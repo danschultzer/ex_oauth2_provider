@@ -36,7 +36,7 @@ defmodule Mix.Tasks.ExOauth2Provider.Install do
 
           for {name, template} <- migrations do
             unless String.match? existing_migrations, ~r/\d{14}_#{name}\.exs/ do
-              file = Path.join(path, "#{next_migration_number(existing_migrations, 0)}_#{name}.exs")
+              file = Path.join(path, "#{next_migration_number(existing_migrations)}_#{name}.exs")
               create_file file, EEx.eval_string(template, [mod: Module.concat([repo, Migrations, camelize(name)])])
             end
           end
@@ -44,17 +44,20 @@ defmodule Mix.Tasks.ExOauth2Provider.Install do
     end
   end
 
-  defp next_migration_number(existing_migrations, pad_time) do
-    {{y, m, d}, {hh, mm, ss}} = :calendar.universal_time()
-    padded_timestamp = "#{y}#{pad(m)}#{pad(d)}#{pad(hh)}#{pad(mm)}#{pad(ss + pad_time)}"
+  defp next_migration_number(existing_migrations, pad_time \\ 0) do
+    timestamp = NaiveDateTime.utc_now
+      |> NaiveDateTime.add(pad_time, :second)
+      |> NaiveDateTime.to_erl
+      |> padded_timestamp
 
-    if String.match? existing_migrations, ~r/#{padded_timestamp}_.*\.exs/ do
+    if String.match? existing_migrations, ~r/#{timestamp}_.*\.exs/ do
       next_migration_number(existing_migrations, pad_time + 1)
     else
-      padded_timestamp
+      timestamp
     end
   end
 
+  defp padded_timestamp({{y, m, d}, {hh, mm, ss}}), do: "#{y}#{pad(m)}#{pad(d)}#{pad(hh)}#{pad(mm)}#{pad(ss)}"
   defp pad(i) when i < 10, do: << ?0, ?0 + i >>
   defp pad(i), do: to_string(i)
 

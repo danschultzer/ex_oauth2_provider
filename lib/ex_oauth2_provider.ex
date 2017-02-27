@@ -7,10 +7,9 @@ defmodule ExOauth2Provider do
         resource_owner_model: App.User
   """
 
-  config = Application.get_env(:ex_oauth2_provider, ExOauth2Provider, [])
-
-  @repo Keyword.get(config, :repo)
-  @resource_owner_model Keyword.get(config, :resource_owner_model)
+  @config Application.get_env(:ex_oauth2_provider, ExOauth2Provider, [])
+  @repo Keyword.get(@config, :repo)
+  @resource_owner_model Keyword.get(@config, :resource_owner_model)
 
   if is_nil(@repo), do: raise "ExOauth2Provider requires a repo"
   if is_nil(@resource_owner_model), do: raise "ExOauth2Provider requires a resource owner (e.g. User)"
