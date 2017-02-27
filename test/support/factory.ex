@@ -3,10 +3,9 @@ defmodule ExOauth2Provider.Factory do
   Generates factories
   """
 
-  config = Application.get_env(:ex_oauth2_provider, ExOauth2Provider, [])
-
-  @repo Keyword.get(config, :repo)
-  @resource_owner_model Keyword.get(config, :resource_owner_model)
+  @config Application.get_env(:ex_oauth2_provider, ExOauth2Provider, [])
+  @repo Keyword.get(@config, :repo)
+  @resource_owner_model Keyword.get(@config, :resource_owner_model)
   @access_token ExOauth2Provider.OauthAccessToken
 
   use ExMachina.Ecto, repo: @repo

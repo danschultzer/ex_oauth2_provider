@@ -20,10 +20,8 @@ defmodule ExOauth2ProviderTest do
     # Inserting and changing inserted_at timestamp
     attrs = params_for(:access_token, %{resource_owner_id: user.id, expires_in: 1})
     {_, access_token} = Repo.insert(OauthAccessToken.create_changeset(%OauthAccessToken{}, attrs))
-    inserted_at = :os.system_time(:microsecond) - 2 * :math.pow(10,6)
-      |> round
-      |> DateTime.from_unix!(:microsecond)
-      |> Ecto.DateTime.cast!
+    inserted_at = access_token.inserted_at
+      |> NaiveDateTime.add(-2, :second)
     access_token = Ecto.Changeset.change(access_token, inserted_at: inserted_at)
       |> Repo.update!
     assert authenticate_token(access_token.token) == {:error, :token_inaccessible}

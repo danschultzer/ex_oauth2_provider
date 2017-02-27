@@ -2,6 +2,8 @@ defmodule ExOauth2Provider.OauthAccessToken do
   use Ecto.Schema
   import Ecto.Changeset
 
+  @scopes Enum.join(Application.get_env(:ex_oauth2_provider, :scopes, []), ",")
+
   schema "oauth_access_tokens" do
     belongs_to :resource_owner, ExOauth2Provider.resource_owner_model
     field :token, :string
@@ -41,12 +43,8 @@ defmodule ExOauth2Provider.OauthAccessToken do
       nil -> false
       expires_in ->
         expires_at = access_token.inserted_at
-          |> NaiveDateTime.to_erl
-          |> :calendar.datetime_to_gregorian_seconds
-          |> Kernel.+(expires_in)
-          |> :calendar.gregorian_seconds_to_datetime
-          |> Ecto.DateTime.from_erl
-        Ecto.DateTime.compare(expires_at, Ecto.DateTime.utc) == :lt
+          |> NaiveDateTime.add(expires_in, :second)
+        NaiveDateTime.compare(expires_at, NaiveDateTime.utc_now) == :lt
     end
   end
 
@@ -63,7 +61,6 @@ defmodule ExOauth2Provider.OauthAccessToken do
   end
 
   defp put_scopes(model_changeset) do
-    scopes = Enum.join(Application.get_env(:ex_oauth2_provider, :scopes, []), ",")
-    put_change(model_changeset, :details, %{scope: scopes})
+    put_change(model_changeset, :details, %{scope: @scopes})
   end
 end
