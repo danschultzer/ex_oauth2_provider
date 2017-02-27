@@ -14,7 +14,7 @@ defmodule ExOauth2ProviderTest do
     assert authenticate_token(access_token.token) == {:ok, Repo.get!(OauthAccessToken, access_token.id)}
   end
 
-  test "it rejects inaccessible token" do
+  test "it rejects expired token" do
     user = insert(:user)
 
     # Inserting and changing inserted_at timestamp
@@ -25,7 +25,10 @@ defmodule ExOauth2ProviderTest do
     access_token = Ecto.Changeset.change(access_token, inserted_at: inserted_at)
       |> Repo.update!
     assert authenticate_token(access_token.token) == {:error, :token_inaccessible}
+  end
 
+  test "it rejects revoked token" do
+    user = insert(:user)
     attrs = params_for(:access_token, %{resource_owner_id: user.id, revoked_at: NaiveDateTime.utc_now})
     {_, access_token} = Repo.insert(OauthAccessToken.create_changeset(%OauthAccessToken{}, attrs))
     assert authenticate_token(access_token.token) == {:error, :token_inaccessible}
