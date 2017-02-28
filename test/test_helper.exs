@@ -12,15 +12,6 @@ Mix.Task.run "ex_oauth2_provider.install"
 Mix.Task.run "ecto.create", ~w(--quiet)
 Mix.Task.run "ecto.migrate"
 
-defmodule ExOauth2Provider.TestCase do
-  use ExUnit.CaseTemplate
-
-  setup do
-    :ok = Ecto.Adapters.SQL.Sandbox.checkout(Repo)
-    Ecto.Adapters.SQL.Sandbox.mode(Repo, {:shared, self()})
-  end
-end
-
 # For tasks/generators testing
 Mix.start()
 Mix.shell(Mix.Shell.Process)

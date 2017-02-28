@@ -7,13 +7,10 @@ defmodule ExOauth2Provider.Plug.LoadResourceTest do
   import ExOauth2Provider.PlugHelpers
 
   alias ExOauth2Provider.Plug.LoadResource
-  alias ExOauth2Provider.OauthAccessToken
   alias ExOauth2Provider.Test.Repo
 
   setup do
-    user = insert(:user)
-    attrs = params_for(:access_token, %{resource_owner_id: user.id})
-    {_, access_token} = Repo.insert(OauthAccessToken.create_changeset(%OauthAccessToken{}, attrs))
+    {user, access_token} = access_token_with_user()
 
     {
       :ok,

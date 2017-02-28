@@ -72,7 +72,7 @@ defmodule Mix.Tasks.ExOauth2Provider.Install do
           add :token, :string
           add :refresh_token, :string
           add :expires_in, :integer
-          add :revoked_at, :datetime
+          add :revoked_at, :naive_datetime
           add :scopes, :string
 
           timestamps()

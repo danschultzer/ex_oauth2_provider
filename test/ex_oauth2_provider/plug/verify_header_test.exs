@@ -7,13 +7,9 @@ defmodule ExOauth2Provider.Plug.VerifyHeaderTest do
   import ExOauth2Provider.PlugHelpers
 
   alias ExOauth2Provider.Plug.VerifyHeader
-  alias ExOauth2Provider.OauthAccessToken
-  alias ExOauth2Provider.Test.Repo
 
   setup do
-    user = insert(:user)
-    attrs = params_for(:access_token, %{resource_owner_id: user.id})
-    {_, access_token} = Repo.insert(OauthAccessToken.create_changeset(%OauthAccessToken{}, attrs))
+    {_, access_token} = access_token_with_user()
 
     {
       :ok,
@@ -65,9 +61,7 @@ defmodule ExOauth2Provider.Plug.VerifyHeaderTest do
   end
 
   test "with a realm specified and multiple auth headers", context do
-    user = insert(:user)
-    attrs = params_for(:access_token, %{resource_owner_id: user.id})
-    {_, another_access_token} = Repo.insert(OauthAccessToken.create_changeset(%OauthAccessToken{}, attrs))
+    {_, another_access_token} = access_token_with_user()
 
     conn =
       context.conn
@@ -80,9 +74,7 @@ defmodule ExOauth2Provider.Plug.VerifyHeaderTest do
   end
 
   test "pulls different tokens into different locations", context do
-    user = insert(:user)
-    attrs = params_for(:access_token, %{resource_owner_id: user.id})
-    {_, another_access_token} = Repo.insert(OauthAccessToken.create_changeset(%OauthAccessToken{}, attrs))
+    {_, another_access_token} = access_token_with_user()
 
     # Can't use the put_req_header here since it overrides previous values
     the_conn = %{context.conn | req_headers: [

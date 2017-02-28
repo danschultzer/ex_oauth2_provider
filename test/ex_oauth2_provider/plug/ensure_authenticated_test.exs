@@ -7,8 +7,6 @@ defmodule ExOauth2Provider.Plug.EnsureAuthenticatedTest do
   import ExOauth2Provider.PlugHelpers
 
   alias ExOauth2Provider.Plug.EnsureAuthenticated
-  alias ExOauth2Provider.OauthAccessToken
-  alias ExOauth2Provider.Test.Repo
 
   defmodule TestHandler do
     @moduledoc false
@@ -21,9 +19,7 @@ defmodule ExOauth2Provider.Plug.EnsureAuthenticatedTest do
   end
 
   setup do
-    user = insert(:user)
-    attrs = params_for(:access_token, %{resource_owner_id: user.id})
-    {_, access_token} = Repo.insert(OauthAccessToken.create_changeset(%OauthAccessToken{}, attrs))
+    {_, access_token} = access_token_with_user()
 
     {
       :ok,
