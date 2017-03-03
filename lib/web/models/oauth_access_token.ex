@@ -2,8 +2,6 @@ defmodule ExOauth2Provider.OauthAccessToken do
   use Ecto.Schema
   import Ecto.Changeset
 
-  @scopes Enum.join(Application.get_env(:ex_oauth2_provider, :scopes, []), ",")
-
   schema "oauth_access_tokens" do
     belongs_to :resource_owner, ExOauth2Provider.resource_owner_model
     field :token, :string
@@ -61,6 +59,11 @@ defmodule ExOauth2Provider.OauthAccessToken do
   end
 
   defp put_scopes(model_changeset) do
-    put_change(model_changeset, :details, %{scope: @scopes})
+    put_change(model_changeset, :details, %{scopes: default_scopes})
+  end
+
+  def default_scopes do
+    Application.get_env(:ex_oauth2_provider, :scopes, [])
+    |> ExOauth2Provider.Scopes.to_string
   end
 end

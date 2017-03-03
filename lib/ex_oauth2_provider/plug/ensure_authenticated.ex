@@ -36,7 +36,7 @@ defmodule ExOauth2Provider.Plug.EnsureAuthenticated do
   end
 
   defp handle_error(%Plug.Conn{params: params} = conn, reason, opts) do
-    conn = conn |> assign(:api_auth_failure, reason) |> halt
+    conn = conn |> assign(:ex_oauth2_provider_failure, reason) |> halt
     params = Map.merge(params, %{reason: reason})
     {mod, meth} = Map.get(opts, :handler)
 

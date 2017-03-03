@@ -2,7 +2,8 @@ use Mix.Config
 
 config :ex_oauth2_provider, ExOauth2Provider,
   repo: ExOauth2Provider.Test.Repo,
-  resource_owner_model: Dummy.User
+  resource_owner_model: Dummy.User,
+  scopes: ~w(read write)
 
 config :ex_oauth2_provider, ecto_repos: [ExOauth2Provider.Test.Repo]
 

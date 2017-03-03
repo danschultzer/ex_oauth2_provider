@@ -19,6 +19,11 @@ defmodule ExOauth2Provider.OauthAccessTokenTest do
     refute changeset.valid?
   end
 
+  test "sets default scopes" do
+    access_token = insert(:access_token)
+    assert access_token.scopes == "read,write"
+  end
+
   test "is_expired true" do
     inserted_at = NaiveDateTime.utc_now |> NaiveDateTime.add(-2, :second)
     access_token = build(:access_token, %{expires_in: 1, inserted_at: inserted_at})
