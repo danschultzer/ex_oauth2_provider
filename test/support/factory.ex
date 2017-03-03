@@ -30,7 +30,8 @@ defmodule ExOauth2Provider.Factory do
     attrs = params_for(:access_token, Map.merge(%{resource_owner_id: user.id}, params))
     {_, access_token} = @repo.insert(@access_token.create_changeset(%@access_token{}, attrs))
 
-    {user, access_token}
+    @repo.get(@access_token, access_token.id)
+    |> @repo.preload(:resource_owner)
   end
 
   def update_access_token_inserted_at(access_token, amount, units \\ :second) do

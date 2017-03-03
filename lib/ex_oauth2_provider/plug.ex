@@ -25,13 +25,13 @@ defmodule ExOauth2Provider.Plug do
   """
   @spec current_resource(Plug.Conn.t, atom) :: any | nil
   def current_resource(conn, the_key \\ :default) do
-    conn.private[resource_key(the_key)]
+    current_token(conn, the_key)
+    |> ExOauth2Provider.repo.preload(:resource_owner)
+    |> get_resource_owner
   end
 
-  @doc false
-  def set_current_resource(conn, resource, the_key \\ :default) do
-    Plug.Conn.put_private(conn, resource_key(the_key), resource)
-  end
+  defp get_resource_owner(nil), do: nil
+  defp get_resource_owner(access_token), do: Map.fetch!(access_token, :resource_owner)
 
   @doc """
   Fetch the currently verified token from the request.

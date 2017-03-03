@@ -9,12 +9,10 @@ defmodule ExOauth2Provider.Plug.VerifyHeaderTest do
   alias ExOauth2Provider.Plug.VerifyHeader
 
   setup do
-    {_, access_token} = access_token_with_user()
-
     {
       :ok,
       conn: conn(:get, "/"),
-      access_token: access_token
+      access_token: access_token_with_user()
     }
   end
 
@@ -37,7 +35,7 @@ defmodule ExOauth2Provider.Plug.VerifyHeaderTest do
       |> run_plug(VerifyHeader)
 
     assert ExOauth2Provider.Plug.authenticated?(conn)
-    assert ExOauth2Provider.Plug.current_token(conn).id == context.access_token.id
+    assert ExOauth2Provider.Plug.current_token(conn) == context.access_token
   end
 
   test "with a valid access token at a specified location", context do
@@ -47,7 +45,7 @@ defmodule ExOauth2Provider.Plug.VerifyHeaderTest do
       |> run_plug(VerifyHeader, %{key: :secret})
 
     assert ExOauth2Provider.Plug.authenticated?(conn, :secret)
-    assert ExOauth2Provider.Plug.current_token(conn, :secret).id == context.access_token.id
+    assert ExOauth2Provider.Plug.current_token(conn, :secret) == context.access_token
   end
 
   test "with a realm specified", context do
@@ -57,11 +55,11 @@ defmodule ExOauth2Provider.Plug.VerifyHeaderTest do
       |> run_plug(VerifyHeader, realm: "Bearer")
 
     assert ExOauth2Provider.Plug.authenticated?(conn)
-    assert ExOauth2Provider.Plug.current_token(conn).id == context.access_token.id
+    assert ExOauth2Provider.Plug.current_token(conn) == context.access_token
   end
 
   test "with a realm specified and multiple auth headers", context do
-    {_, another_access_token} = access_token_with_user()
+    another_access_token = access_token_with_user()
 
     conn =
       context.conn
@@ -70,11 +68,11 @@ defmodule ExOauth2Provider.Plug.VerifyHeaderTest do
       |> run_plug(VerifyHeader, realm: "Client")
 
     assert ExOauth2Provider.Plug.authenticated?(conn)
-    assert ExOauth2Provider.Plug.current_token(conn).id == another_access_token.id
+    assert ExOauth2Provider.Plug.current_token(conn) == another_access_token
   end
 
   test "pulls different tokens into different locations", context do
-    {_, another_access_token} = access_token_with_user()
+    another_access_token = access_token_with_user()
 
     # Can't use the put_req_header here since it overrides previous values
     the_conn = %{context.conn | req_headers: [
@@ -88,8 +86,8 @@ defmodule ExOauth2Provider.Plug.VerifyHeaderTest do
            |> run_plug(VerifyHeader, realm: "Client", key: :client)
 
     assert ExOauth2Provider.Plug.authenticated?(conn, :client)
-    assert ExOauth2Provider.Plug.current_token(conn, :client).id == another_access_token.id
+    assert ExOauth2Provider.Plug.current_token(conn, :client) == another_access_token
     assert ExOauth2Provider.Plug.authenticated?(conn)
-    assert ExOauth2Provider.Plug.current_token(conn).id == context.access_token.id
+    assert ExOauth2Provider.Plug.current_token(conn) == context.access_token
   end
 end

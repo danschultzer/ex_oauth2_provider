@@ -1,7 +1,9 @@
 defmodule ExOauth2Provider.PlugTest do
-  use ExUnit.Case
+  use ExOauth2Provider.TestCase
   require Plug.Test
   use Plug.Test
+
+  import ExOauth2Provider.Factory
 
   setup do
     {:ok, %{conn: conn(:post, "/")}}
@@ -26,42 +28,29 @@ defmodule ExOauth2Provider.PlugTest do
     assert ExOauth2Provider.Plug.authenticated?(new_conn, :secret)
   end
 
-  test "set_current_resource with no key", context do
-    resource = "resource"
-    new_conn = ExOauth2Provider.Plug.set_current_resource(context.conn, resource)
-    assert ExOauth2Provider.Plug.current_resource(new_conn) == "resource"
-  end
-
-  test "set_current_resource with key", context do
-    resource = "resource"
-    new_conn = ExOauth2Provider.Plug.set_current_resource(context.conn, resource, :secret)
-    assert ExOauth2Provider.Plug.current_resource(new_conn, :secret) == "resource"
-  end
-
-
-  test "current_resource with no key and no resource", context do
+  test "current_resource with no key and no token", context do
     assert ExOauth2Provider.Plug.current_resource(context.conn) == nil
-  end
-
-  test "current_resource with no key and resource", context do
-    resource = "thing"
-    new_conn = ExOauth2Provider.Plug.set_current_resource(context.conn, resource)
-    assert ExOauth2Provider.Plug.current_resource(new_conn) == resource
-  end
-
-  test "current_resource with key and resource", context do
-    resource = "thing"
-    new_conn = ExOauth2Provider.Plug.set_current_resource(
-      context.conn,
-      resource,
-      :secret
-    )
-
-    assert ExOauth2Provider.Plug.current_resource(new_conn, :secret) == resource
   end
 
   test "current_resource with key and no resource", context do
     assert ExOauth2Provider.Plug.current_resource(context.conn, :secret) == nil
+  end
+
+  test "current_resource with no key and with token", context do
+    token = build(:access_token, resource_owner: build(:user))
+    new_conn = ExOauth2Provider.Plug.set_current_token(context.conn, token)
+    assert ExOauth2Provider.Plug.current_resource(new_conn) == token.resource_owner
+  end
+
+  test "current_resource with key and token", context do
+    token = build(:access_token, resource_owner: build(:user))
+    new_conn = ExOauth2Provider.Plug.set_current_token(
+      context.conn,
+      token,
+      :secret
+    )
+
+    assert ExOauth2Provider.Plug.current_resource(new_conn, :secret) == token.resource_owner
   end
 
   test "set_current_token with no key", context do

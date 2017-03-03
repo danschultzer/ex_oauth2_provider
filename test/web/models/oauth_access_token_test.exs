@@ -31,11 +31,10 @@ defmodule ExOauth2Provider.OauthAccessTokenTest do
   end
 
   test "is_expired false" do
-    {_, access_token} = access_token_with_user(%{expires_in: 1})
+    access_token = access_token_with_user(%{expires_in: 1})
     assert OauthAccessToken.is_expired?(access_token) == false
 
     access_token = access_token_with_user()
-      |> elem(1)
       |> update_access_token_inserted_at(-2)
     assert OauthAccessToken.is_expired?(access_token) == false
   end
@@ -46,12 +45,12 @@ defmodule ExOauth2Provider.OauthAccessTokenTest do
   end
 
   test "is_accessible false when revoked" do
-    {_, access_token} = access_token_with_user(%{revoked_at: NaiveDateTime.utc_now})
+    access_token = access_token_with_user(%{revoked_at: NaiveDateTime.utc_now})
     assert OauthAccessToken.is_expired?(access_token) == false
   end
 
   test "is_accessible false when expired" do
-    {_, access_token} = access_token_with_user(%{revoked_at: NaiveDateTime.utc_now})
+    access_token = access_token_with_user(%{revoked_at: NaiveDateTime.utc_now})
     assert OauthAccessToken.is_expired?(access_token) == false
   end
 end

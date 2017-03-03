@@ -19,12 +19,10 @@ defmodule ExOauth2Provider.Plug.EnsureAuthenticatedTest do
   end
 
   setup do
-    {_, access_token} = access_token_with_user()
-
     {
       :ok,
       conn: conn(:get, "/foo"),
-      access_token: access_token
+      access_token: access_token_with_user()
     }
   end
 

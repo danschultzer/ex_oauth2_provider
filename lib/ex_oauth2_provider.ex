@@ -21,12 +21,34 @@ defmodule ExOauth2Provider do
                                         {:error, any}
   def authenticate_token(nil), do: {:error, :token_inaccessible}
   def authenticate_token(token) do
-    case ExOauth2Provider.OauthAccessToken |> @repo.get_by(token: token) do
-      nil -> {:error, :token_not_found}
-      res -> case ExOauth2Provider.OauthAccessToken.is_accessible?(res) do
-        true -> {:ok, res}
-        _ -> {:error, :token_inaccessible}
-      end
+    token
+    |> load_access_token
+    |> validate_access_token
+    |> load_resource
+  end
+
+  defp load_access_token(token) do
+    case @repo.get_by(ExOauth2Provider.OauthAccessToken, token: token) do
+      nil          -> {:error, :token_not_found}
+      access_token -> {:ok, access_token}
+    end
+  end
+
+  defp validate_access_token({:error, reason}), do: {:error, reason}
+  defp validate_access_token({:ok, access_token}) do
+    case ExOauth2Provider.OauthAccessToken.is_accessible?(access_token) do
+      true -> {:ok, access_token}
+      _    -> {:error, :token_inaccessible}
+    end
+  end
+
+  defp load_resource({:error, reason}), do: {:error, reason}
+  defp load_resource({:ok, access_token}) do
+    access_token = @repo.preload(access_token, :resource_owner)
+
+    case access_token.resource_owner do
+      nil -> {:error, :no_association_found}
+      _   -> {:ok, access_token}
     end
   end
 
