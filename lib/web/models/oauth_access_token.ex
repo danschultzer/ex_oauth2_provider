@@ -67,7 +67,8 @@ defmodule ExOauth2Provider.OauthAccessToken do
   end
 
   def default_scopes do
-    Application.get_env(:ex_oauth2_provider, :scopes, [])
+    :ex_oauth2_provider
+    |> Application.get_env(:scopes, [])
     |> ExOauth2Provider.Scopes.to_string
   end
 end

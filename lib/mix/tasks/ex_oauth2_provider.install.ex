@@ -35,10 +35,7 @@ defmodule Mix.Tasks.ExOauth2Provider.Install do
           existing_migrations = to_string File.ls!(path)
 
           for {name, template} <- migrations do
-            unless String.match? existing_migrations, ~r/\d{14}_#{name}\.exs/ do
-              file = Path.join(path, "#{next_migration_number(existing_migrations)}_#{name}.exs")
-              create_file file, EEx.eval_string(template, [mod: Module.concat([repo, Migrations, camelize(name)])])
-            end
+            create_migration_file(repo, existing_migrations, name, path, template)
           end
       end
     end
@@ -54,6 +51,13 @@ defmodule Mix.Tasks.ExOauth2Provider.Install do
       next_migration_number(existing_migrations, pad_time + 1)
     else
       timestamp
+    end
+  end
+
+  defp create_migration_file(repo, existing_migrations, name, path, template) do
+    unless String.match? existing_migrations, ~r/\d{14}_#{name}\.exs/ do
+      file = Path.join(path, "#{next_migration_number(existing_migrations)}_#{name}.exs")
+      create_file file, EEx.eval_string(template, [mod: Module.concat([repo, Migrations, camelize(name)])])
     end
   end
 

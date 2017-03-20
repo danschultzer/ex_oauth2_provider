@@ -34,7 +34,8 @@ defmodule ExOauth2Provider.Plug do
   """
   @spec current_resource(Plug.Conn.t, atom) :: any | nil
   def current_resource(conn, the_key \\ :default) do
-    current_token(conn, the_key)
+    conn
+    |> current_token(the_key)
     |> ExOauth2Provider.repo.preload(:resource_owner)
     |> get_resource_owner
   end
