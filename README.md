@@ -1,5 +1,7 @@
 # ExOauth2Provider
 
+[![Build Status](https://travis-ci.org/danschultzer/ex_oauth2_provider.svg?branch=master)](https://travis-ci.org/danschultzer/ex_oauth2_provider)
+
 The no brainer library to add OAuth 2 provider functionality to your elixir or phoenix app.
 
 ## Installation
