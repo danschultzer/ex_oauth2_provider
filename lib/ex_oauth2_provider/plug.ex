@@ -1,4 +1,13 @@
 defmodule ExOauth2Provider.Plug do
+  @moduledoc """
+  ExOauth2Provider.Plug contains functions that assist with interacting with
+  ExOauth2Provider via Plugs.
+  ExOauth2Provider.Plug is not itself a plug.
+  Use the helpers to look up current_token and current_resource.
+  ## Example
+      ExOauth2Provider.Plug.current_token(conn)
+      ExOauth2Provider.Plug.current_resource(conn)
+  """
 
   import ExOauth2Provider.Keys
 

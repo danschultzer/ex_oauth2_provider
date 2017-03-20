@@ -1,4 +1,8 @@
 defmodule ExOauth2Provider.OauthAccessToken do
+  @moduledoc """
+  Ecto schema for oauth access tokens
+  """
+
   use Ecto.Schema
   import Ecto.Changeset
 
