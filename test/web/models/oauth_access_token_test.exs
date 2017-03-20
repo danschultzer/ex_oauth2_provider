@@ -1,16 +1,19 @@
 defmodule ExOauth2Provider.OauthAccessTokenTest do
   use ExOauth2Provider.TestCase
-
-  alias ExOauth2Provider.OauthAccessToken
-
   import ExOauth2Provider.Factory
   alias ExOauth2Provider.OauthAccessToken
 
-  @valid_attrs %{resource_owner_id: 1}
+  @valid_attrs %{resource_owner_id: 0}
   @invalid_attrs %{}
 
   test "create_changeset with valid attributes" do
     changeset = OauthAccessToken.create_changeset(%OauthAccessToken{}, @valid_attrs)
+    assert changeset.valid?
+  end
+
+  test "create_changeset with application" do
+    application = insert(:application, %{resource_owner_id: 0})
+    changeset = OauthAccessToken.create_changeset(%OauthAccessToken{}, %{resource_owner_id: 0, application_id: application.id})
     assert changeset.valid?
   end
 
@@ -19,9 +22,15 @@ defmodule ExOauth2Provider.OauthAccessTokenTest do
     refute changeset.valid?
   end
 
+  test "create_changeset adds random token" do
+    changeset = OauthAccessToken.create_changeset(%OauthAccessToken{}, @valid_attrs)
+    changeset2 = OauthAccessToken.create_changeset(%OauthAccessToken{}, @valid_attrs)
+    assert changeset.changes.token != changeset2.changes.token
+  end
+
   test "sets default scopes" do
-    access_token = insert(:access_token)
-    assert access_token.scopes == "read,write"
+    access_token = OauthAccessToken.create_changeset(%OauthAccessToken{}, %{})
+    assert access_token.changes.scopes == "read,write"
   end
 
   test "is_expired true" do
@@ -40,7 +49,7 @@ defmodule ExOauth2Provider.OauthAccessTokenTest do
   end
 
   test "is_accessible true" do
-    access_token = insert(:access_token)
+    access_token = insert(:access_token, %{resource_owner_id: 0})
     assert OauthAccessToken.is_expired?(access_token) == false
   end
 

@@ -18,7 +18,7 @@ defmodule ExOauth2Provider.Mixfile do
      package: package(),
 
      # Docs
-     name: "ExOAuth2Provider",
+     name: "ExOauth2Provider",
      docs: [source_ref: "v#{@version}", main: "ExOauth2Provider",
             canonical: "http://hexdocs.pm/ex_oauth2_provider",
             source_url: "https://github.com/danschultzer/ex_oauth2_provider",

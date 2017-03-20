@@ -4,12 +4,16 @@ defmodule ExOauth2Provider do
   ## Configuration
       config :ex_oauth2_provider, ExOauth2Provider,
         repo: App.Repo,
-        resource_owner_model: App.User
+        resource_owner_model: App.User,
+        scopes: ~(write read), # Default value is ~(write read)
+        native_redirect_uri: "urn:ietf:wg:oauth:2.0:oob" # Default value is "urn:ietf:wg:oauth:2.0:oob"
   """
 
   @config Application.get_env(:ex_oauth2_provider, ExOauth2Provider, [])
   @repo Keyword.get(@config, :repo)
   @resource_owner_model Keyword.get(@config, :resource_owner_model)
+  @default_scopes  Keyword.get(@config, :scopes, [])
+  @native_redirect_uri Keyword.get(@config, :native_redirect_uri, "urn:ietf:wg:oauth:2.0:oob")
 
   if is_nil(@repo), do: raise "ExOauth2Provider requires a repo"
   if is_nil(@resource_owner_model), do: raise "ExOauth2Provider requires a resource owner (e.g. User)"
@@ -65,4 +69,6 @@ defmodule ExOauth2Provider do
 
   def resource_owner_model, do: @resource_owner_model
   def repo, do: @repo
+  def default_scopes, do: @default_scopes
+  def native_redirect_uri, do: @native_redirect_uri
 end

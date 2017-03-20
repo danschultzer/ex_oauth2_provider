@@ -7,7 +7,9 @@ defmodule ExOauth2Provider.OauthAccessToken do
   import Ecto.Changeset
 
   schema "oauth_access_tokens" do
+    belongs_to :application, ExOauth2Provider.OauthApplication, on_replace: :nilify
     belongs_to :resource_owner, ExOauth2Provider.resource_owner_model
+
     field :token, :string
     field :refresh_token, :string
     field :expires_in, :integer
@@ -24,13 +26,15 @@ defmodule ExOauth2Provider.OauthAccessToken do
     struct
     |> cast(params, [:expires_in, :revoked_at])
     |> validate_required([:token, :resource_owner_id])
+    |> assoc_constraint(:resource_owner)
     |> unique_constraint(:token)
     |> unique_constraint(:refresh_token)
   end
 
   def create_changeset(struct, params \\ %{}) do
     struct
-    |> cast(params, [:resource_owner_id])
+    |> cast(params, [:resource_owner_id, :application_id])
+    |> cast_assoc(:application)
     |> cast_assoc(:resource_owner, [:required])
     |> put_access_token
     |> put_refresh_token
@@ -54,21 +58,23 @@ defmodule ExOauth2Provider.OauthAccessToken do
     !is_expired?(access_token) and is_nil(access_token.revoked_at)
   end
 
-  defp put_access_token(model_changeset) do
-    put_change(model_changeset, :token, ExOauth2Provider.generate_token)
+  defp put_access_token(changeset) do
+    changeset
+    |> put_change(:token, ExOauth2Provider.generate_token)
   end
 
-  defp put_refresh_token(model_changeset) do
-    put_change(model_changeset, :refresh_token, ExOauth2Provider.generate_token)
+  defp put_refresh_token(changeset) do
+    changeset
+    |> put_change(:refresh_token, ExOauth2Provider.generate_token)
   end
 
-  defp put_scopes(model_changeset) do
-    put_change(model_changeset, :details, %{scopes: default_scopes})
+  defp put_scopes(changeset) do
+    changeset
+    |> put_change(:scopes, default_scopes_string)
   end
 
-  def default_scopes do
-    :ex_oauth2_provider
-    |> Application.get_env(:scopes, [])
+  defp default_scopes_string do
+    ExOauth2Provider.default_scopes
     |> ExOauth2Provider.Scopes.to_string
   end
 end

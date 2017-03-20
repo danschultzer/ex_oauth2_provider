@@ -32,7 +32,7 @@ defmodule ExOauth2ProviderTest do
 
   test "it reject with no resource" do
     access_token = access_token_with_user()
-    |> Ecto.Changeset.change(resource_owner_id: nil)
+    |> Ecto.Changeset.change(resource_owner_id: 0)
     |> Repo.update!
 
     assert authenticate_token(access_token.token) == {:error, :no_association_found}

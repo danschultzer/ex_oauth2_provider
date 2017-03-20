@@ -7,12 +7,24 @@ defmodule ExOauth2Provider.Factory do
 
   @repo Keyword.get(config, :repo)
   @resource_owner_model Keyword.get(config, :resource_owner_model)
+  @application ExOauth2Provider.OauthApplication
   @access_token ExOauth2Provider.OauthAccessToken
 
   use ExMachina.Ecto, repo: @repo
 
+  def application_factory do
+    %@application{
+      uid: "test",
+      secret: "secret",
+      name: "OAuth Application",
+      redirect_uri: "urn:ietf:wg:oauth:2.0:oob",
+      scopes: "read,write"
+    }
+  end
+
   def access_token_factory do
     %@access_token{
+      token: "secret",
       scopes: "read,write"
     }
   end
