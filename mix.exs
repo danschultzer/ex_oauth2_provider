@@ -43,6 +43,7 @@ defmodule ExOauth2Provider.Mixfile do
      {:postgrex, ">= 0.11.1", optional: true},
 
      # Dev and test dependencies
+     {:credo, "~> 0.7", only: [:dev, :test]},
      {:ex_doc, "~> 0.14", only: :dev, runtime: false},
      {:ex_machina, "~> 1.0", only: :test}
    ]
