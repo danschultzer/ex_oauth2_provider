@@ -35,14 +35,68 @@ And use the model in [test/support/dummy/models/user.ex](test/support/dummy/mode
 3. Add migrations
 
 ```bash
-mix ex_oath2_provider.install
+mix ex_oauth2_provider.install
 ```
 
 This will add all necessary migrations to your app.
 
-## Usage
+## Plug API
 
-TBA
+### ExOauth2Provider.Plug.VerifyHeader
+
+Looks for a token in the Authorization Header. If one is not found, this does nothing.
+
+### ExOauth2Provider.Plug.EnsureAuthenticated
+
+Looks for a previously verified token. If one is found, continues, otherwise it will call the `:unauthenticated` function of your handler.
+
+When you ensure a session, you can declare an error handler. This can be done as part of a pipeline or inside a Phoenix controller.
+
+```elixir
+defmodule MyApp.MyController do
+  use MyApp.Web, :controller
+
+  plug ExOauth2Provider.Plug.EnsureAuthenticated, handler: MyApp.MyAuthErrorHandler
+end
+```
+### ExOauth2Provider.Plug.EnsureScopes
+
+Looks for a previously verified token. If one is found, confirms that all listed scopes are present in the token. If not, the `:unauthorized` function is called on your handler.
+
+```elixir
+defmodule MyApp.MyController do
+  use MyApp.Web, :controller
+
+  plug ExOauth2Provider.Plug.EnsureScopes, handler: MyApp.MyAuthErrorHandler, scopes: ~w(read write)
+end
+```
+
+When scopes' sets are specified through a `:one_of` map, the token is searched for at least one matching scopes set to allow the request. The first set that matches will allow the request. If no set matches, the `:unauthorized` function is called.
+
+```elixir
+defmodule MyApp.MyController do
+  use MyApp.Web, :controller
+
+  plug ExOauth2Provider.Plug.EnsureScopes, handler: MyApp.MyAuthErrorHandler,
+    one_of: [~w(admin), ~w(read write)]
+end
+```
+
+### Current resource and token
+
+Access to the current resource and token is useful. Note, you'll need to have run the VerifyHeader for token and resource access.
+
+```elixir
+ExOauth2Provider.Plug.current_token(conn) # access the token in the default location
+ExOauth2Provider.Plug.current_token(conn, :secret) # access the token in the secret location
+```
+
+For the resource
+
+```elixir
+ExOauth2Provider.Plug.current_resource(conn) # Access the loaded resource in the default location
+ExOauth2Provider.Plug.current_resource(conn, :secret) # Access the loaded resource in the secret location
+```
 
 ## Acknowledgement
 
