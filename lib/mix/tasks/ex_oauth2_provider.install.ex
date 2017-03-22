@@ -7,6 +7,9 @@ defmodule Mix.Tasks.ExOauth2Provider.Install do
 
   @shortdoc "Generates a new migration for the repo"
 
+  @config_file         "config/config.exs"
+  @switches            [resource_owner: :string, config_file: :string]
+
   @moduledoc """
   Generates migrations.
   The repository must be set under `:ecto_repos` in the
@@ -19,26 +22,46 @@ defmodule Mix.Tasks.ExOauth2Provider.Install do
   specifying the `:priv` key under the repository configuration.
   ## Command line options
     * `-r`, `--repo` - the repo to generate migration for
+    * `--config-file` - the configuration file to update
+    * `--resource-owner` - defines the resource owner, default is MyApp.User
   """
 
   @doc false
   def run(args) do
     no_umbrella!("ex_oauth2_provider.install")
+
+    args
+    |> parse_options_to_config
+    |> add_migrations_files
+    |> update_config
+  end
+
+  defp parse_options_to_config(args) do
     repos = parse_repo(args)
+    Enum.each repos, &Mix.Ecto.ensure_repo(&1, args)
+    {opts, _, _} = OptionParser.parse(args, switches: @switches)
 
+    %{
+      config: true,
+      app_path: Mix.Project.app_path,
+      config: opts[:config_file] || @config_file,
+      repos: repos,
+      resource_owner: opts[:resource_owner] || "MyApp.User"
+    }
+  end
+
+  defp add_migrations_files(%{repos: repos, app_path: app_path} = config) do
     Enum.each repos, fn repo ->
-      case OptionParser.parse(args) do
-        {opts, [], _} ->
-          ensure_repo(repo, args)
-          path = Path.relative_to(migrations_path(repo), Mix.Project.app_path)
-          create_directory path
-          existing_migrations = to_string File.ls!(path)
+      path = Path.relative_to(migrations_path(repo), app_path)
+      create_directory path
+      existing_migrations = to_string File.ls!(path)
 
-          for {name, template} <- migrations() do
-            create_migration_file(repo, existing_migrations, name, path, template)
-          end
+      for {name, template} <- migrations() do
+        create_migration_file(repo, existing_migrations, name, path, template)
       end
     end
+
+    config
   end
 
   defp next_migration_number(existing_migrations, pad_time \\ 0) do
@@ -58,6 +81,7 @@ defmodule Mix.Tasks.ExOauth2Provider.Install do
     unless String.match? existing_migrations, ~r/\d{14}_#{name}\.exs/ do
       file = Path.join(path, "#{next_migration_number(existing_migrations)}_#{name}.exs")
       create_file file, EEx.eval_string(template, [mod: Module.concat([repo, Migrations, camelize(name)])])
+      Mix.shell.info "Migration file #{file} has been added."
     end
   end
 
@@ -72,4 +96,33 @@ defmodule Mix.Tasks.ExOauth2Provider.Install do
       {String.slice(filename, 0..-5), File.read!(Path.join(path, filename))}
     end
   end
+
+  defp update_config(config) do
+    repos = Enum.map config[:repos], &to_string(&1)
+    """
+config :ex_oauth2_provider, ExOauth2Provider,
+  repo: #{repos},
+  resource_owner_model: #{config[:resource_owner]}
+"""
+    |> write_config(config)
+  end
+
+  defp write_config(string, %{config: config_file} = config) do
+    log_config? = if File.exists? config_file do
+      source = File.read!(config_file)
+      if String.contains? source, "config :ex_oauth2_provider, ExOauth2Provider" do
+        Mix.shell.info "Configuration was not added because one already exists!"
+        true
+      else
+        File.write!(config_file, source <> "\n" <> string)
+        Mix.shell.info "Your config/config.exs file was updated."
+        false
+      end
+    else
+      Mix.shell.info "Could not find #{config_file}. Configuration was not added!"
+      true
+    end
+    Enum.into [config_string: string, log_config?: log_config?], config
+  end
+  defp write_config(string, config), do: Enum.into([log_config?: true, config_string: string], config)
 end
