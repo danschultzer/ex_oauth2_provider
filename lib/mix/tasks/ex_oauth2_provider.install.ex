@@ -90,10 +90,11 @@ defmodule Mix.Tasks.ExOauth2Provider.Install do
   defp pad(i), do: to_string(i)
 
   def migrations do
-    path = "priv/templates/migrations"
+    templates_path = Application.app_dir(:ex_oauth2_provider)
+    |> Path.join("priv/templates/migrations")
 
-    for filename <- File.ls!(path) do
-      {String.slice(filename, 0..-5), File.read!(Path.join(path, filename))}
+    for filename <- File.ls!(templates_path) do
+      {String.slice(filename, 0..-5), File.read!(Path.join(templates_path, filename))}
     end
   end
 
