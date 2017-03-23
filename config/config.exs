@@ -29,4 +29,6 @@ config :ex_oauth2_provider, ExOauth2Provider, repo: %{}
 # Configuration from the imported file will override the ones defined
 # here (which is why it is important to import them last).
 #
-import_config "#{Mix.env}.exs"
+if Mix.env == :test do
+  import_config "test.exs"
+end
