@@ -7,7 +7,7 @@ defmodule ExOauth2Provider.Mixfile do
     [app: :ex_oauth2_provider,
      version: @version,
      elixir: "~> 1.4",
-     elixirc_paths: _elixirc_paths(Mix.env),
+     elixirc_paths: elixirc_paths(Mix.env),
      build_embedded: Mix.env == :prod,
      start_permanent: Mix.env == :prod,
      preferred_cli_env: [ex_oauth2_provider: :test],
@@ -27,14 +27,14 @@ defmodule ExOauth2Provider.Mixfile do
   end
 
   def application do
-    [applications: _applications(Mix.env)]
+    [extra_applications: extra_applications(Mix.env)]
   end
 
-  defp _applications(:test), do: [:postgrex, :ecto, :logger]
-  defp _applications(_), do: [:logger]
+  defp extra_applications(:test), do: [:postgrex, :ecto, :logger]
+  defp extra_applications(_), do: [:logger]
 
-  defp _elixirc_paths(:test), do: ["lib", "test/support"]
-  defp _elixirc_paths(_), do: ["lib"]
+  defp elixirc_paths(:test), do: ["lib", "test/support"]
+  defp elixirc_paths(_), do: ["lib"]
 
   defp deps do
     [{:ecto, "~> 2.1"},
@@ -54,7 +54,7 @@ defmodule ExOauth2Provider.Mixfile do
       maintainers: ["Dan Shultzer"],
       licenses: ["MIT"],
       links: %{github: "https://github.com/danschultzer/ex_oauth2_provider"},
-      files: ~w(lib web) ++ ~w(CHANGELOG.md LICENSE mix.exs README.md)
+      files: ~w(lib) ++ ~w(LICENSE mix.exs README.md)
     ]
   end
 end
