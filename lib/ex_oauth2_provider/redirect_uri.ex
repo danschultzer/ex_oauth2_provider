@@ -2,6 +2,7 @@ defmodule ExOauth2Provider.RedirectURI do
   @moduledoc """
   Functions for dealing with redirect uri.
   """
+  import ExOauth2Provider.Utils
 
   @doc """
   Validates whether a url can be used as a redirect_uri
@@ -34,7 +35,7 @@ defmodule ExOauth2Provider.RedirectURI do
   def matches?(uri, client_uri) when is_binary(client_uri) do
     matches?(uri, URI.parse(client_uri))
   end
-  def matches?(uri, client_uri) do
+  def matches?(%URI{} = uri, %URI{} = client_uri) do
     uri = uri
     |> Map.merge(%{query: nil})
     client_uri == uri
@@ -58,5 +59,22 @@ defmodule ExOauth2Provider.RedirectURI do
   """
   def native_uri?(url) do
     ExOauth2Provider.native_redirect_uri == url
+  end
+
+  @doc """
+  Adds query parameters to URI
+  """
+  def uri_with_query(uri, query) when is_binary(uri),
+    do: uri_with_query(URI.parse(uri), query)
+  def uri_with_query(%URI{} = uri, query) do
+    uri
+    |> Map.merge(%{query: add_query_params(uri.query, query)})
+    |> to_string
+  end
+  defp add_query_params(query, attrs) do
+    (query || "")
+    |> URI.decode_query(attrs)
+    |> remove_empty_values
+    |> URI.encode_query
   end
 end

@@ -72,4 +72,18 @@ defmodule ExOauth2Provider.RedirectURITest do
     uri = "http://app.co/aaa?waffles=abc"
     refute valid_for_authorization?(uri, uri)
   end
+
+  test "uri_with_query/2" do
+    assert uri_with_query("http://example.com/", %{parameter: "value"}) == "http://example.com/?parameter=value"
+  end
+
+  test "uri_with_query/2 rejects nil values" do
+    assert uri_with_query("http://example.com/", %{parameter: nil}) == "http://example.com/?"
+  end
+
+  test "uri_with_query/2 preserves original query parameters" do
+    uri = uri_with_query("http://example.com/?query1=value", %{parameter: "value"})
+    assert Regex.match?(~r/query1=value/, uri)
+    assert Regex.match?(~r/parameter=value/, uri)
+  end
 end
