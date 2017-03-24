@@ -12,6 +12,19 @@ defmodule ExOauth2Provider.Scopes do
     |> is_nil
   end
 
+  @doc """
+  Check if two strings or lists of scopes are equal
+  """
+  def equal?(scopes, other_scopes) when is_binary(scopes) do
+    equal?(to_list(scopes), other_scopes)
+  end
+  def equal?(scopes, other_scopes) when is_binary(other_scopes) do
+    equal?(scopes, to_list(other_scopes))
+  end
+  def equal?(scopes, other_scopes) do
+    all?(scopes, other_scopes) && all?(other_scopes, scopes)
+  end
+
   # Fetch scopes from access token
   @spec from_access_token(map) :: list
   def from_access_token(access_token) do
