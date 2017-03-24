@@ -90,7 +90,8 @@ defmodule Mix.Tasks.ExOauth2Provider.Install do
   defp pad(i), do: to_string(i)
 
   def migrations do
-    templates_path = Application.app_dir(:ex_oauth2_provider)
+    templates_path = :ex_oauth2_provider
+    |> Application.app_dir
     |> Path.join("priv/templates/migrations")
 
     for filename <- File.ls!(templates_path) do
