@@ -43,21 +43,10 @@ defmodule ExOauth2Provider.OauthApplication do
   defp validate_redirect_uri(changeset) do
     uri = changeset
     |> get_stripped_value_from_field(:redirect_uri)
-    |> URI.parse
-
-    cond do
-      URI.to_string(uri) == ExOauth2Provider.native_redirect_uri ->
-        changeset
-      URI.to_string(uri) == "" ->
-        add_error(changeset, :redirect_uri, "Redirect URI cannot be blank")
-      uri.fragment != nil ->
-        add_error(changeset, :redirect_uri, "Redirect URI cannot contain fragments")
-      uri.scheme == nil || uri.host == nil ->
-        add_error(changeset, :redirect_uri, "Redirect URI has to be absolute")
-      uri.scheme == "http" ->
-        add_error(changeset, :redirect_uri, "Redirect URI has to be https")
-      true ->
-        changeset
+    |> ExOauth2Provider.RedirectURI.validate
+    |> case do
+      {:error, error} -> add_error(changeset, :redirect_uri, error)
+      {:ok, _} -> changeset
     end
   end
 
