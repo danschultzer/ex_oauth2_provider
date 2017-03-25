@@ -16,6 +16,19 @@ defmodule <%= inspect mod %> do
     create unique_index(:oauth_applications, [:uid])
     create index(:oauth_applications, [:resource_owner_id])
 
+    create table(:oauth_access_grants) do
+      add :resource_owner_id,      :integer,        null: false
+      add :application_id,         references(:oauth_applications)
+      add :token,                  :string,         null: false
+      add :expires_in,             :integer,        null: false
+      add :revoked_at,             :naive_datetime
+      add :scopes,                 :string
+
+      timestamps(updated_at: false)
+    end
+
+    create unique_index(:oauth_access_grants, [:token])
+
     create table(:oauth_access_tokens) do
       add :application_id,         references(:oauth_applications)
       add :resource_owner_id,      :integer, null: false
