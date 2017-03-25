@@ -19,10 +19,6 @@ defmodule ExOauth2Provider.ScopesTest do
     scopes = ["read", "write"]
     assert equal?(scopes, ["read", "write"])
     assert equal?(scopes, ["write", "read"])
-
-    assert equal?(scopes, "write,read")
-    assert equal?("read,write", ["write", "read"])
-    assert equal?("read,write", "write,read")
   end
 
   test "equal?#false" do
@@ -30,9 +26,6 @@ defmodule ExOauth2Provider.ScopesTest do
     refute equal?(scopes, ["read", "write", "profile"])
     refute equal?(scopes, ["read"])
     refute equal?(scopes, [])
-
-    refute equal?(scopes, "read")
-    refute equal?("read,write", ["read"])
   end
 
   test "to_list" do
