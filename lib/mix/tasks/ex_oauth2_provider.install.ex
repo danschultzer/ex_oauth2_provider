@@ -8,7 +8,8 @@ defmodule Mix.Tasks.ExOauth2Provider.Install do
   @shortdoc "Generates a new migration for the repo"
 
   @config_file         "config/config.exs"
-  @switches            [resource_owner: :string, config_file: :string]
+  @switches            [resource_owner: :string, config_file: :string,
+                        config: :boolean, migrations: :boolean]
 
   @moduledoc """
   Generates migrations.
@@ -42,15 +43,16 @@ defmodule Mix.Tasks.ExOauth2Provider.Install do
     {opts, _, _} = OptionParser.parse(args, switches: @switches)
 
     %{
-      config: true,
+      config: Keyword.get(opts, :config, true),
+      config_file: opts[:config_file] || @config_file,
       app_path: Mix.Project.app_path,
-      config: opts[:config_file] || @config_file,
       repos: repos,
-      resource_owner: opts[:resource_owner] || "MyApp.User"
+      resource_owner: opts[:resource_owner] || "MyApp.User",
+      migrations: Keyword.get(opts, :migrations, true),
     }
   end
 
-  defp add_migrations_files(%{repos: repos, app_path: app_path} = config) do
+  defp add_migrations_files(%{migrations: true, repos: repos, app_path: app_path} = config) do
     Enum.each repos, fn repo ->
       path = Path.relative_to(migrations_path(repo), app_path)
       create_directory path
@@ -63,6 +65,7 @@ defmodule Mix.Tasks.ExOauth2Provider.Install do
 
     config
   end
+  defp add_migrations_files(config), do: config
 
   defp next_migration_number(existing_migrations, pad_time \\ 0) do
     timestamp = NaiveDateTime.utc_now
@@ -99,7 +102,7 @@ defmodule Mix.Tasks.ExOauth2Provider.Install do
     end
   end
 
-  defp update_config(config) do
+  defp update_config(%{config: true} = config) do
     repos = Enum.map config[:repos], &to_string(&1)
     """
 config :ex_oauth2_provider, ExOauth2Provider,
@@ -108,8 +111,9 @@ config :ex_oauth2_provider, ExOauth2Provider,
 """
     |> write_config(config)
   end
+  defp update_config(config), do: config
 
-  defp write_config(string, %{config: config_file} = config) do
+  defp write_config(string, %{config: true, config_file: config_file} = config) do
     log_config? = if File.exists? config_file do
       source = File.read!(config_file)
       if String.contains? source, "config :ex_oauth2_provider, ExOauth2Provider" do

@@ -40,6 +40,11 @@ defmodule Mix.Tasks.ExOauth2Provider.InstallTest do
     end
   end
 
+  test "doesn't generates migrations" do
+    run @options ++ ~w(--no-migrations)
+    refute File.exists?(@migrations_path)
+  end
+
   test "doesn't make duplicate oauth migrations" do
     run @options
     run @options
@@ -55,7 +60,6 @@ defmodule Mix.Tasks.ExOauth2Provider.InstallTest do
     assert date1 < date2
   end
 
-
   test "appends to config file" do
     reset_config_file()
     original = File.read!(@config_file)
@@ -65,6 +69,15 @@ defmodule Mix.Tasks.ExOauth2Provider.InstallTest do
     source = File.read!(@config_file)
     assert String.starts_with? source, original
     assert String.contains? source, expected
+  end
+
+  test "doesn't append to config file" do
+    reset_config_file()
+    original = File.read!(@config_file)
+
+    run @options ++ ~w(--no-config)
+    source = File.read!(@config_file)
+    assert source == original
   end
 
   test "appends only once in config" do
