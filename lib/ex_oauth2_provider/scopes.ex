@@ -36,6 +36,6 @@ defmodule ExOauth2Provider.Scopes do
   end
 
   # Convert scopes list to string
-  @spec to_string(list) :: string
+  @spec to_string(list) :: String.t()
   def to_string(scopes), do: Enum.join(scopes, ",")
 end

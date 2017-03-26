@@ -169,7 +169,7 @@ defmodule ExOauth2Provider.Grant.AuthorizationCodeTest do
     assert {:error, _, _} = deny(resource_owner, @request_no_response_type)
   end
 
-  test "#deny/1 with redirection uri", %{application: application, resource_owner: resource_owner} do
+  test "#deny/2 with redirection uri", %{application: application, resource_owner: resource_owner} do
     add_redirect_uri_to_application(application, "#{application.redirect_uri}\nhttp://example.com/path")
     params = Map.merge(@valid_request, %{"redirect_uri" => "http://example.com/path?param=1", "state" => 40612})
 
