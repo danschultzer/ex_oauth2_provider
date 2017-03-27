@@ -86,8 +86,8 @@ defmodule ExOauth2Provider.Grant.AuthorizationCodeTest do
   end
 
   test "#preauthorize/2 when previous access token with same scopes", %{resource_owner: resource_owner, application: application} do
-    access_token = insert(:access_token, resource_owner_id: resource_owner.id, application_id: application.id, scopes: @valid_request["scope"])
-    assert preauthorize(resource_owner, @valid_request) == {:ok, %{code: get_last_access_grant().token}}
+    insert(:access_token, resource_owner_id: resource_owner.id, application_id: application.id, scopes: @valid_request["scope"])
+    assert preauthorize(resource_owner, @valid_request) == {:native_redirect, %{code: get_last_access_grant().token}}
   end
 
   test "#authorize/2 rejects when no resource owner" do
@@ -140,7 +140,7 @@ defmodule ExOauth2Provider.Grant.AuthorizationCodeTest do
   end
 
   test "#authorize/2 generates grant", %{resource_owner: resource_owner} do
-    assert {:ok, %{code: code}} = authorize(resource_owner, @valid_request)
+    assert {:native_redirect, %{code: code}} = authorize(resource_owner, @valid_request)
     assert OauthAccessGrants.get_grant!(code).resource_owner_id == resource_owner.id
   end
 

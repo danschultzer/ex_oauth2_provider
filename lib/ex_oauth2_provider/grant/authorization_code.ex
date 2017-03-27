@@ -22,6 +22,7 @@ defmodule ExOauth2Provider.Grant.AuthorizationCode do
     {:ok, client, scopes}                                         # Show request page with client and scopes
     {:error, %{error: error, error_description: _}, http_status}  # Show error page with error and http status
     {:redirect, redirect_uri}                                     # Redirect
+    {:native_redirect, %{code: code}}                             # Redirect to :show page
   """
   def preauthorize(resource_owner, %{} = request) do
     %{resource_owner: resource_owner, request: request}
@@ -79,6 +80,7 @@ defmodule ExOauth2Provider.Grant.AuthorizationCode do
     {:ok, code}                                                  # A grant was generated
     {:error, %{error: error, error_description: _}, http_status} # Error occurred
     {:redirect, redirect_uri}                                    # Redirect
+    {:native_redirect, %{code: code}}                            # Redirect to :show page
   """
   def authorize(resource_owner, %{} = request) do
     %{resource_owner: resource_owner, request: request}
@@ -273,7 +275,10 @@ defmodule ExOauth2Provider.Grant.AuthorizationCode do
 
   @doc false
   defp build_redirect_response(%{request: %{"redirect_uri" => redirect_uri}} = _, payload) do
-    {:redirect, RedirectURI.uri_with_query(redirect_uri, payload)}
+    case RedirectURI.native_uri?(redirect_uri) do
+      true -> {:native_redirect, payload}
+      _    -> {:redirect, RedirectURI.uri_with_query(redirect_uri, payload)}
+    end
   end
 
   @doc false
@@ -294,7 +299,5 @@ defmodule ExOauth2Provider.Grant.AuthorizationCode do
     !RedirectURI.native_uri?(redirect_uri)
   end
   defp can_redirect?(%{error: _}), do: false
-  defp can_redirect?(%{request: %{"redirect_uri" => request_uri}}) do
-    !RedirectURI.native_uri?(request_uri)
-  end
+  defp can_redirect?(%{request: %{}}), do: true
 end
