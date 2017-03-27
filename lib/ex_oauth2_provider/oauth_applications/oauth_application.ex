@@ -4,11 +4,11 @@ defmodule ExOauth2Provider.OauthApplications.OauthApplication do
   """
 
   use Ecto.Schema
-  #
-  # # Use macro and set up schema in phoenix with this macro
-  # if Code.ensure_loaded?(Phoenix.Param) do
-  #   @derive {Phoenix.Param, key: :uid}
-  # end
+
+  # For Phoenix integrations
+  if Code.ensure_loaded?(Phoenix.Param) do
+    @derive {Phoenix.Param, key: :uid}
+  end
 
   schema "oauth_applications" do
     belongs_to :resource_owner, ExOauth2Provider.resource_owner_model
