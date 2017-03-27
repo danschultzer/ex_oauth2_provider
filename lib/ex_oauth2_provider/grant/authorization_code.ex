@@ -29,6 +29,7 @@ defmodule ExOauth2Provider.Grant.AuthorizationCode do
     |> set_defaults
     |> validate_request
     |> check_previous_authorization
+    |> reissue_grant
     |> preauthorize_response
   end
 
@@ -44,9 +45,17 @@ defmodule ExOauth2Provider.Grant.AuthorizationCode do
   end
 
   @doc false
+  defp reissue_grant(%{error: _} = params), do: params
+  defp reissue_grant(%{access_token: _} = params) do
+    params
+    |> issue_grant
+  end
+  defp reissue_grant(params), do: params
+
+  @doc false
   defp preauthorize_response(%{client: client, request: %{"scope" => scopes}} = params) do
     case params do
-      %{access_token: _} -> build_response(params)
+      %{grant: grant} -> build_response(params, %{code: grant.token})
       %{error: error} -> build_response(params, error)
       _ -> {:ok, client, scopes}
     end
@@ -268,9 +277,6 @@ defmodule ExOauth2Provider.Grant.AuthorizationCode do
   end
 
   @doc false
-  defp build_standard_response(%{access_token: _} = _, payload) do
-    {:ok, payload}
-  end
   defp build_standard_response(%{grant: _} = _, payload) do
     {:ok, payload}
   end

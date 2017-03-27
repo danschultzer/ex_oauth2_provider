@@ -87,7 +87,7 @@ defmodule ExOauth2Provider.Grant.AuthorizationCodeTest do
 
   test "#preauthorize/2 when previous access token with same scopes", %{resource_owner: resource_owner, application: application} do
     access_token = insert(:access_token, resource_owner_id: resource_owner.id, application_id: application.id, scopes: @valid_request["scope"])
-    assert preauthorize(resource_owner, @valid_request) == {:ok, %{}}
+    assert preauthorize(resource_owner, @valid_request) == {:ok, %{code: get_last_access_grant().token}}
   end
 
   test "#authorize/2 rejects when no resource owner" do
