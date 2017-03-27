@@ -3,7 +3,7 @@ defmodule ExOauth2Provider.Grant.AuthorizationCodeTest do
   doctest ExOauth2Provider
 
   import ExOauth2Provider.Grant.AuthorizationCode
-  alias ExOauth2Provider.OauthAccessGrant
+  alias ExOauth2Provider.OauthAccessGrants
 
   import ExOauth2Provider.Factory
 
@@ -138,7 +138,7 @@ defmodule ExOauth2Provider.Grant.AuthorizationCodeTest do
   end
 
   test "#authorize/2 generates grant", %{resource_owner: resource_owner} do
-    assert {:ok, %OauthAccessGrant{} = grant} = authorize(resource_owner, @valid_request)
+    assert {:ok, %OauthAccessGrants.OauthAccessGrant{} = grant} = authorize(resource_owner, @valid_request)
     assert grant.resource_owner_id == resource_owner.id
   end
 
@@ -146,7 +146,7 @@ defmodule ExOauth2Provider.Grant.AuthorizationCodeTest do
     add_redirect_uri_to_application(application, "#{application.redirect_uri}\nhttp://example.com/path")
     params = Map.merge(@valid_request, %{"redirect_uri" => "http://example.com/path?param=1", "state" => 40612})
 
-    assert {:ok, %OauthAccessGrant{} = grant, redirect_uri} = authorize(resource_owner, params)
+    assert {:ok, %OauthAccessGrants.OauthAccessGrant{} = grant, redirect_uri} = authorize(resource_owner, params)
     assert redirect_uri == "http://example.com/path?code=#{grant.token}&param=1&state=40612"
   end
 

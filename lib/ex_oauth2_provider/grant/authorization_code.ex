@@ -2,13 +2,12 @@ defmodule ExOauth2Provider.Grant.AuthorizationCode do
   @moduledoc """
   Functions for dealing with authorization.
   """
-  alias ExOauth2Provider.OauthApplication
-  alias ExOauth2Provider.OauthAccessToken
-  alias ExOauth2Provider.OauthAccessGrant
+  alias ExOauth2Provider.OauthApplications
+  alias ExOauth2Provider.OauthAccessTokens
+  alias ExOauth2Provider.OauthAccessGrants
   alias ExOauth2Provider.RedirectURI
   alias ExOauth2Provider.Scopes
   import ExOauth2Provider.Utils
-  import Ecto.Query, only: [from: 2]
 
   @doc """
   Will get an existing access token if an active one exists for the resource owner,
@@ -49,9 +48,7 @@ defmodule ExOauth2Provider.Grant.AuthorizationCode do
   @doc false
   defp get_token_for_resource_owner_and_client({:error, _} = request, _, _), do: request
   defp get_token_for_resource_owner_and_client(_, client, resource_owner) do
-    token = ExOauth2Provider.repo.one(from x in OauthAccessToken,
-      where: x.application_id == ^client.id and x.resource_owner_id == ^resource_owner.id,
-      order_by: [desc: x.inserted_at], limit: 1)
+    token = OauthAccessTokens.get_most_recent_token(resource_owner, client)
     {:ok, token}
   end
 
@@ -109,12 +106,11 @@ defmodule ExOauth2Provider.Grant.AuthorizationCode do
     request
     |> Map.take(["redirect_uri", "scope"])
     |> Map.new(fn {k, v} -> {String.to_atom(k), v} end) # Convert string keys to atoms
-    |> Map.merge(%{
-      application_id: client.id,
-      resource_owner_id: resource_owner.id,
-      expires_in: ExOauth2Provider.authorization_code_expires_in})
-    |> OauthAccessGrant.create_grant
+    |> Map.merge(%{expires_in: ExOauth2Provider.authorization_code_expires_in})
+    |> create_crant(client, resource_owner)
   end
+  defp create_crant(params, application, resource_owner),
+    do: OauthAccessGrants.create_grant(resource_owner, application, params)
 
   @doc """
   Rejects a resource owner
@@ -145,8 +141,7 @@ defmodule ExOauth2Provider.Grant.AuthorizationCode do
 
   @doc false
   defp load_client(client_id) do
-    OauthApplication
-    |> ExOauth2Provider.repo.get_by(uid: client_id)
+    OauthApplications.get_application(client_id)
   end
 
   @doc false
@@ -234,11 +229,11 @@ defmodule ExOauth2Provider.Grant.AuthorizationCode do
   end
 
   @doc false
-  defp format_response({:ok, %OauthAccessToken{} = _} = response, request) do
+  defp format_response({:ok, %OauthAccessTokens.OauthAccessToken{} = _} = response, request) do
     response
     |> append_redirect_to_response(request)
   end
-  defp format_response({:ok, %OauthAccessGrant{} = grant} = response, request) do
+  defp format_response({:ok, %OauthAccessGrants.OauthAccessGrant{} = grant} = response, request) do
     response
     |> append_redirect_to_response(request, %{code: grant.token})
   end

@@ -27,7 +27,7 @@ defmodule ExOauth2Provider.Scopes do
   end
 
   # Convert scopes string to list
-  @spec to_list(string) :: list
+  @spec to_list(String.t()) :: list
   def to_list(str), do: trim_split(str, ",")
   defp trim_split(str, char) do
     str

@@ -21,6 +21,7 @@ defmodule <%= inspect mod %> do
       add :application_id,         references(:oauth_applications)
       add :token,                  :string,         null: false
       add :expires_in,             :integer,        null: false
+      add :redirect_uri,           :string,         null: false
       add :revoked_at,             :naive_datetime
       add :scopes,                 :string
 

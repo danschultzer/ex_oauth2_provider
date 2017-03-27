@@ -24,7 +24,7 @@ defmodule ExOauth2Provider.Plug do
   def authenticated?(conn, type) do
     case current_token(conn, type) do
       nil -> false
-      token -> true
+      _ -> true
     end
   end
 

@@ -17,9 +17,6 @@ defmodule ExOauth2Provider do
   @native_redirect_uri Keyword.get(@config, :native_redirect_uri, "urn:ietf:wg:oauth:2.0:oob")
   @authorization_code_expires_in Keyword.get(@config, :authorization_code_expires_in, 600)
 
-  if is_nil(@repo), do: raise "ExOauth2Provider requires a repo"
-  if is_nil(@resource_owner_model), do: raise "ExOauth2Provider requires a resource owner (e.g. User)"
-
   @doc """
   Authenticate the token.
   """
@@ -34,7 +31,7 @@ defmodule ExOauth2Provider do
   end
 
   defp load_access_token(token) do
-    case @repo.get_by(ExOauth2Provider.OauthAccessToken, token: token) do
+    case ExOauth2Provider.OauthAccessTokens.get_token(token) do
       nil          -> {:error, :token_not_found}
       access_token -> {:ok, access_token}
     end
@@ -42,7 +39,7 @@ defmodule ExOauth2Provider do
 
   defp validate_access_token({:error, reason}), do: {:error, reason}
   defp validate_access_token({:ok, access_token}) do
-    case ExOauth2Provider.OauthAccessToken.is_accessible?(access_token) do
+    case ExOauth2Provider.OauthAccessTokens.is_accessible?(access_token) do
       true -> {:ok, access_token}
       _    -> {:error, :token_inaccessible}
     end

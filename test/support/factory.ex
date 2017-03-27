@@ -7,8 +7,8 @@ defmodule ExOauth2Provider.Factory do
 
   @repo Keyword.get(config, :repo)
   @resource_owner_model Keyword.get(config, :resource_owner_model)
-  @application ExOauth2Provider.OauthApplication
-  @access_token ExOauth2Provider.OauthAccessToken
+  @application ExOauth2Provider.OauthApplications.OauthApplication
+  @access_token ExOauth2Provider.OauthAccessTokens.OauthAccessToken
 
   use ExMachina.Ecto, repo: @repo
 
@@ -36,14 +36,11 @@ defmodule ExOauth2Provider.Factory do
   end
 
   def access_token_with_user(params \\ %{}) do
-    user = insert(:user)
+    {:ok, access_token} = :user
+    |> insert
+    |> ExOauth2Provider.OauthAccessTokens.create_token(params)
 
-    # Inserting and changing inserted_at timestamp
-    attrs = params_for(:access_token, Map.merge(%{resource_owner_id: user.id}, params))
-    {_, access_token} = @repo.insert(@access_token.create_changeset(%@access_token{}, attrs))
-
-    @repo.get(@access_token, access_token.id)
-    |> @repo.preload(:resource_owner)
+    access_token
   end
 
   def update_access_token_inserted_at(access_token, amount, units \\ :second) do

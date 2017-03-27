@@ -25,7 +25,8 @@ defmodule ExOauth2ProviderTest do
   end
 
   test "it rejects revoked token" do
-    access_token = access_token_with_user(%{revoked_at: NaiveDateTime.utc_now})
+    access_token = access_token_with_user()
+    ExOauth2Provider.OauthAccessTokens.revoke_token(access_token)
 
     assert authenticate_token(access_token.token) == {:error, :token_inaccessible}
   end
