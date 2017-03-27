@@ -18,14 +18,14 @@ defmodule ExOauth2Provider.Factory do
       secret: "secret",
       name: "OAuth Application",
       redirect_uri: "urn:ietf:wg:oauth:2.0:oob",
-      scopes: "read,write"
+      scopes: "read write"
     }
   end
 
   def access_token_factory do
     %@access_token{
       token: "secret",
-      scopes: "read,write"
+      scopes: "read write"
     }
   end
 

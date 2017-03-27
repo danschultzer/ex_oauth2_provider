@@ -5,16 +5,19 @@ defmodule ExOauth2Provider do
       config :ex_oauth2_provider, ExOauth2Provider,
         repo: App.Repo,
         resource_owner_model: App.User,
-        scopes: ~w(write read),
+        default_scopes: ~w(public),
+        optional_scopes: ~w(write update),
         native_redirect_uri: "urn:ietf:wg:oauth:2.0:oob" # Default value is "urn:ietf:wg:oauth:2.0:oob",
         authorization_code_expires_in: 600
   """
 
-  @config Application.get_env(:ex_oauth2_provider, ExOauth2Provider, [])
-  @repo Keyword.get(@config, :repo)
+  @config               Application.get_env(:ex_oauth2_provider, ExOauth2Provider, [])
+  @repo                 Keyword.get(@config, :repo)
   @resource_owner_model Keyword.get(@config, :resource_owner_model)
-  @default_scopes  Keyword.get(@config, :scopes, [])
-  @native_redirect_uri Keyword.get(@config, :native_redirect_uri, "urn:ietf:wg:oauth:2.0:oob")
+  @default_scopes       Keyword.get(@config, :default_scopes, [])
+  @optional_scopes      Keyword.get(@config, :optional_scopes, [])
+  @server_scopes        @default_scopes ++ @optional_scopes
+  @native_redirect_uri  Keyword.get(@config, :native_redirect_uri, "urn:ietf:wg:oauth:2.0:oob")
   @authorization_code_expires_in Keyword.get(@config, :authorization_code_expires_in, 600)
 
   @doc """
@@ -69,6 +72,7 @@ defmodule ExOauth2Provider do
   def resource_owner_model, do: @resource_owner_model
   def repo, do: @repo
   def default_scopes, do: @default_scopes
+  def server_scopes, do: @server_scopes
   def native_redirect_uri, do: @native_redirect_uri
   def authorization_code_expires_in, do: @authorization_code_expires_in
 end

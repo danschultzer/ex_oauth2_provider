@@ -19,7 +19,7 @@ defmodule ExOauth2Provider.Plug.EnsureScopeTest do
   end
 
   setup do
-    access_token = build(:access_token, %{scopes: "read,write"})
+    access_token = build(:access_token, %{scopes: "read write"})
 
     conn = conn(:get, "/foo")
     {:ok, %{conn: conn, access_token: access_token}}
@@ -126,7 +126,7 @@ defmodule ExOauth2Provider.Plug.EnsureScopeTest do
       |> ExOauth2Provider.Plug.set_current_token(access_token)
       |> Plug.Conn.fetch_query_params
       |> run_plug(EnsureScopes, handler: TestHandler,
-                  scopes: ~w(read, :write, :other_read))
+                  scopes: ~w(read :write :other_read))
 
     assert expected_conn.halted
   end

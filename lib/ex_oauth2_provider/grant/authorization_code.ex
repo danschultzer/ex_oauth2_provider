@@ -37,11 +37,16 @@ defmodule ExOauth2Provider.Grant.AuthorizationCode do
   @doc false
   defp check_previous_authorization(%{error: _} = params), do: params
   defp check_previous_authorization(%{resource_owner: resource_owner, client: client, request: %{"scope" => scopes}} = params) do
-    token = OauthAccessTokens.get_most_recent_token(resource_owner, client)
+    case OauthAccessTokens.get_most_recent_token(resource_owner, client) do
+      nil -> params
+      token ->
+        token_scopes = token.scopes |> Scopes.to_list
+        request_scopes = scopes |> Scopes.to_list
 
-    case token && ExOauth2Provider.Scopes.equal?(Scopes.to_list(token.scopes), Scopes.to_list(scopes)) do
-      true -> Map.merge(params, %{access_token: token})
-      _ -> params
+        case token && ExOauth2Provider.Scopes.equal?(token_scopes, request_scopes) do
+          true -> Map.merge(params, %{access_token: token})
+          _ -> params
+        end        
     end
   end
 
@@ -58,7 +63,7 @@ defmodule ExOauth2Provider.Grant.AuthorizationCode do
     case params do
       %{grant: grant} -> build_response(params, %{code: grant.token})
       %{error: error} -> build_response(params, error)
-      _ -> {:ok, client, scopes}
+      _ -> {:ok, client, Scopes.to_list(scopes)}
     end
   end
   defp preauthorize_response(%{error: error} = params), do: build_response(params, error)
@@ -72,7 +77,7 @@ defmodule ExOauth2Provider.Grant.AuthorizationCode do
     |> ExOauth2Provider.Grant.AuthorizationCode.authorize(%{
       "client_id" => "Jf5rM8hQBc",
       "response_type" => "code",
-      "scope" => "read,write",                  # Optional
+      "scope" => "read write",                  # Optional
       "state" => "46012",                       # Optional
       "redirect_uri" => "https://example.com/"  # Optional
     })
@@ -153,7 +158,7 @@ defmodule ExOauth2Provider.Grant.AuthorizationCode do
   defp set_defaults(%{request: request, client: client} = params) do
     [redirect_uri | _] = String.split(client.redirect_uri)
 
-    request = %{"redirect_uri" => redirect_uri, "scope" => client.scopes}
+    request = %{"redirect_uri" => redirect_uri, "scope" => Scopes.default_server_scopes |> Scopes.to_string}
     |> Map.merge(request)
 
     params
@@ -165,9 +170,9 @@ defmodule ExOauth2Provider.Grant.AuthorizationCode do
   defp validate_request(%{request: _, client: _} = params) do
     params
     |> validate_resource_owner
+    |> validate_response_type
     |> validate_redirect_uri
     |> validate_scopes
-    |> validate_response_type
   end
 
   @doc false
@@ -181,13 +186,22 @@ defmodule ExOauth2Provider.Grant.AuthorizationCode do
 
   @doc false
   defp validate_scopes(%{error: _} = params), do: params
-  defp validate_scopes(%{request: %{"scope" => scopes}, client: %{scopes: required_scopes}} = params) do
-    scopes
-    |> Scopes.to_list
-    |> Scopes.all?(Scopes.to_list(required_scopes))
+  defp validate_scopes(%{request: %{"scope" => scopes}, client: client} = params) do
+    client
+    |> all_scopes
+    |> Scopes.all?(scopes |> Scopes.to_list)
     |> case do
       true -> params
       _ -> add_error(params, invalid_scopes())
+    end
+  end
+
+  @doc false
+  defp all_scopes(%OauthApplications.OauthApplication{scopes: application_scopes}) do
+    case application_scopes do
+      nil -> Scopes.server_scopes
+      "" -> Scopes.server_scopes
+      _ -> application_scopes |> Scopes.to_list
     end
   end
 

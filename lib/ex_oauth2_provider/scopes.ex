@@ -19,6 +19,20 @@ defmodule ExOauth2Provider.Scopes do
     all?(scopes, other_scopes) && all?(other_scopes, scopes)
   end
 
+  @doc """
+  Default scopes for server
+  """
+  def default_server_scopes do
+    ExOauth2Provider.default_scopes
+  end
+
+  @doc """
+  All scopes for server
+  """
+  def server_scopes do
+    ExOauth2Provider.server_scopes
+  end
+
   # Fetch scopes from access token
   @spec from_access_token(map) :: list
   def from_access_token(access_token) do
@@ -28,14 +42,14 @@ defmodule ExOauth2Provider.Scopes do
 
   # Convert scopes string to list
   @spec to_list(String.t()) :: list
-  def to_list(str), do: trim_split(str, ",")
-  defp trim_split(str, char) do
-    str
-    |> String.replace(~r/([\s]+)/, "")
-    |> String.split(char, trim: true)
+  def to_list(nil), do: []
+  def to_list(str) do
+    String.split(str)
   end
 
   # Convert scopes list to string
   @spec to_string(list) :: String.t()
-  def to_string(scopes), do: Enum.join(scopes, ",")
+  def to_string(scopes) do
+    Enum.join(scopes, " ")
+  end
 end

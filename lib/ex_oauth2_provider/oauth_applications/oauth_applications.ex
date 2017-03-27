@@ -118,7 +118,7 @@ defmodule ExOauth2Provider.OauthApplications do
   defp application_changeset(%OauthApplication{} = application, params) do
     application
     |> cast(params, [:name, :secret, :redirect_uri, :scopes])
-    |> validate_required([:resource_owner, :name, :uid, :secret, :redirect_uri])
+    |> validate_required([:name, :uid, :secret, :redirect_uri])
     |> unique_constraint(:uid)
     |> validate_redirect_uri
   end
@@ -129,6 +129,7 @@ defmodule ExOauth2Provider.OauthApplications do
     |> put_uid
     |> put_secret
     |> put_assoc(:resource_owner, resource_owner)
+    |> assoc_constraint(:resource_owner)
     |> apply_changes
     |> application_changeset(params)
   end

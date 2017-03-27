@@ -29,12 +29,13 @@ defmodule ExOauth2Provider.ScopesTest do
   end
 
   test "to_list" do
-    str = "user:read,user:write,global_write"
+    str = "user:read user:write global_write"
     assert to_list(str) == ["user:read", "user:write", "global_write"]
+    assert to_list(nil) == []
   end
 
   test "to_string" do
     list = ["user:read", "user:write", "global_write"]
-    assert ExOauth2Provider.Scopes.to_string(list) == "user:read,user:write,global_write"
+    assert ExOauth2Provider.Scopes.to_string(list) == "user:read user:write global_write"
   end
 end

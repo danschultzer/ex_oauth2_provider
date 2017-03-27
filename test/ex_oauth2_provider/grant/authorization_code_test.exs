@@ -4,30 +4,25 @@ defmodule ExOauth2Provider.Grant.AuthorizationCodeTest do
 
   import ExOauth2Provider.Grant.AuthorizationCode
   alias ExOauth2Provider.OauthAccessGrants
+  alias ExOauth2Provider.Scopes
 
   import ExOauth2Provider.Factory
   import Ecto.Query
 
   @client_id                "Jf5rM8hQBc"
-  @valid_request            %{"client_id" => @client_id, "response_type" => "code", "scope" => "read,write"}
+  @valid_request            %{"client_id" => @client_id, "response_type" => "code", "scope" => "app:read app:write"}
   @invalid_redirect_uri     Map.merge(@valid_request, %{"redirect_uri" => "/invalid/path"})
-  @invalid_scope            Map.merge(@valid_request, %{"scope" => "read,profile"})
   @request_invalid_client   Map.merge(@valid_request, %{"client_id" => "invalid"})
   @request_no_client        %{"response_type" => "code"}
   @request_no_response_type %{"client_id" => @client_id}
   @invalid_response_type    %{"client_id" => @client_id, "response_type" => "invalid"}
 
   def fixture(:application) do
-    insert(:application, %{uid: @client_id, resource_owner_id: 0})
+    insert(:application, %{uid: @client_id, resource_owner_id: 0, scopes: "app:read app:write"})
   end
 
   def fixture(:resource_owner) do
     insert(:user)
-  end
-
-  def add_scope_to_access_token(access_token, scope) do
-    changeset = Ecto.Changeset.change access_token, scope: scope
-    ExOauth2Provider.repo.update! changeset
   end
 
   def add_redirect_uri_to_application(application, uri) do
@@ -73,16 +68,23 @@ defmodule ExOauth2Provider.Grant.AuthorizationCodeTest do
   end
 
   test "#preauthorize/2", %{resource_owner: resource_owner, application: application} do
-    assert preauthorize(resource_owner, @valid_request) == {:ok, application, @valid_request["scope"]}
+    assert preauthorize(resource_owner, @valid_request) == {:ok, application, Scopes.to_list(@valid_request["scope"])}
   end
 
   test "#preauthorize/2 when previous access token with different scopes", %{resource_owner: resource_owner, application: application} do
-    access_token = insert(:access_token, application: application, scopes: "read", resource_owner_id: resource_owner.id)
-    assert preauthorize(resource_owner, @valid_request) == {:ok, application, @valid_request["scope"]}
+    access_token = insert(:access_token, application: application, scopes: "app:read", resource_owner_id: resource_owner.id)
+    assert preauthorize(resource_owner, @valid_request) == {:ok, application, Scopes.to_list(@valid_request["scope"])}
 
-    add_scope_to_access_token(access_token, "read,write")
-    request = Map.merge(@valid_request, %{scope: "read"})
-    assert preauthorize(resource_owner, request) == {:ok, application, @valid_request["scope"]}
+    changeset = Ecto.Changeset.change access_token, scopes: "app:read app:write"
+    ExOauth2Provider.repo.update! changeset
+
+    request = Map.merge(@valid_request, %{"scope" => "app:read"})
+    assert preauthorize(resource_owner, request) == {:ok, application, Scopes.to_list(request["scope"])}
+  end
+
+  test "#preauthorize/2 with limited scope", %{resource_owner: resource_owner, application: application} do
+    request = Map.merge(@valid_request, %{"scope" => "app:read"})
+    assert preauthorize(resource_owner, request) == {:ok, application, Scopes.to_list(request["scope"])}
   end
 
   test "#preauthorize/2 when previous access token with same scopes", %{resource_owner: resource_owner, application: application} do
@@ -118,11 +120,35 @@ defmodule ExOauth2Provider.Grant.AuthorizationCodeTest do
     }
   end
 
-  test "#authorize/2 rejects when invalid scopes", %{resource_owner: resource_owner} do
-    assert {:error, error, :bad_request} = authorize(resource_owner, @invalid_scope)
+  test "#authorize/2 rejects when has unknown scope", %{resource_owner: resource_owner} do
+    request =  Map.merge(@valid_request, %{"scope" => "app:read app:profile"})
+    assert {:error, error, :bad_request} = authorize(resource_owner, request)
     assert error == %{error: :invalid_scope,
       error_description: "The requested scope is invalid, unknown, or malformed."
     }
+  end
+
+  describe "when application has no scope" do
+    setup %{resource_owner: resource_owner, application: application} do
+      changeset = Ecto.Changeset.change application, scopes: ""
+      ExOauth2Provider.repo.update! changeset
+
+      %{resource_owner: resource_owner, application: application}
+    end
+
+    test "#authorize/2 rejects when has unknown scope", %{resource_owner: resource_owner} do
+      request =  Map.merge(@valid_request, %{"scope" => "public profile"})
+      assert {:error, error, :bad_request} = authorize(resource_owner, request)
+      assert error == %{error: :invalid_scope,
+        error_description: "The requested scope is invalid, unknown, or malformed."
+      }
+    end
+
+    test "#authorize/2 generates grant", %{resource_owner: resource_owner} do
+      request =  Map.merge(@valid_request, %{"scope" => "public"})
+      assert {:native_redirect, %{code: code}} = authorize(resource_owner, request)
+      assert OauthAccessGrants.get_grant!(code).resource_owner_id == resource_owner.id
+    end
   end
 
   test "#authorize/2 rejects when invalid redirect uri", %{resource_owner: resource_owner} do
