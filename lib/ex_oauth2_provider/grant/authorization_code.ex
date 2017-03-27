@@ -14,55 +14,44 @@ defmodule ExOauth2Provider.Grant.AuthorizationCode do
   client and scope.
   ## Example
     resource_owner
-    |> ExOauth2Provider.Grant.AuthorizationCode.get_access_token_by_request(%{
+    |> ExOauth2Provider.Grant.AuthorizationCode.preauthorize(%{
       "client_id" => "Jf5rM8hQBc",
       "response_type" => "code"
     })
   ## Response
-    {:ok, nil}                   # No token found
-    {:ok, token}                 # An access token already exists
-    {:ok, _, redirect}           # Ok with redirect uri
-    {:error, error}              # Error occurred
-    {:error, error, redirect}    # Error with redirect uri
+    {:ok, client, scopes}                                         # Show request page with client and scopes
+    {:error, %{error: error, error_description: _}, http_status}  # Show error page with error and http status
+    {:redirect, redirect_uri}                                     # Redirect
   """
-  def get_access_token_by_request(resource_owner, %{"client_id" => client_id, "response_type" => _} = request) do
-    client_id
+  def preauthorize(resource_owner, %{} = request) do
+    %{resource_owner: resource_owner, request: request}
     |> load_client
-    |> get_access_token_by_client_and_request(request, resource_owner)
-  end
-  def get_access_token_by_request(_, _), do: invalid_request()
-
-  @doc false
-  defp get_access_token_by_client_and_request(nil, _, _), do: invalid_client()
-  defp get_access_token_by_client_and_request(_, _, nil), do: invalid_request()
-  defp get_access_token_by_client_and_request(client, request, resource_owner) do
-    request = set_defaults_on_request(client, request)
-
-    request
-    |> validate_request(client)
-    |> get_token_for_resource_owner_and_client(client, resource_owner)
-    |> check_scope_on_token(request["scope"])
-    |> format_response(request)
+    |> set_defaults
+    |> validate_request
+    |> check_previous_authorization
+    |> preauthorize_response
   end
 
   @doc false
-  defp get_token_for_resource_owner_and_client({:error, _} = request, _, _), do: request
-  defp get_token_for_resource_owner_and_client(_, client, resource_owner) do
+  defp check_previous_authorization(%{error: _} = params), do: params
+  defp check_previous_authorization(%{resource_owner: resource_owner, client: client, request: %{"scope" => scopes}} = params) do
     token = OauthAccessTokens.get_most_recent_token(resource_owner, client)
-    {:ok, token}
-  end
 
-  @doc false
-  defp check_scope_on_token({:error, _} = request, _), do: request
-  defp check_scope_on_token({:ok, nil} = response, _), do: response
-  defp check_scope_on_token({:ok, token}, scope) do
-    case ExOauth2Provider.Scopes.equal?(Scopes.to_list(token.scopes), Scopes.to_list(scope)) do
-      true ->
-        {:ok, token}
-      false ->
-        {:ok, nil}
+    case token && ExOauth2Provider.Scopes.equal?(Scopes.to_list(token.scopes), Scopes.to_list(scopes)) do
+      true -> Map.merge(params, %{access_token: token})
+      _ -> params
     end
   end
+
+  @doc false
+  defp preauthorize_response(%{client: client, request: %{"scope" => scopes}} = params) do
+    case params do
+      %{access_token: _} -> build_response(params)
+      %{error: error} -> build_response(params, error)
+      _ -> {:ok, client, scopes}
+    end
+  end
+  defp preauthorize_response(%{error: error} = params), do: build_response(params, error)
 
   @doc """
   Authorizes a resource owner.
@@ -78,39 +67,40 @@ defmodule ExOauth2Provider.Grant.AuthorizationCode do
       "redirect_uri" => "https://example.com/"  # Optional
     })
   ## Response
-    {:ok, grant}                                       # A grant was created
-    {:error, %{error: error, error_description: _}, _} # Error occurred
+    {:ok, code}                                                  # A grant was generated
+    {:error, %{error: error, error_description: _}, http_status} # Error occurred
+    {:redirect, redirect_uri}                                    # Redirect
   """
-  def authorize(resource_owner, %{"client_id" => client_id, "response_type" => _} = request) do
-    client_id
+  def authorize(resource_owner, %{} = request) do
+    %{resource_owner: resource_owner, request: request}
     |> load_client
-    |> authorize_with_client(request, resource_owner)
-  end
-  def authorize(_, _), do: invalid_request()
-
-  @doc false
-  defp authorize_with_client(nil, _, _), do: invalid_client()
-  defp authorize_with_client(_, _, nil), do: invalid_request()
-  defp authorize_with_client(client, request, resource_owner) do
-    request = set_defaults_on_request(client, request)
-
-    request
-    |> validate_request(client)
-    |> issue_grant(client, resource_owner)
-    |> format_response(request)
+    |> set_defaults
+    |> validate_request
+    |> issue_grant
+    |> authorize_response
   end
 
   @doc false
-  defp issue_grant({:error, _, _} = error, _, _), do: error
-  defp issue_grant(request, client, resource_owner) do
-    request
+  defp issue_grant(%{error: _} = params), do: params
+  defp issue_grant(%{resource_owner: resource_owner, client: application, request: request} = params) do
+    grant_params = request
     |> Map.take(["redirect_uri", "scope"])
     |> Map.new(fn {k, v} -> {String.to_atom(k), v} end) # Convert string keys to atoms
     |> Map.merge(%{expires_in: ExOauth2Provider.authorization_code_expires_in})
-    |> create_crant(client, resource_owner)
+
+    case OauthAccessGrants.create_grant(resource_owner, application, grant_params) do
+      {:ok, grant} -> Map.merge(params, %{grant: grant})
+      {:error, error} -> add_error(params, error)
+    end
   end
-  defp create_crant(params, application, resource_owner),
-    do: OauthAccessGrants.create_grant(resource_owner, application, params)
+
+  @doc false
+  defp authorize_response(%{} = params) do
+    case params do
+      %{grant: grant} -> build_response(params, %{code: grant.token})
+      %{error: error} -> build_response(params, error)
+    end
+  end
 
   @doc """
   Rejects a resource owner
@@ -122,74 +112,99 @@ defmodule ExOauth2Provider.Grant.AuthorizationCode do
       "response_type" => "code"
     })
   ## Response type
-    {:error, %{error: error, error_description: _}, _}
+    {:error, %{error: error, error_description: _}, http_status} # Error occurred
+    {:redirect, redirect_uri}                                    # Redirect
   """
-  def deny(resource_owner, %{"client_id" => client_id, "response_type" => _} = request) do
-    client_id
+  def deny(resource_owner, %{} = request) do
+    %{resource_owner: resource_owner, request: request}
     |> load_client
-    |> deny_request(request, resource_owner)
-  end
-  def deny(_, _), do: invalid_request()
-
-  @doc false
-  def deny_request(nil, _, _), do: invalid_client()
-  def deny_request(_, _, nil), do: invalid_request()
-  def deny_request(client, request, _) do
-    request = set_defaults_on_request(client, request)
-    format_response(access_denied(), request)
+    |> set_defaults
+    |> validate_request
+    |> add_error(access_denied())
+    |> deny_response
   end
 
   @doc false
-  defp load_client(client_id) do
-    OauthApplications.get_application(client_id)
+  defp deny_response(%{error: error} = params),
+    do: build_response(params, error)
+
+  @doc false
+  defp load_client(%{request: %{"client_id" => client_id}} = params) do
+    case OauthApplications.get_application(client_id) do
+      nil -> add_error(params, invalid_client())
+      client -> Map.merge(params, %{client: client})
+    end
+  end
+  defp load_client(params), do: add_error(params, invalid_request())
+
+  @doc false
+  defp set_defaults(%{error: _} = params), do: params
+  defp set_defaults(%{request: request, client: client} = params) do
+    [redirect_uri | _] = String.split(client.redirect_uri)
+
+    request = %{"redirect_uri" => redirect_uri, "scope" => client.scopes}
+    |> Map.merge(request)
+
+    params
+    |> Map.merge(%{request: request})
   end
 
   @doc false
-  defp validate_request(%{} = request, client) do
-    request
-    |> validate_redirect_uri(client.redirect_uri)
-    |> validate_scopes(client.scopes)
+  defp validate_request(%{error: _} = params), do: params
+  defp validate_request(%{request: _, client: _} = params) do
+    params
+    |> validate_resource_owner
+    |> validate_redirect_uri
+    |> validate_scopes
     |> validate_response_type
   end
 
   @doc false
-  defp set_defaults_on_request(client, request) do
-    [redirect_uri | _] = String.split(client.redirect_uri)
-
-    %{"redirect_uri" => redirect_uri,
-      "scope" => client.scopes}
-    |> Map.merge(request)
+  defp validate_resource_owner(%{error: _} = params), do: params
+  defp validate_resource_owner(%{resource_owner: resource_owner} = params) do
+    case resource_owner do
+      %{id: _} -> params
+      _ -> add_error(params, invalid_request())
+    end
   end
 
   @doc false
-  defp validate_scopes({:error, _, _} = error, _), do: error
-  defp validate_scopes(%{"scope" => scope} = request, required_scopes) do
-    scope
+  defp validate_scopes(%{error: _} = params), do: params
+  defp validate_scopes(%{request: %{"scope" => scopes}, client: %{scopes: required_scopes}} = params) do
+    scopes
     |> Scopes.to_list
     |> Scopes.all?(Scopes.to_list(required_scopes))
     |> case do
-      true -> request
-      _ -> invalid_scopes()
+      true -> params
+      _ -> add_error(params, invalid_scopes())
     end
   end
 
   @doc false
-  defp validate_redirect_uri({:error, _, _} = error, _), do: error
-  defp validate_redirect_uri(%{"redirect_uri" => redirect_uri} = request, client_redirect_uri) do
+  defp validate_redirect_uri(%{error: _} = params), do: params
+  defp validate_redirect_uri(%{request: %{"redirect_uri" => redirect_uri}, client: client} = params) do
     cond do
-      RedirectURI.native_uri?(redirect_uri) -> request
-      RedirectURI.valid_for_authorization?(redirect_uri, client_redirect_uri) -> request
-      true -> invalid_redirect_uri()
+      RedirectURI.native_uri?(redirect_uri) -> params
+      RedirectURI.valid_for_authorization?(redirect_uri, client.redirect_uri) -> params
+      true -> add_error(params, invalid_redirect_uri())
     end
   end
+  defp validate_redirect_uri(params), do: add_error(params, invalid_request())
 
   @doc false
-  defp validate_response_type({:error, _, _} = error), do: error
-  defp validate_response_type(%{"response_type" => response_type} = request) do
+  defp validate_response_type(%{error: _} = params), do: params
+  defp validate_response_type(%{request: %{"response_type" => response_type}} = params) do
     case response_type == "code" do
-      true  -> request
-      false -> unsupported_response_type()
+      true  -> params
+      false -> add_error(params, unsupported_response_type())
     end
+  end
+  defp validate_response_type(params), do: add_error(params, invalid_request())
+
+  @doc false
+  defp add_error(%{error: _} = params, _), do: params
+  defp add_error(params, {:error, error, http_status}) do
+    Map.merge(params, %{error: error, error_http_status: http_status})
   end
 
   @doc false
@@ -229,47 +244,51 @@ defmodule ExOauth2Provider.Grant.AuthorizationCode do
   end
 
   @doc false
-  defp format_response({:ok, %OauthAccessTokens.OauthAccessToken{} = _} = response, request) do
-    response
-    |> append_redirect_to_response(request)
-  end
-  defp format_response({:ok, %OauthAccessGrants.OauthAccessGrant{} = grant} = response, request) do
-    response
-    |> append_redirect_to_response(request, %{code: grant.token})
-  end
-  defp format_response({:ok, nil} = response, _), do: response
-  defp format_response({:error, error, _} = response, request) do
-    response
-    |> append_redirect_to_response(request, error)
-  end
-  defp format_response({:error, _} = response, _), # For DB errors
-    do: response
+  defp build_response(%{request: request} = params, payload \\ %{}) do
+    payload = add_state(payload, request)
 
-  @doc false
-  defp append_redirect_to_response(response, request, payload \\ %{}) do
-    case can_redirect?(response, request) do
-      true ->
-        payload = %{"state" => request["state"]}
+    case can_redirect?(params) do
+      true -> build_redirect_response(params, payload)
+      _ -> build_standard_response(params, payload)
+    end
+  end
+  defp add_state(payload, request) do
+    case request["state"] do
+      nil -> payload
+      state ->
+        %{"state" => state}
         |> Map.merge(payload)
         |> remove_empty_values
-
-        response
-        |> Tuple.append(uri_with_payload_from_request(request, payload))
-      _ -> response
     end
   end
 
   @doc false
-  defp can_redirect?({:error, %{error: name}, _}, %{"redirect_uri" => request_uri}) do
-    name != :invalid_redirect_uri &&
-    name != :invalid_client &&
-    !RedirectURI.native_uri?(request_uri)
-  end
-  defp can_redirect?({:error, _, _}, _), do: false
-  defp can_redirect?({:ok, _}, %{"redirect_uri" => request_uri}) do
-    !RedirectURI.native_uri?(request_uri)
+  defp build_redirect_response(%{request: %{"redirect_uri" => redirect_uri}} = _, payload) do
+    {:redirect, RedirectURI.uri_with_query(redirect_uri, payload)}
   end
 
-  defp uri_with_payload_from_request(%{"redirect_uri" => redirect_uri}, payload),
-    do: RedirectURI.uri_with_query(redirect_uri, payload)
+  @doc false
+  defp build_standard_response(%{access_token: _} = _, payload) do
+    {:ok, payload}
+  end
+  defp build_standard_response(%{grant: _} = _, payload) do
+    {:ok, payload}
+  end
+  defp build_standard_response(%{error: %{name: _} = error} = params, _) do
+    {:error, error, params[:error_http_status] || :bad_request}
+  end
+  defp build_standard_response(%{error: error}, _) do # For DB errors
+    {:error, error, :bad_request}
+  end
+
+  @doc false
+  defp can_redirect?(%{error: %{error: error_name}, request: %{"redirect_uri" => redirect_uri}}) do
+    error_name != :invalid_redirect_uri &&
+    error_name != :invalid_client &&
+    !RedirectURI.native_uri?(redirect_uri)
+  end
+  defp can_redirect?(%{error: _}), do: false
+  defp can_redirect?(%{request: %{"redirect_uri" => request_uri}}) do
+    !RedirectURI.native_uri?(request_uri)
+  end
 end
