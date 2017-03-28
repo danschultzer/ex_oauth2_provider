@@ -25,7 +25,8 @@ defmodule Mix.Tasks.ExOauth2Provider.InstallTest do
   end
 
   setup do
-    File.rm_rf!(unquote(tmp_path))
+    File.rm_rf(unquote(tmp_path))
+    File.mkdir(unquote(tmp_path))
     :ok
   end
 
