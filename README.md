@@ -23,16 +23,16 @@ Run `mix deps.get` to install it. Add the following to `config/config.exs`:
 ```elixir
 config :ex_oauth2_provider, ExOauth2Provider,
   repo: MyApp.Repo,
-  resource_owner_model: MyApp.User
+  resource_owner: MyApp.User
 ```
 
-You should use a resource owner model that already exists in your app, like your user model. If you don't have nay user model, you can add a migration like this:
+You should use a resource owner structure that already exists in your app, e.g. your User struct. If you don't have any user struct, you can add a migration like this:
 
 ```bash
 mix ecto.gen.migration --change "    create table(:users) do\n      add :email, :string\n    end"
 ```
 
-And use the model in [test/support/dummy/models/user.ex](test/support/dummy/models/user.ex).
+And use the struct in [test/support/dummy/models/user.ex](test/support/dummy/models/user.ex).
 
 3. Add migrations
 
@@ -41,6 +41,72 @@ mix ex_oauth2_provider.install
 ```
 
 This will add all necessary migrations to your app.
+
+## Authorization Code Flow
+
+```elixir
+# GET /oauth/authorize
+case AuthorizationCode.preauthorize(resource_owner, params) do
+  {:ok, client, scopes} ->
+    # render authorization page
+  {:native_redirect, %{code: code}} ->
+    # redirect to authorized page showing code
+  {:redirect, redirect_uri} ->
+    # redirect
+  {:error, error, http_status} ->
+    # render error page
+end
+
+# POST /oauth/authorize
+AuthorizationCode.authorize(params) do
+  {:redirect, redirect_uri} ->
+    # redirect
+  {:native_redirect, %{code: code}} ->
+    # redirect to authorized page showing code
+  {:error, error, http_status} ->
+    # render error in json
+end
+
+# DELETE /oauth/authorize
+AuthorizationCode.deny(params) do
+  {:redirect, redirect_uri} ->
+    # redirect
+  {:error, error, http_status} ->
+    # render error in json
+end
+```
+
+## Access token grant
+
+```elixir
+# GET /oauth/token
+case AccessToken.authorize(params) do
+  {:ok, access_token} ->
+  {:error, error, http_status} ->
+end
+```
+
+## Revoke access token
+
+```elixir
+# GET /oauth/revoke
+case AccessToken.revoke(params) do
+  {:ok, access_token} ->
+  {:error, error, http_status} ->
+end
+```
+
+## Scopes
+
+Server wide scopes can be defined in the configuration:
+
+```elixir
+config :ex_oauth2_provider, ExOauth2Provider,
+  repo: ExOauth2Provider.Test.Repo,
+  resource_owner: Dummy.User,
+  default_scopes: ~w(public),
+  optional_scopes: ~w(read update)
+```
 
 ## Plug API
 

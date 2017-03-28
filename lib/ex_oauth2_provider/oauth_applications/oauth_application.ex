@@ -11,7 +11,7 @@ defmodule ExOauth2Provider.OauthApplications.OauthApplication do
   end
 
   schema "oauth_applications" do
-    belongs_to :resource_owner, ExOauth2Provider.resource_owner_model
+    belongs_to :resource_owner, ExOauth2Provider.resource_owner_struct
 
     field :name,         :string,     null: false
     field :uid,          :string,     null: false

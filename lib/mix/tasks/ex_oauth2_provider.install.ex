@@ -107,7 +107,7 @@ defmodule Mix.Tasks.ExOauth2Provider.Install do
     """
 config :ex_oauth2_provider, ExOauth2Provider,
   repo: #{repos},
-  resource_owner_model: #{config[:resource_owner]}
+  resource_owner: #{config[:resource_owner]}
 """
     |> write_config(config)
   end

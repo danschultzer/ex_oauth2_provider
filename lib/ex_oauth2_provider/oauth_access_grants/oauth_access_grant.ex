@@ -7,7 +7,7 @@ defmodule ExOauth2Provider.OauthAccessGrants.OauthAccessGrant do
   alias ExOauth2Provider.OauthApplications.OauthApplication
 
   schema "oauth_access_grants" do
-    belongs_to :resource_owner, ExOauth2Provider.resource_owner_model
+    belongs_to :resource_owner, ExOauth2Provider.resource_owner_struct
     belongs_to :application, OauthApplication
 
     field :token,        :string,     null: false

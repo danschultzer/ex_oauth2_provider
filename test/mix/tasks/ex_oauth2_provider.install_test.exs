@@ -93,7 +93,7 @@ defmodule Mix.Tasks.ExOauth2Provider.InstallTest do
 
   test "configures resource_owner in config file" do
     reset_config_file()
-    expected = "resource_owner_model: Test.ResourceOwner"
+    expected = "resource_owner: Test.ResourceOwner"
 
     run @options_with_config ++ ["--resource-owner", "Test.ResourceOwner"]
     source = File.read!(@config_file)

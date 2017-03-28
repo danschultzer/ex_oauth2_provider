@@ -5,10 +5,10 @@ defmodule ExOauth2Provider.Factory do
 
   config = Application.get_env(:ex_oauth2_provider, ExOauth2Provider, [])
 
-  @repo Keyword.get(config, :repo)
-  @resource_owner_model Keyword.get(config, :resource_owner_model)
-  @application ExOauth2Provider.OauthApplications.OauthApplication
-  @access_token ExOauth2Provider.OauthAccessTokens.OauthAccessToken
+  @repo           ExOauth2Provider.repo()
+  @resource_owner ExOauth2Provider.resource_owner_struct()
+  @application    ExOauth2Provider.OauthApplications.OauthApplication
+  @access_token   ExOauth2Provider.OauthAccessTokens.OauthAccessToken
 
   use ExMachina.Ecto, repo: @repo
 
@@ -30,7 +30,7 @@ defmodule ExOauth2Provider.Factory do
   end
 
   def user_factory do
-    %@resource_owner_model{
+    %@resource_owner{
       email: sequence(:email, &"foo-#{&1}@example.com")
     }
   end
