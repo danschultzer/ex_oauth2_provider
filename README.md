@@ -18,13 +18,13 @@ def deps do
 end
 ```
 
-Run `mix deps.get` to install it. Add the following to `config/config.exs`:
+Run `mix deps.get` to install it, and then run the install script:
 
-```elixir
-config :ex_oauth2_provider, ExOauth2Provider,
-  repo: MyApp.Repo,
-  resource_owner: MyApp.User
+```bash
+mix ex_oauth2_provider.install
 ```
+
+This will add all necessary migrations to your app.
 
 You should use a resource owner structure that already exists in your app, e.g. your User struct. If you don't have any user struct, you can add a migration like this:
 
@@ -33,14 +33,6 @@ mix ecto.gen.migration --change "    create table(:users) do\n      add :email, 
 ```
 
 And use the struct in [test/support/dummy/models/user.ex](test/support/dummy/models/user.ex).
-
-3. Add migrations
-
-```bash
-mix ex_oauth2_provider.install
-```
-
-This will add all necessary migrations to your app.
 
 ## Authorization Code Flow
 
@@ -64,7 +56,7 @@ AuthorizationCode.authorize(params) do
   {:native_redirect, %{code: code}} ->
     # redirect to authorized page showing code
   {:error, error, http_status} ->
-    # render error in json
+    # JSON response
 end
 
 # DELETE /oauth/authorize
@@ -72,7 +64,7 @@ AuthorizationCode.deny(params) do
   {:redirect, redirect_uri} ->
     # redirect
   {:error, error, http_status} ->
-    # render error in json
+    # JSON response
 end
 ```
 
@@ -81,8 +73,8 @@ end
 ```elixir
 # GET /oauth/token
 case AccessToken.authorize(params) do
-  {:ok, access_token} ->
-  {:error, error, http_status} ->
+  {:ok, access_token}          -> # JSON response
+  {:error, error, http_status} -> # JSON response
 end
 ```
 
@@ -91,8 +83,8 @@ end
 ```elixir
 # GET /oauth/revoke
 case AccessToken.revoke(params) do
-  {:ok, access_token} ->
-  {:error, error, http_status} ->
+  {:ok, access_token}          -> # JSON response
+  {:error, error, http_status} -> # JSON response
 end
 ```
 
