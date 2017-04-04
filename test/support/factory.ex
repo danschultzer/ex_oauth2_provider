@@ -9,6 +9,7 @@ defmodule ExOauth2Provider.Factory do
   @resource_owner ExOauth2Provider.resource_owner_struct()
   @application    ExOauth2Provider.OauthApplications.OauthApplication
   @access_token   ExOauth2Provider.OauthAccessTokens.OauthAccessToken
+  @access_grant   ExOauth2Provider.OauthAccessGrants.OauthAccessGrant
 
   use ExMachina.Ecto, repo: @repo
 
@@ -26,6 +27,13 @@ defmodule ExOauth2Provider.Factory do
     %@access_token{
       token: "secret",
       scopes: "read write"
+    }
+  end
+
+  def access_grant_factory do
+    %@access_grant{
+      expires_in: 900,
+      redirect_uri: "urn:ietf:wg:oauth:2.0:oob"
     }
   end
 

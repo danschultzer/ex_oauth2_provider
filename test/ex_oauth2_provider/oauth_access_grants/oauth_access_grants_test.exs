@@ -1,4 +1,6 @@
 defmodule ExOauth2Provider.OauthAccessGrantTest do
+  import ExOauth2Provider.QueryHelper
+
   use ExOauth2Provider.TestCase
   alias ExOauth2Provider.OauthAccessGrants
   alias ExOauth2Provider.OauthAccessGrants.OauthAccessGrant
@@ -17,9 +19,9 @@ defmodule ExOauth2Provider.OauthAccessGrantTest do
     assert application.id == id
   end
 
-  test "get_grant!/1", %{user: user, application: application} do
+  test "get_grant/1", %{user: user, application: application} do
     {:ok, grant} = OauthAccessGrants.create_grant(user, application, @valid_attrs)
-    assert %OauthAccessGrants.OauthAccessGrant{id: id} = OauthAccessGrants.get_grant!(grant.token)
+    assert %OauthAccessGrants.OauthAccessGrant{id: id} = get_access_grant_by_code(grant.token)
     assert grant.id == id
   end
 

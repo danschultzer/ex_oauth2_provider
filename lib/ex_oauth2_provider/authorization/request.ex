@@ -1,6 +1,6 @@
-defmodule ExOauth2Provider.Grant.AuthorizationCode do
+defmodule ExOauth2Provider.Authorization.Request do
   @moduledoc """
-  Functions for dealing with authorization.
+  Functions for dealing with authorization code.
   """
   alias ExOauth2Provider.OauthApplications
   alias ExOauth2Provider.OauthAccessTokens
@@ -10,11 +10,11 @@ defmodule ExOauth2Provider.Grant.AuthorizationCode do
   import ExOauth2Provider.Utils
 
   @doc """
-  Will get an existing access token if an active one exists for the resource owner,
-  client and scope.
+  Will check if there's already an existing access token with same scope and client
+  for the resource owner.
   ## Example
     resource_owner
-    |> ExOauth2Provider.Grant.AuthorizationCode.preauthorize(%{
+    |> ExOauth2Provider.Authorization.Request.preauthorize(%{
       "client_id" => "Jf5rM8hQBc",
       "response_type" => "code"
     })
@@ -46,7 +46,7 @@ defmodule ExOauth2Provider.Grant.AuthorizationCode do
         case token && ExOauth2Provider.Scopes.equal?(token_scopes, request_scopes) do
           true -> Map.merge(params, %{access_token: token})
           _ -> params
-        end        
+        end
     end
   end
 
@@ -69,12 +69,11 @@ defmodule ExOauth2Provider.Grant.AuthorizationCode do
   defp preauthorize_response(%{error: error} = params), do: build_response(params, error)
 
   @doc """
-  Authorizes a resource owner.
   This is used when a resource owner has authorized access. If successful,
   this will generate an access token grant.
   ## Example
     resource_owner
-    |> ExOauth2Provider.Grant.AuthorizationCode.authorize(%{
+    |> ExOauth2Provider.Authorization.Request.authorize(%{
       "client_id" => "Jf5rM8hQBc",
       "response_type" => "code",
       "scope" => "read write",                  # Optional
@@ -119,11 +118,10 @@ defmodule ExOauth2Provider.Grant.AuthorizationCode do
   end
 
   @doc """
-  Rejects a resource owner
   This is used when a resource owner has rejected access.
   ## Example
     resource_owner
-    |> ExOauth2Provider.Grant.AuthorizationCode.deny(%{
+    |> ExOauth2Provider.Authorization.Request.deny(%{
       "client_id" => "Jf5rM8hQBc",
       "response_type" => "code"
     })
@@ -192,7 +190,7 @@ defmodule ExOauth2Provider.Grant.AuthorizationCode do
     |> Scopes.all?(scopes |> Scopes.to_list)
     |> case do
       true -> params
-      _ -> add_error(params, invalid_scopes())
+      _    -> add_error(params, invalid_scopes())
     end
   end
 
@@ -200,8 +198,8 @@ defmodule ExOauth2Provider.Grant.AuthorizationCode do
   defp all_scopes(%OauthApplications.OauthApplication{scopes: application_scopes}) do
     case application_scopes do
       nil -> Scopes.server_scopes
-      "" -> Scopes.server_scopes
-      _ -> application_scopes |> Scopes.to_list
+      ""  -> Scopes.server_scopes
+      _   -> application_scopes |> Scopes.to_list
     end
   end
 
@@ -299,8 +297,8 @@ defmodule ExOauth2Provider.Grant.AuthorizationCode do
   defp build_standard_response(%{grant: _} = _, payload) do
     {:ok, payload}
   end
-  defp build_standard_response(%{error: %{name: _} = error} = params, _) do
-    {:error, error, params[:error_http_status] || :bad_request}
+  defp build_standard_response(%{error: error, error_http_status: error_http_status} = _, _) do
+    {:error, error, error_http_status}
   end
   defp build_standard_response(%{error: error}, _) do # For DB errors
     {:error, error, :bad_request}

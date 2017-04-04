@@ -4,25 +4,29 @@ defmodule ExOauth2Provider.OauthAccessGrants do
   """
 
   import Ecto.{Query, Changeset}, warn: false
+  use ExOauth2Provider.Mixin.Expirable
+  use ExOauth2Provider.Mixin.Revocable
   alias ExOauth2Provider.OauthApplications.OauthApplication
   alias ExOauth2Provider.OauthAccessGrants.OauthAccessGrant
 
   @doc """
   Gets a single access grant.
 
-  Raises `Ecto.NoResultsError` if the OauthAccessGrant does not exist.
-
   ## Examples
 
-      iex> get_grant!("c341a5c7b331ef076eb4954668d54f590e0009e06b81b100191aa22c93044f3d")
+      iex> get_grant("c341a5c7b331ef076eb4954668d54f590e0009e06b81b100191aa22c93044f3d", "jE9dk")
       %OauthAccessGrant{}
 
-      iex> get_grant!("75d72f326a69444a9287ea264617058dbbfe754d7071b8eef8294cbf4e7e0fdc")
-      ** (Ecto.NoResultsError)
+      iex> get_grant("75d72f326a69444a9287ea264617058dbbfe754d7071b8eef8294cbf4e7e0fdc", "jE9dk")
+      ** nil
 
   """
-  def get_grant!(token),
-    do: ExOauth2Provider.repo.get_by!(OauthAccessGrant, token: token)
+  def get_grant(%OauthApplication{id: _} = application, token) do
+    access_grant = OauthAccessGrant
+    |> ExOauth2Provider.repo.get_by(application_id: application.id, token: token)
+    |> filter_expired
+    |> filter_revoked
+  end
 
   @doc """
   Creates an access grant.

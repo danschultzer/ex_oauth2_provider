@@ -4,6 +4,8 @@ defmodule ExOauth2Provider.OauthAccessTokens do
   """
 
   import Ecto.{Query, Changeset}, warn: false
+  use ExOauth2Provider.Mixin.Expirable
+  use ExOauth2Provider.Mixin.Revocable
   alias ExOauth2Provider.OauthAccessTokens.OauthAccessToken
   alias ExOauth2Provider.OauthApplications.OauthApplication
 
@@ -62,40 +64,6 @@ defmodule ExOauth2Provider.OauthAccessTokens do
   end
 
   @doc """
-  Revokes an access token.
-
-  ## Examples
-
-      iex> revoke_token(token)
-      {:ok, %OauthAccessToken{}}
-
-      iex> revoke_token(token)
-      {:error, %Ecto.Changeset{}}
-
-  """
-  def revoke_token(%OauthAccessToken{revoked_at: nil} = token) do
-    token
-    |> change(%{revoked_at: NaiveDateTime.utc_now})
-    |> ExOauth2Provider.repo.update()
-  end
-  def revoke_token(%OauthAccessToken{} = token), do: {:ok, token}
-
-  @doc """
-  Checks if an access token has been revoked.
-
-  ## Examples
-
-      iex> token_revoked?(token)
-      false
-
-      iex> token_revoked?(revoked_token)
-      true
-
-  """
-  def token_revoked?(%OauthAccessToken{revoked_at: nil} = _), do: false
-  def token_revoked?(%OauthAccessToken{} = _), do: true
-
-  @doc """
   Checks if an access token can be accessed.
 
   ## Examples
@@ -108,17 +76,7 @@ defmodule ExOauth2Provider.OauthAccessTokens do
 
   """
   def is_accessible?(%OauthAccessToken{} = token) do
-    !is_expired?(token) and is_nil(token.revoked_at)
-  end
-
-  defp is_expired?(%OauthAccessToken{} = token) do
-    case token.expires_in do
-      nil -> false
-      expires_in ->
-        expires_at = token.inserted_at
-          |> NaiveDateTime.add(expires_in, :second)
-        NaiveDateTime.compare(expires_at, NaiveDateTime.utc_now) == :lt
-    end
+    !is_expired?(token) and !is_revoked?(token)
   end
 
   defp new_token_changeset(%OauthAccessToken{} = token, params) do
@@ -130,12 +88,12 @@ defmodule ExOauth2Provider.OauthAccessTokens do
     |> validate_application
     |> validate_required([:token, :resource_owner])
     |> assoc_constraint(:resource_owner)
-    # |> put_scopes
+    |> put_scopes
     |> unique_constraint(:token)
     |> unique_constraint(:refresh_token)
   end
 
-  defp put_application(changeset, %{application: application} = _),
+  defp put_application(changeset, %{application: %OauthApplication{} = application} = _),
     do: put_assoc(changeset, :application, application)
   defp put_application(changeset, _), do: changeset
 
@@ -149,15 +107,14 @@ defmodule ExOauth2Provider.OauthAccessTokens do
     do: change(changeset, %{token: ExOauth2Provider.Utils.generate_token})
 
   defp put_refresh_token(%{} = changeset),
-
-  # defp put_scopes(%{} = changeset) do
-  #   changeset
-  #   |> put_change(:scopes, default_scopes_string)
-  # end
-  #
-  # defp default_scopes_string do
-  #   ExOauth2Provider.default_scopes
-  #   |> ExOauth2Provider.Scopes.to_string
-  # end
     do: change(changeset, %{refresh_token: ExOauth2Provider.Utils.generate_token})
+
+  defp put_scopes(%{scopes: nil} = changeset),
+    do: change(changeset, %{scopes: default_scopes_string})
+  defp put_scopes(changeset), do: changeset
+
+  defp default_scopes_string do
+    ExOauth2Provider.default_scopes
+    |> ExOauth2Provider.Scopes.to_string
+  end
 end

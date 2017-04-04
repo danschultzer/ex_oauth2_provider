@@ -26,7 +26,7 @@ defmodule ExOauth2ProviderTest do
 
   test "it rejects revoked token" do
     access_token = access_token_with_user()
-    ExOauth2Provider.OauthAccessTokens.revoke_token(access_token)
+    ExOauth2Provider.OauthAccessTokens.revoke(access_token)
 
     assert authenticate_token(access_token.token) == {:error, :token_inaccessible}
   end

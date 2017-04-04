@@ -1,8 +1,9 @@
-defmodule ExOauth2Provider.Grant.AuthorizationCodeTest do
+defmodule ExOauth2Provider.Authorization.RequestTest do
   use ExOauth2Provider.TestCase
   doctest ExOauth2Provider
 
-  import ExOauth2Provider.Grant.AuthorizationCode
+  import ExOauth2Provider.Authorization.Request
+  import ExOauth2Provider.QueryHelper
   alias ExOauth2Provider.OauthAccessGrants
   alias ExOauth2Provider.Scopes
 
@@ -47,7 +48,7 @@ defmodule ExOauth2Provider.Grant.AuthorizationCodeTest do
   end
 
   test "#preauthorize/2 error when invalid client", %{resource_owner: resource_owner} do
-    assert {:error, error, :bad_request} = preauthorize(resource_owner, @request_invalid_client)
+    assert {:error, error, :unprocessable_entity} = preauthorize(resource_owner, @request_invalid_client)
     assert error == %{error: :invalid_client,
       error_description: "Client authentication failed due to unknown client, no client authentication included, or unsupported authentication method."
     }
@@ -71,7 +72,7 @@ defmodule ExOauth2Provider.Grant.AuthorizationCodeTest do
     assert preauthorize(resource_owner, @valid_request) == {:ok, application, Scopes.to_list(@valid_request["scope"])}
   end
 
-  test "#preauthorize/2 when previous access token with different scopes", %{resource_owner: resource_owner, application: application} do
+  test "#preauthorize/2 when previous access token with different application scopes", %{resource_owner: resource_owner, application: application} do
     access_token = insert(:access_token, application: application, scopes: "app:read", resource_owner_id: resource_owner.id)
     assert preauthorize(resource_owner, @valid_request) == {:ok, application, Scopes.to_list(@valid_request["scope"])}
 
@@ -87,6 +88,29 @@ defmodule ExOauth2Provider.Grant.AuthorizationCodeTest do
     assert preauthorize(resource_owner, request) == {:ok, application, Scopes.to_list(request["scope"])}
   end
 
+  test "#preauthorize/2 with limited server scope", %{resource_owner: resource_owner, application: application} do
+    changeset = Ecto.Changeset.change application, scopes: ""
+    {:ok, application} = ExOauth2Provider.repo.update changeset
+
+    request = Map.merge(@valid_request, %{"scope" => "read"})
+    assert preauthorize(resource_owner, request) == {:ok, application, Scopes.to_list(request["scope"])}
+  end
+
+  test "#preauthorize/2 with invalid application scope", %{resource_owner: resource_owner} do
+    request = Map.merge(@valid_request, %{"scope" => "app:invalid"})
+    assert {:error, error, :unprocessable_entity} = preauthorize(resource_owner, request)
+    assert error == %{error: :invalid_scope, error_description: "The requested scope is invalid, unknown, or malformed."}
+  end
+
+  test "#preauthorize/2 with invalid server scope", %{resource_owner: resource_owner, application: application} do
+    changeset = Ecto.Changeset.change application, scopes: ""
+    ExOauth2Provider.repo.update! changeset
+
+    request = Map.merge(@valid_request, %{"scope" => "invalid"})
+    assert {:error, error, :unprocessable_entity} = preauthorize(resource_owner, request)
+    assert error == %{error: :invalid_scope, error_description: "The requested scope is invalid, unknown, or malformed."}
+  end
+
   test "#preauthorize/2 when previous access token with same scopes", %{resource_owner: resource_owner, application: application} do
     insert(:access_token, resource_owner_id: resource_owner.id, application_id: application.id, scopes: @valid_request["scope"])
     assert preauthorize(resource_owner, @valid_request) == {:native_redirect, %{code: get_last_access_grant().token}}
@@ -100,7 +124,7 @@ defmodule ExOauth2Provider.Grant.AuthorizationCodeTest do
   end
 
   test "#authorize/2 error when invalid client", %{resource_owner: resource_owner} do
-    assert {:error, error, :bad_request} = authorize(resource_owner, @request_invalid_client)
+    assert {:error, error, :unprocessable_entity} = authorize(resource_owner, @request_invalid_client)
     assert error == %{error: :invalid_client,
       error_description: "Client authentication failed due to unknown client, no client authentication included, or unsupported authentication method."
     }
@@ -122,7 +146,7 @@ defmodule ExOauth2Provider.Grant.AuthorizationCodeTest do
 
   test "#authorize/2 rejects when has unknown scope", %{resource_owner: resource_owner} do
     request =  Map.merge(@valid_request, %{"scope" => "app:read app:profile"})
-    assert {:error, error, :bad_request} = authorize(resource_owner, request)
+    assert {:error, error, :unprocessable_entity} = authorize(resource_owner, request)
     assert error == %{error: :invalid_scope,
       error_description: "The requested scope is invalid, unknown, or malformed."
     }
@@ -138,7 +162,7 @@ defmodule ExOauth2Provider.Grant.AuthorizationCodeTest do
 
     test "#authorize/2 rejects when has unknown scope", %{resource_owner: resource_owner} do
       request =  Map.merge(@valid_request, %{"scope" => "public profile"})
-      assert {:error, error, :bad_request} = authorize(resource_owner, request)
+      assert {:error, error, :unprocessable_entity} = authorize(resource_owner, request)
       assert error == %{error: :invalid_scope,
         error_description: "The requested scope is invalid, unknown, or malformed."
       }
@@ -147,19 +171,19 @@ defmodule ExOauth2Provider.Grant.AuthorizationCodeTest do
     test "#authorize/2 generates grant", %{resource_owner: resource_owner} do
       request =  Map.merge(@valid_request, %{"scope" => "public"})
       assert {:native_redirect, %{code: code}} = authorize(resource_owner, request)
-      assert OauthAccessGrants.get_grant!(code).resource_owner_id == resource_owner.id
+      assert get_access_grant_by_code(code).resource_owner_id == resource_owner.id
     end
   end
 
   test "#authorize/2 rejects when invalid redirect uri", %{resource_owner: resource_owner} do
-    assert {:error, error, :bad_request} = authorize(resource_owner, @invalid_redirect_uri)
+    assert {:error, error, :unprocessable_entity} = authorize(resource_owner, @invalid_redirect_uri)
     assert error == %{error: :invalid_redirect_uri,
       error_description: "The redirect uri included is not valid."
     }
   end
 
   test "#authorize/2 rejects when unsupported response type", %{resource_owner: resource_owner} do
-    assert {:error, error, :bad_request} = authorize(resource_owner, @invalid_response_type)
+    assert {:error, error, :unprocessable_entity} = authorize(resource_owner, @invalid_response_type)
     assert error == %{error: :unsupported_response_type,
       error_description: "The authorization server does not support this response type."
     }
@@ -167,7 +191,7 @@ defmodule ExOauth2Provider.Grant.AuthorizationCodeTest do
 
   test "#authorize/2 generates grant", %{resource_owner: resource_owner} do
     assert {:native_redirect, %{code: code}} = authorize(resource_owner, @valid_request)
-    assert OauthAccessGrants.get_grant!(code).resource_owner_id == resource_owner.id
+    assert get_access_grant_by_code(code).resource_owner_id == resource_owner.id
   end
 
   test "#authorize/2 generates grant with redirection uri", %{resource_owner: resource_owner, application: application} do
@@ -179,7 +203,7 @@ defmodule ExOauth2Provider.Grant.AuthorizationCodeTest do
   end
 
   test "#deny/2", %{resource_owner: resource_owner} do
-    assert {:error, error, :bad_request} = deny(resource_owner, @valid_request)
+    assert {:error, error, :unauthorized} = deny(resource_owner, @valid_request)
     assert error == %{error: :access_denied,
       error_description: "The resource owner or authorization server denied the request."
     }

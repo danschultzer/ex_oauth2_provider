@@ -51,6 +51,9 @@ defmodule ExOauth2Provider.OauthApplications do
   def get_application(uid) do
     ExOauth2Provider.repo.get_by(OauthApplication, uid: uid)
   end
+  def get_application(uid, secret) do
+    ExOauth2Provider.repo.get_by(OauthApplication, uid: uid, secret: secret)
+  end
 
   @doc """
   Creates a application.

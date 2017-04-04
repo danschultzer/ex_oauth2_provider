@@ -25,7 +25,7 @@ defmodule ExOauth2Provider.OauthAccessTokensTest do
 
     inserted_at = NaiveDateTime.utc_now |> NaiveDateTime.add(1, :second)
     token1
-    |> Ecto.Changeset.change(%{inserted_at: inserted_at})
+    |> Ecto.Changeset.change(inserted_at: inserted_at)
     |> ExOauth2Provider.repo.update()
     assert %OauthAccessToken{id: id} = OauthAccessTokens.get_most_recent_token(user, application)
     assert id == token1.id
@@ -40,10 +40,6 @@ defmodule ExOauth2Provider.OauthAccessTokensTest do
     assert token.application == application
   end
 
-  test "create_token/2 with invalid attributes", %{user: user} do
-    assert {:error, %Ecto.Changeset{}} = OauthAccessTokens.create_token(user, %{application: "invalid"})
-  end
-
   test "create_token/2 adds random token", %{user: user} do
     {:ok, token} = OauthAccessTokens.create_token(user)
     {:ok, token2} = OauthAccessTokens.create_token(user)
@@ -56,25 +52,25 @@ defmodule ExOauth2Provider.OauthAccessTokensTest do
     assert token.refresh_token != token2.refresh_token
   end
 
-  test "revoke_token/1 revokes token", %{user: user} do
+  test "revoke/1 revokes token", %{user: user} do
     {:ok, token} = OauthAccessTokens.create_token(user)
-    assert {:ok, token} = OauthAccessTokens.revoke_token(token)
-    assert OauthAccessTokens.token_revoked?(token) == true
+    assert {:ok, token} = OauthAccessTokens.revoke(token)
+    assert OauthAccessTokens.is_revoked?(token) == true
   end
 
-  test "revoke_token/1 doesn't revoke revoked tokens", %{user: user} do
+  test "revoke/1 doesn't revoke revoked tokens", %{user: user} do
     {:ok, token} = OauthAccessTokens.create_token(user)
     token = Map.merge(token, %{revoked_at: NaiveDateTime.utc_now |> NaiveDateTime.add(-86400, :second)})
-    {:ok, token2} = OauthAccessTokens.revoke_token(token)
+    {:ok, token2} = OauthAccessTokens.revoke(token)
     assert token2.revoked_at == token.revoked_at
   end
 
-  test "token_revoked?/1#true" do
-    assert OauthAccessTokens.token_revoked?(%OauthAccessToken{revoked_at: NaiveDateTime.utc_now})
+  test "is_revoked?/1#true" do
+    assert OauthAccessTokens.is_revoked?(%OauthAccessToken{revoked_at: NaiveDateTime.utc_now})
   end
 
-  test "token_revoked?/1#false" do
-    refute OauthAccessTokens.token_revoked?(%OauthAccessToken{revoked_at: nil})
+  test "is_revoked?/1#false" do
+    refute OauthAccessTokens.is_revoked?(%OauthAccessToken{revoked_at: nil})
   end
 
   test "is_accessible?/1#true" do
