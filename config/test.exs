@@ -4,7 +4,8 @@ config :ex_oauth2_provider, ExOauth2Provider,
   repo: ExOauth2Provider.Test.Repo,
   resource_owner: Dummy.User,
   default_scopes: ~w(public),
-  optional_scopes: ~w(read update)
+  optional_scopes: ~w(read update),
+  use_refresh_token: true
 
 config :ex_oauth2_provider, ecto_repos: [ExOauth2Provider.Test.Repo]
 

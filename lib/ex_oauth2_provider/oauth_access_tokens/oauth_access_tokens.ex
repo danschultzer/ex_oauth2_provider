@@ -64,6 +64,37 @@ defmodule ExOauth2Provider.OauthAccessTokens do
   end
 
   @doc """
+  Finds existing access token or creates a new one.
+
+  ## Examples
+
+      iex> find_or_create_token(user)
+      {:ok, %OauthAccessGrant{}}
+
+      iex> find_or_create_token(user)
+      {:error, %Ecto.Changeset{}}
+
+  """
+  def find_or_create_token(%{id: _} = resource_owner, attrs \\ %{}) do
+    token_attrs = attrs
+    |> Map.delete(:use_refresh_token)
+    |> Map.merge(%{resource_owner_id: resource_owner.id})
+    |> case do
+      %{application: application} = attrs -> attrs
+                                             |> Map.merge(%{application_id: application.id})
+                                             |> Map.delete(:application)
+      attrs -> attrs
+    end
+
+    access_token = ExOauth2Provider.repo.get_by(OauthAccessToken, token_attrs)
+
+    case is_accessible?(access_token) do
+      true -> {:ok, access_token}
+      false -> create_token(resource_owner, attrs)
+    end
+  end
+
+  @doc """
   Checks if an access token can be accessed.
 
   ## Examples
@@ -78,12 +109,13 @@ defmodule ExOauth2Provider.OauthAccessTokens do
   def is_accessible?(%OauthAccessToken{} = token) do
     !is_expired?(token) and !is_revoked?(token)
   end
+  def is_accessible?(nil), do: false
 
   defp new_token_changeset(%OauthAccessToken{} = token, params) do
     token
     |> cast(params, [:expires_in, :scopes])
     |> put_token
-    |> put_refresh_token
+    |> put_refresh_token(params[:use_refresh_token])
     |> put_application(params)
     |> validate_application
     |> validate_required([:token, :resource_owner])
@@ -106,8 +138,9 @@ defmodule ExOauth2Provider.OauthAccessTokens do
   defp put_token(%{} = changeset),
     do: change(changeset, %{token: ExOauth2Provider.Utils.generate_token})
 
-  defp put_refresh_token(%{} = changeset),
+  defp put_refresh_token(%{} = changeset, true),
     do: change(changeset, %{refresh_token: ExOauth2Provider.Utils.generate_token})
+  defp put_refresh_token(%{} = changeset, _), do: changeset
 
   defp put_scopes(%{scopes: nil} = changeset),
     do: change(changeset, %{scopes: default_scopes_string})

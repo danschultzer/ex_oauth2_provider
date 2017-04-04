@@ -44,14 +44,35 @@ defmodule ExOauth2Provider.Authorization.Grant do
   @doc false
   defp issue_access_token(%{error: _} = params), do: params
   defp issue_access_token(%{access_grant: access_grant, request: _} = params) do
-    token_params = %{scopes: access_grant.scopes,
-                     expires_in: ExOauth2Provider.authorization_code_expires_in,
-                     application: access_grant.application}
-
-    case OauthAccessTokens.create_token(access_grant.resource_owner, token_params) do
-      {:ok, access_token} -> Map.merge(params, %{access_token: access_token})
-      {:error, error}     -> add_error(params, error)
+    ExOauth2Provider.repo.transaction(fn ->
+      access_grant
+      |> revoke_grant
+      |> create_access_token(%{scopes: access_grant.scopes,
+                               expires_in: ExOauth2Provider.authorization_code_expires_in,
+                               application: access_grant.application})
+    end)
+    |> case do
+      {:ok, {:error} = error}    -> add_error(params, error)
+      {:ok, {:ok, access_token}} -> Map.merge(params, %{access_token: access_token})
+      {:error, error}            -> add_error(params, error)
     end
+  end
+
+  @doc false
+  defp revoke_grant(%OauthAccessGrants.OauthAccessGrant{} = access_grant) do
+    case OauthAccessGrants.is_revoked?(access_grant) do
+      true -> invalid_grant()
+      false -> OauthAccessGrants.revoke(access_grant)
+    end
+  end
+
+  @doc false
+  defp create_access_token({:error, _} = error, _), do: error
+  defp create_access_token({:ok, access_grant}, token_params) do
+    token_params = token_params
+                   |> Map.merge(%{expires_in: ExOauth2Provider.access_token_expires_in,
+                                  use_refresh_token: ExOauth2Provider.refresh_token_enabled})
+    OauthAccessTokens.find_or_create_token(access_grant.resource_owner, token_params)
   end
 
   @doc false
@@ -146,6 +167,10 @@ defmodule ExOauth2Provider.Authorization.Grant do
   @doc false
   defp build_response(%{access_token: access_token} = _) do
     {:ok, %{access_token: access_token.token,
+            # Access Token type: Bearer.
+            # @see https://tools.ietf.org/html/rfc6750
+            #   The OAuth 2.0 Authorization Framework: Bearer Token Usage
+            #
             token_type: "bearer",
             expires_in: access_token.expires_in,
             refresh_token: access_token.refresh_token,

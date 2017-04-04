@@ -47,9 +47,55 @@ defmodule ExOauth2Provider.OauthAccessTokensTest do
   end
 
   test "create_token/2 adds random refresh token", %{user: user} do
-    {:ok, token} = OauthAccessTokens.create_token(user)
-    {:ok, token2} = OauthAccessTokens.create_token(user)
+    {:ok, token} = OauthAccessTokens.create_token(user, %{use_refresh_token: true})
+    {:ok, token2} = OauthAccessTokens.create_token(user, %{use_refresh_token: true})
     assert token.refresh_token != token2.refresh_token
+  end
+
+  test "create_token/2 doesn't add refresh token when disabled", %{user: user} do
+    {:ok, token} = OauthAccessTokens.create_token(user, %{use_refresh_token: false})
+    assert token.refresh_token == nil
+  end
+
+  test "find_or_create_token/2 gets existing token", %{user: user} do
+    {:ok, token} = OauthAccessTokens.find_or_create_token(user)
+    {:ok, token2} = OauthAccessTokens.find_or_create_token(user)
+    assert token.id == token2.id
+  end
+
+  test "find_or_create_token/2 creates token when matching is revoked", %{user: user} do
+    {:ok, token} = OauthAccessTokens.find_or_create_token(user)
+    OauthAccessTokens.revoke(token)
+    {:ok, token2} = OauthAccessTokens.find_or_create_token(user)
+    assert token.id != token2.id
+  end
+
+  test "find_or_create_token/2 creates token when matching has expired", %{user: user} do
+    {:ok, token} = OauthAccessTokens.find_or_create_token(user, %{expires_in: 1})
+
+    inserted_at = NaiveDateTime.utc_now |> NaiveDateTime.add(-token.expires_in, :second)
+    token
+    |> Ecto.Changeset.change(%{inserted_at: inserted_at})
+    |> ExOauth2Provider.repo.update()
+
+    {:ok, token2} = OauthAccessTokens.find_or_create_token(user)
+    assert token.id != token2.id
+  end
+
+  test "find_or_create_token/2 creates token when params are different", %{user: user} do
+    {:ok, token} = OauthAccessTokens.find_or_create_token(user)
+
+    {:ok, token2} = :user
+    |> ExOauth2Provider.Factory.insert
+    |> OauthAccessTokens.find_or_create_token
+    assert token.id != token2.id
+
+    Enum.each(%{application_id: 0,
+                expires_in: 0,
+                scopes: "public"}, fn({k, v}) ->
+      {:ok, token2} = OauthAccessTokens.find_or_create_token(user, %{"#{k}": v})
+      assert token.id != token2.id
+    end)
   end
 
   test "revoke/1 revokes token", %{user: user} do

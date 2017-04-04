@@ -40,8 +40,8 @@ defmodule ExOauth2Provider.Authorization.GrantTest do
     insert(:user)
   end
 
-  def fixture(:access_grant, application, user) do
-    insert(:access_grant, %{application_id: application.id, resource_owner_id: user.id, token: @code, scopes: "read", redirect_uri: @redirect_uri})
+  def fixture(:access_grant, application, user, code \\ nil) do
+    insert(:access_grant, %{application_id: application.id, resource_owner_id: user.id, token: code || @code, scopes: "read", redirect_uri: @redirect_uri})
   end
 
   setup do
@@ -57,6 +57,21 @@ defmodule ExOauth2Provider.Authorization.GrantTest do
     assert get_last_access_token().resource_owner_id == user.id
     assert get_last_access_token().application_id == application.id
     assert get_last_access_token().scopes == access_grant.scopes
+    assert get_last_access_token().expires_in == ExOauth2Provider.access_token_expires_in
+    assert get_last_access_token().refresh_token != nil
+  end
+
+  test "#authorize/1 can't use grant twice", %{} do
+    assert {:ok, _} = authorize(@valid_request)
+    assert {:error, %{error: :invalid_grant}, _} = authorize(@valid_request)
+  end
+
+  test "#authorize/1 doesn't duplicate access token", %{user: user, application: application} do
+    assert {:ok, access_token} = authorize(@valid_request)
+    access_grant = fixture(:access_grant, application, user, "new_code")
+    valid_request = Map.merge(@valid_request, %{"code" => access_grant.token})
+    assert {:ok, access_token2} = authorize(valid_request)
+    assert access_token.access_token == access_token2.access_token
   end
 
   test "#authorize/1 error when invalid client" do
