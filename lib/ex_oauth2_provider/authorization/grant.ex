@@ -31,24 +31,47 @@ defmodule ExOauth2Provider.Authorization.Grant do
     {:ok, access_token}
     {:error, %{error: error, error_description: _}, http_status}
   """
-  def authorize(%{"grant_type" => "authorization_code", "code" => _} = request) do
+  def authorize(%{"grant_type" => "client_credentials"} = request) do
+    %{request: request}
+    |> load_client
+    |> issue_access_token_by_creds
+    |> authorize_response
+  end
+  def authorize(%{"grant_type" => "authorization_code"} = request) do
     %{request: request}
     |> load_client
     |> load_access_grant
-    |> validate_request
-    |> issue_access_token
+    |> validate_redirect_uri
+    |> issue_access_token_by_grant
     |> authorize_response
   end
-  def authorize(_), do: unsupported_grant_type()
+  def authorize(%{"grant_type" => _}), do: unsupported_grant_type()
+  def authorize(_), do: invalid_request()
 
   @doc false
-  defp issue_access_token(%{error: _} = params), do: params
-  defp issue_access_token(%{access_grant: access_grant, request: _} = params) do
+  defp issue_access_token_by_creds(%{error: _} = params), do: params
+  defp issue_access_token_by_creds(%{client: client} = params) do
+    client = client
+    |> ExOauth2Provider.repo.preload(:resource_owner)
+
+    token_params = %{scopes: client.scopes,
+                     application: client,
+                     # client_credentials MUST NOT use refresh tokens
+                     use_refresh_token: false}
+
+    case create_access_token(client.resource_owner, token_params) do
+      {:ok, access_token} -> Map.merge(params, %{access_token: access_token})
+      {:error, error}     -> add_error(params, error)
+    end
+  end
+
+  @doc false
+  defp issue_access_token_by_grant(%{error: _} = params), do: params
+  defp issue_access_token_by_grant(%{access_grant: access_grant, request: _} = params) do
     ExOauth2Provider.repo.transaction(fn ->
       access_grant
       |> revoke_grant
       |> create_access_token(%{scopes: access_grant.scopes,
-                               expires_in: ExOauth2Provider.authorization_code_expires_in,
                                application: access_grant.application})
     end)
     |> case do
@@ -68,11 +91,13 @@ defmodule ExOauth2Provider.Authorization.Grant do
 
   @doc false
   defp create_access_token({:error, _} = error, _), do: error
-  defp create_access_token({:ok, access_grant}, token_params) do
-    token_params = token_params
-                   |> Map.merge(%{expires_in: ExOauth2Provider.access_token_expires_in,
-                                  use_refresh_token: ExOauth2Provider.refresh_token_enabled})
-    OauthAccessTokens.find_or_create_token(access_grant.resource_owner, token_params)
+  defp create_access_token({:ok, access_grant}, token_params),
+    do: create_access_token(access_grant.resource_owner, token_params)
+  defp create_access_token(%{id: _} = resource_owner, token_params) do
+    token_params = %{expires_in: ExOauth2Provider.access_token_expires_in,
+                   use_refresh_token: ExOauth2Provider.refresh_token_enabled}
+                   |> Map.merge(token_params)
+    OauthAccessTokens.find_or_create_token(resource_owner, token_params)
   end
 
   @doc false
@@ -105,24 +130,6 @@ defmodule ExOauth2Provider.Authorization.Grant do
     end
   end
   defp load_access_grant(params), do: add_error(params, invalid_grant())
-
-  @doc false
-  defp validate_request(%{error: _} = params), do: params
-  defp validate_request(params) do
-    params
-    |> validate_grant_type
-    |> validate_redirect_uri
-  end
-
-  @doc false
-  defp validate_grant_type(%{error: _} = params), do: params
-  defp validate_grant_type(%{request: %{"grant_type" => grant_type}} = params) do
-    case grant_type == "authorization_code" do
-      true  -> params
-      false -> add_error(params, unsupported_grant_type())
-    end
-  end
-  defp validate_grant_type(params), do: add_error(params, invalid_request())
 
   @doc false
   defp validate_redirect_uri(%{error: _} = params), do: params
