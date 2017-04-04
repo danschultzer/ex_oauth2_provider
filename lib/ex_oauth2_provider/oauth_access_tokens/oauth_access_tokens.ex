@@ -146,10 +146,9 @@ defmodule ExOauth2Provider.OauthAccessTokens do
   defp validate_application(changeset), do: changeset
 
   defp put_token(%{} = changeset),
-    do: change(changeset, %{token: ExOauth2Provider.generate_token})
+    do: change(changeset, %{token: ExOauth2Provider.Utils.generate_token})
 
   defp put_refresh_token(%{} = changeset),
-    do: change(changeset, %{refresh_token: ExOauth2Provider.generate_token})
 
   # defp put_scopes(%{} = changeset) do
   #   changeset
@@ -160,4 +159,5 @@ defmodule ExOauth2Provider.OauthAccessTokens do
   #   ExOauth2Provider.default_scopes
   #   |> ExOauth2Provider.Scopes.to_string
   # end
+    do: change(changeset, %{refresh_token: ExOauth2Provider.Utils.generate_token})
 end

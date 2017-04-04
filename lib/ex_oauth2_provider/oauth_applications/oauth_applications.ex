@@ -146,12 +146,12 @@ defmodule ExOauth2Provider.OauthApplications do
 
   defp put_uid(%{changes: %{uid: _}} = changeset), do: changeset
   defp put_uid(%{} = changeset) do
-    change(changeset, %{uid: ExOauth2Provider.generate_token})
+    change(changeset, %{uid: ExOauth2Provider.Utils.generate_token})
   end
 
   defp put_secret(%{changes: %{secret: _}} = changeset), do: changeset
   defp put_secret(%{} = changeset) do
-    change(changeset, %{secret: ExOauth2Provider.generate_token})
+    change(changeset, %{secret: ExOauth2Provider.Utils.generate_token})
   end
 
   # defp put_change_if_empty(%{} = changeset, field, value) do

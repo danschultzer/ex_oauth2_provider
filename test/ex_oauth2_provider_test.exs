@@ -38,17 +38,4 @@ defmodule ExOauth2ProviderTest do
 
     assert authenticate_token(access_token.token) == {:error, :no_association_found}
   end
-
-  test "it generate random token" do
-    assert generate_token() != generate_token()
-  end
-
-  test "it generate the token with custom length" do
-    assert String.length(generate_token(%{size: 1})) < String.length(generate_token(%{size: 2}))
-  end
-
-  test "it generate the token with custom generator" do
-    generator = fn(string) -> Base.encode64(string) end
-    assert String.length(generate_token(%{generator: generator})) < String.length(generate_token())
-  end
 end

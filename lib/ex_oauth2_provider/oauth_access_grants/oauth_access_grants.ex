@@ -54,6 +54,6 @@ defmodule ExOauth2Provider.OauthAccessGrants do
 
   defp put_token(changeset) do
     changeset
-    |> put_change(:token, ExOauth2Provider.generate_token)
+    |> put_change(:token, ExOauth2Provider.Utils.generate_token)
   end
 end
