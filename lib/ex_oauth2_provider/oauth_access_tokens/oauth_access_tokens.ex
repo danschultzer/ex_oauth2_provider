@@ -32,17 +32,48 @@ defmodule ExOauth2Provider.OauthAccessTokens do
 
   ## Examples
 
-      iex> get_most_recent_token(user, app})
+      iex> get_matching_token_for(user, app})
       %OauthAccessToken{}
 
-      iex> get_most_recent_token(user, another_app})
+      iex> get_matching_token_for(user, another_app})
       nil
 
   """
-  def get_most_recent_token(%{id: resource_owner_id} = _, %OauthApplication{id: application_id} = _) do
-    ExOauth2Provider.repo.one(from x in OauthAccessToken,
-      where: x.application_id == ^application_id and x.resource_owner_id == ^resource_owner_id,
-      order_by: [desc: x.inserted_at], limit: 1)
+  def get_matching_token_for(%{id: resource_owner_id} = _, %OauthApplication{id: application_id} = _, scopes) do
+    OauthAccessToken
+    |> where([x], x.application_id == ^application_id)
+    |> where([x], x.resource_owner_id == ^resource_owner_id)
+    |> where([x], is_nil(x.revoked_at))
+    |> order_by([x], desc: x.inserted_at)
+    |> limit(1)
+    |> ExOauth2Provider.repo.one
+    |> check_matching_scopes(scopes)
+  end
+
+  @doc false
+  defp check_matching_scopes(nil, _), do: nil
+  defp check_matching_scopes(token, scopes) do
+    token_scopes   = token.scopes |> ExOauth2Provider.Scopes.to_list
+    request_scopes = scopes |> ExOauth2Provider.Scopes.to_list
+
+    case ExOauth2Provider.Scopes.equal?(token_scopes, request_scopes) do
+      true -> token
+      _    -> nil
+    end
+  end
+
+  @doc """
+  Gets active tokens for resource owner.
+
+  ## Examples
+
+      iex> get_active_tokens_for(user)
+      [%OauthAccessToken{}, ...]
+  """
+  def get_active_tokens_for(%{id: resource_owner_id} = _) do
+    ExOauth2Provider.repo.all(from o in OauthAccessToken,
+                              where: o.resource_owner_id == ^resource_owner_id and
+                                     is_nil(o.revoked_at))
   end
 
   @doc """
@@ -149,7 +180,7 @@ defmodule ExOauth2Provider.OauthAccessTokens do
   defp put_refresh_token(%{} = changeset, _), do: changeset
 
   defp put_scopes(%{scopes: nil} = changeset),
-    do: change(changeset, %{scopes: default_scopes_string})
+    do: change(changeset, %{scopes: default_scopes_string()})
   defp put_scopes(changeset), do: changeset
 
   defp default_scopes_string do

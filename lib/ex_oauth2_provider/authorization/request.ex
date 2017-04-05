@@ -37,16 +37,9 @@ defmodule ExOauth2Provider.Authorization.Request do
   @doc false
   defp check_previous_authorization(%{error: _} = params), do: params
   defp check_previous_authorization(%{resource_owner: resource_owner, client: client, request: %{"scope" => scopes}} = params) do
-    case OauthAccessTokens.get_most_recent_token(resource_owner, client) do
-      nil -> params
-      token ->
-        token_scopes = token.scopes |> Scopes.to_list
-        request_scopes = scopes |> Scopes.to_list
-
-        case token && ExOauth2Provider.Scopes.equal?(token_scopes, request_scopes) do
-          true -> Map.merge(params, %{access_token: token})
-          _ -> params
-        end
+    case OauthAccessTokens.get_matching_token_for(resource_owner, client, scopes) do
+      nil   -> params
+      token -> Map.merge(params, %{access_token: token})
     end
   end
 
@@ -267,7 +260,7 @@ defmodule ExOauth2Provider.Authorization.Request do
   end
 
   @doc false
-  defp build_response(%{request: request} = params, payload \\ %{}) do
+  defp build_response(%{request: request} = params, payload) do
     payload = add_state(payload, request)
 
     case can_redirect?(params) do

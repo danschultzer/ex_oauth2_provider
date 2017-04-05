@@ -5,6 +5,7 @@ defmodule ExOauth2Provider.OauthApplications do
 
   import Ecto.{Query, Changeset}, warn: false
   alias ExOauth2Provider.OauthApplications.OauthApplication
+  alias ExOauth2Provider.OauthAccessTokens
 
   @doc """
   Returns the list of applications.
@@ -53,6 +54,24 @@ defmodule ExOauth2Provider.OauthApplications do
   end
   def get_application(uid, secret) do
     ExOauth2Provider.repo.get_by(OauthApplication, uid: uid, secret: secret)
+  end
+
+  @doc """
+  Gets all authorized applications for a resource owner.
+
+  ## Examples
+
+      iex> get_authorized_applications_for(resource_owner)
+      [%OauthApplication{},...]
+  """
+  def get_authorized_applications_for(%{id: _} = resource_owner) do
+    application_ids = resource_owner
+                      |> OauthAccessTokens.get_active_tokens_for
+                      |> Enum.map(fn(o) -> o.application_id end)
+
+    OauthApplication
+    |> where([o], o.id in ^application_ids)
+    |> ExOauth2Provider.repo.all
   end
 
   @doc """
@@ -118,6 +137,26 @@ defmodule ExOauth2Provider.OauthApplications do
   def change_application(%OauthApplication{} = application),
     do: application_changeset(application, %{})
 
+  @doc """
+  Revokes all access tokens for .
+
+  ## Examples
+
+      iex> revoke_all_access_tokens_for(application, resource_owner)
+      {:ok, nil}
+
+  """
+  def revoke_all_access_tokens_for(%OauthApplication{id: application_id}, %{id: resource_owner_id}) do
+    ExOauth2Provider.repo.transaction fn ->
+      OauthAccessTokens.OauthAccessToken
+      |> where([o], o.resource_owner_id == ^resource_owner_id)
+      |> where([o], o.application_id == ^application_id)
+      |> where([o], is_nil(o.revoked_at))
+      |> ExOauth2Provider.repo.all
+      |> Enum.map(fn(o) -> OauthAccessTokens.revoke(o) end)
+    end
+  end
+
   defp application_changeset(%OauthApplication{} = application, params) do
     application
     |> cast(params, [:name, :secret, :redirect_uri, :scopes])
@@ -156,22 +195,4 @@ defmodule ExOauth2Provider.OauthApplications do
   defp put_secret(%{} = changeset) do
     change(changeset, %{secret: ExOauth2Provider.Utils.generate_token})
   end
-
-  # defp put_change_if_empty(%{} = changeset, field, value) do
-  #   case get_stripped_value_from_field(changeset, field) do
-  #     "" -> put_change(changeset, field, value)
-  #     _  -> changeset
-  #   end
-  # end
-  #
-  # defp get_stripped_value_from_field(%{} = changeset, field) do
-  #   changeset
-  #   |> get_field(field)
-  #   |> nil_to_string
-  #   |> String.strip
-  # end
-  #
-  # defp nil_to_string(value) do
-  #   value || ""
-  # end
 end

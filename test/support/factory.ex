@@ -3,8 +3,6 @@ defmodule ExOauth2Provider.Factory do
   Generates factories
   """
 
-  config = Application.get_env(:ex_oauth2_provider, ExOauth2Provider, [])
-
   @repo           ExOauth2Provider.repo()
   @resource_owner ExOauth2Provider.resource_owner_struct()
   @application    ExOauth2Provider.OauthApplications.OauthApplication

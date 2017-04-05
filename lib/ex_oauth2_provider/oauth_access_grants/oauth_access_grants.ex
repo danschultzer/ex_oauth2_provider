@@ -22,7 +22,7 @@ defmodule ExOauth2Provider.OauthAccessGrants do
 
   """
   def get_grant(%OauthApplication{id: _} = application, token) do
-    access_grant = OauthAccessGrant
+    OauthAccessGrant
     |> ExOauth2Provider.repo.get_by(application_id: application.id, token: token)
     |> filter_expired
     |> filter_revoked

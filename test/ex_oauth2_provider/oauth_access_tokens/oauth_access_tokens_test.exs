@@ -14,21 +14,40 @@ defmodule ExOauth2Provider.OauthAccessTokensTest do
     assert id == token.id
   end
 
-  test "get_most_recent_token/1", %{user: user, application: application} do
+  test "get_matching_token_for/1", %{user: user, application: application} do
     {:ok, token1} = OauthAccessTokens.create_token(user, %{application: application})
-    assert %OauthAccessToken{id: id} = OauthAccessTokens.get_most_recent_token(user, application)
+    assert %OauthAccessToken{id: id} = OauthAccessTokens.get_matching_token_for(user, application, nil)
     assert token1.id == id
 
     {:ok, token2} = OauthAccessTokens.create_token(user, %{application: application})
-    assert %OauthAccessToken{id: id} = OauthAccessTokens.get_most_recent_token(user, application)
+    assert %OauthAccessToken{id: id} = OauthAccessTokens.get_matching_token_for(user, application, nil)
     assert token2.id == id
 
     inserted_at = NaiveDateTime.utc_now |> NaiveDateTime.add(1, :second)
     token1
     |> Ecto.Changeset.change(inserted_at: inserted_at)
-    |> ExOauth2Provider.repo.update()
-    assert %OauthAccessToken{id: id} = OauthAccessTokens.get_most_recent_token(user, application)
+    |> ExOauth2Provider.repo.update
+    assert %OauthAccessToken{id: id} = OauthAccessTokens.get_matching_token_for(user, application, nil)
     assert id == token1.id
+
+    token1
+    |> Ecto.Changeset.change(scopes: "read write")
+    |> ExOauth2Provider.repo.update
+    assert %OauthAccessToken{id: id} = OauthAccessTokens.get_matching_token_for(user, application, "write read")
+    assert id == token1.id
+
+    assert nil == OauthAccessTokens.get_matching_token_for(user, application, "other_read")
+    assert nil == OauthAccessTokens.get_matching_token_for(ExOauth2Provider.Factory.insert(:user), application, nil)
+  end
+
+  test "get_active_tokens_for/1", %{user: user, application: application} do
+    {:ok, token} = OauthAccessTokens.create_token(user, %{application: application})
+    assert [%OauthAccessToken{}] = OauthAccessTokens.get_active_tokens_for(user)
+
+    OauthAccessTokens.revoke(token)
+    assert [] = OauthAccessTokens.get_active_tokens_for(user)
+
+    assert [] == OauthAccessTokens.get_active_tokens_for(ExOauth2Provider.Factory.insert(:user))
   end
 
   test "create_token/2 with valid attributes", %{user: user} do

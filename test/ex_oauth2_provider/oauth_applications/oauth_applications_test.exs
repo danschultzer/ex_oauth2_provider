@@ -2,6 +2,7 @@ defmodule ExOauth2Provider.OauthApplicationsTest do
   use ExOauth2Provider.TestCase
   alias ExOauth2Provider.OauthApplications
   alias ExOauth2Provider.OauthApplications.OauthApplication
+  alias ExOauth2Provider.OauthAccessTokens
 
   @valid_attrs    %{name: "Application", redirect_uri: "https://example.org/endpoint"}
   @invalid_attrs  %{}
@@ -26,6 +27,19 @@ defmodule ExOauth2Provider.OauthApplicationsTest do
     {:ok, application} = OauthApplications.create_application(user, @valid_attrs)
     assert %OauthApplication{id: id} = OauthApplications.get_application(application.uid)
     assert application.id == id
+  end
+
+  test "get_authorized_applications_for/1", %{user: user} do
+    application = ExOauth2Provider.Factory.insert(:application, resource_owner_id: 0)
+    application2 = ExOauth2Provider.Factory.insert(:application, uid: "newapp", resource_owner_id: 0)
+    {:ok, token} = OauthAccessTokens.create_token(user, %{application: application})
+    OauthAccessTokens.create_token(user, %{application: application2})
+    assert [application, application2] == OauthApplications.get_authorized_applications_for(user)
+
+    assert [] == OauthApplications.get_authorized_applications_for(ExOauth2Provider.Factory.insert(:user))
+
+    OauthAccessTokens.revoke(token)
+    assert [application2] == OauthApplications.get_authorized_applications_for(user)
   end
 
   test "create_application/2 with valid attributes", %{user: user} do
@@ -101,5 +115,19 @@ defmodule ExOauth2Provider.OauthApplicationsTest do
     application = %OauthApplication{scopes: ""}
     changeset = OauthApplications.change_application(application)
     refute changeset.errors[:scopes]
+  end
+
+  test "revoke_all_access_tokens_for/2", %{user: user} do
+    application = ExOauth2Provider.Factory.insert(:application, resource_owner_id: 0)
+    {:ok, token} = OauthAccessTokens.create_token(user, %{application: application})
+    {:ok, token2} = OauthAccessTokens.create_token(user, %{application: application})
+    {:ok, token3} = OauthAccessTokens.create_token(user, %{application: application})
+    OauthAccessTokens.revoke(token3)
+
+    assert {:ok, objects} = OauthApplications.revoke_all_access_tokens_for(application, user)
+    assert 2 == Enum.count(objects)
+
+    assert OauthAccessTokens.is_revoked?(ExOauth2Provider.repo.get!(OauthAccessTokens.OauthAccessToken, token.id))
+    assert OauthAccessTokens.is_revoked?(ExOauth2Provider.repo.get!(OauthAccessTokens.OauthAccessToken, token2.id))
   end
 end
