@@ -68,13 +68,14 @@ defmodule ExOauth2Provider.Authorization.Grant do
   @doc false
   defp issue_access_token_by_grant(%{error: _} = params), do: params
   defp issue_access_token_by_grant(%{access_grant: access_grant, request: _} = params) do
-    ExOauth2Provider.repo.transaction(fn ->
+    result = ExOauth2Provider.repo.transaction(fn ->
       access_grant
       |> revoke_grant
       |> create_access_token(%{scopes: access_grant.scopes,
                                application: access_grant.application})
     end)
-    |> case do
+
+    case result do
       {:ok, {:error} = error}    -> add_error(params, error)
       {:ok, {:ok, access_token}} -> Map.merge(params, %{access_token: access_token})
       {:error, error}            -> add_error(params, error)
