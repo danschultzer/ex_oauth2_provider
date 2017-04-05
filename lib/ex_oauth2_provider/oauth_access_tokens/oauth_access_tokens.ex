@@ -76,7 +76,7 @@ defmodule ExOauth2Provider.OauthAccessTokens do
 
   """
   def find_or_create_token(%{id: _} = resource_owner, attrs \\ %{}) do
-    token_attrs = attrs
+    access_token = attrs
     |> Map.delete(:use_refresh_token)
     |> Map.merge(%{resource_owner_id: resource_owner.id})
     |> case do
@@ -85,8 +85,14 @@ defmodule ExOauth2Provider.OauthAccessTokens do
                                              |> Map.delete(:application)
       attrs -> attrs
     end
-
-    access_token = ExOauth2Provider.repo.get_by(OauthAccessToken, token_attrs)
+    |> Enum.reduce(OauthAccessToken, fn({k,v}, query) ->
+      case v do
+        nil -> where(query, [o], is_nil(field(o, ^k)))
+        _   -> where(query, [o], field(o, ^k) == ^v)
+      end
+    end)
+    |> limit(1)
+    |> ExOauth2Provider.repo.one
 
     case is_accessible?(access_token) do
       true -> {:ok, access_token}

@@ -92,7 +92,8 @@ defmodule ExOauth2Provider.OauthAccessTokensTest do
 
     Enum.each(%{application_id: 0,
                 expires_in: 0,
-                scopes: "public"}, fn({k, v}) ->
+                scopes: "public",
+                scopes: nil}, fn({k, v}) ->
       {:ok, token2} = OauthAccessTokens.find_or_create_token(user, %{"#{k}": v})
       assert token.id != token2.id
     end)
