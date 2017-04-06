@@ -7,7 +7,7 @@ defmodule ExOauth2Provider do
         resource_owner: App.User,
         default_scopes: ~w(public),
         optional_scopes: ~w(write update),
-        native_redirect_uri: "urn:ietf:wg:oauth:2.0:oob" # Default value is "urn:ietf:wg:oauth:2.0:oob",
+        native_redirect_uri: "urn:ietf:wg:oauth:2.0:oob",
         authorization_code_expires_in: 600,
         access_token_expires_in: 7200,
         use_refresh_token: false

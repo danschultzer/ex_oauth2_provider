@@ -11,9 +11,10 @@ defmodule ExOauth2Provider.OauthApplicationsTest do
     {:ok, %{user: ExOauth2Provider.Factory.insert(:user)}}
   end
 
-  test "list_applications/0", %{user: user} do
+  test "list_applications_for/1", %{user: user} do
     {:ok, application} = OauthApplications.create_application(user, @valid_attrs)
-    assert [app] = OauthApplications.list_applications()
+    {:ok, _} = OauthApplications.create_application(ExOauth2Provider.Factory.insert(:user), @valid_attrs)
+    assert [app] = OauthApplications.list_applications_for(user)
     assert app.id == application.id
   end
 
@@ -27,6 +28,16 @@ defmodule ExOauth2Provider.OauthApplicationsTest do
     {:ok, application} = OauthApplications.create_application(user, @valid_attrs)
     assert %OauthApplication{id: id} = OauthApplications.get_application(application.uid)
     assert application.id == id
+  end
+
+  test "get_application_for!/1", %{user: user} do
+    {:ok, application} = OauthApplications.create_application(user, @valid_attrs)
+    assert %OauthApplication{id: id} = OauthApplications.get_application_for!(user, application.uid)
+    assert application.id == id
+
+    assert_raise Ecto.NoResultsError, fn ->
+      OauthApplications.get_application_for!(ExOauth2Provider.Factory.insert(:user), application.uid)
+    end
   end
 
   test "get_authorized_applications_for/1", %{user: user} do

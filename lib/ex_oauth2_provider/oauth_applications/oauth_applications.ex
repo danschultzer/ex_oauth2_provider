@@ -12,12 +12,15 @@ defmodule ExOauth2Provider.OauthApplications do
 
   ## Examples
 
-      iex> list_applications()
+      iex> list_applications_for(resource_owner)
       [%OauthApplications{}, ...]
 
   """
-  def list_applications,
-    do: ExOauth2Provider.repo.all(OauthApplication)
+  def list_applications_for(%{id: resource_owner_id}) do
+    OauthApplication
+    |> where([x], x.resource_owner_id == ^resource_owner_id)
+    |> ExOauth2Provider.repo.all
+  end
 
   @doc """
   Gets a single application.
@@ -36,6 +39,25 @@ defmodule ExOauth2Provider.OauthApplications do
   def get_application!(uid) do
     ExOauth2Provider.repo.get_by!(OauthApplication, uid: uid)
   end
+
+
+    @doc """
+    Gets a single application for a resource owner.
+
+    Raises `Ecto.NoResultsError` if the OauthApplication does not exist for resource owner.
+
+    ## Examples
+
+        iex> get_application_for!(resource_owner, "c341a5c7b331ef076eb4954668d54f590e0009e06b81b100191aa22c93044f3d")
+        %OauthApplication{}
+
+        iex> get_application_for!(resource_owner, "75d72f326a69444a9287ea264617058dbbfe754d7071b8eef8294cbf4e7e0fdc")
+        ** (Ecto.NoResultsError)
+
+    """
+    def get_application_for!(%{id: resource_owner_id}, uid) do
+      ExOauth2Provider.repo.get_by!(OauthApplication, uid: uid, resource_owner_id: resource_owner_id)
+    end
 
   @doc """
   Gets a single application.
