@@ -14,15 +14,20 @@ defmodule ExOauth2Provider do
   """
 
   @config                        Application.get_env(:ex_oauth2_provider, ExOauth2Provider, [])
-  @repo                          Keyword.get(@config, :repo)
-  @resource_owner_struct         Keyword.get(@config, :resource_owner)
-  @default_scopes                Keyword.get(@config, :default_scopes, [])
-  @optional_scopes               Keyword.get(@config, :optional_scopes, [])
+  @fallback_config               Application.get_env(:phoenix_oauth2_provider, PhoenixOauth2Provider, [])
+
+  @repo                          Keyword.get(@config, :repo, Keyword.get(@fallback_config, :repo))
+  @resource_owner_struct         Keyword.get(@config, :resource_owner, Keyword.get(@fallback_config, :resource_owner))
+  @default_scopes                Keyword.get(@config, :default_scopes, Keyword.get(@fallback_config, :default_scopes, []))
+  @optional_scopes               Keyword.get(@config, :optional_scopes, Keyword.get(@fallback_config, :optional_scopes, []))
   @server_scopes                 @default_scopes ++ @optional_scopes
-  @native_redirect_uri           Keyword.get(@config, :native_redirect_uri, "urn:ietf:wg:oauth:2.0:oob")
-  @authorization_code_expires_in Keyword.get(@config, :authorization_code_expires_in, 600)
-  @access_token_expires_in       Keyword.get(@config, :access_token_expires_in, 7200)
-  @use_refresh_token             Keyword.get(@config, :use_refresh_token, false)
+  @native_redirect_uri           Keyword.get(@config, :native_redirect_uri, Keyword.get(@fallback_config, :native_redirect_uri, "urn:ietf:wg:oauth:2.0:oob"))
+  @authorization_code_expires_in Keyword.get(@config, :authorization_code_expires_in, Keyword.get(@fallback_config, :authorization_code_expires_in, 600))
+  @access_token_expires_in       Keyword.get(@config, :access_token_expires_in, Keyword.get(@fallback_config, :access_token_expires_in, 7200))
+  @use_refresh_token             Keyword.get(@config, :use_refresh_token, Keyword.get(@fallback_config,  :use_refresh_token, false))
+
+  if is_nil(@repo), do: raise "ExOauth2Provider requires a repo"
+  if is_nil(@resource_owner_struct), do: raise "ExOauth2Provider requires a resource owner (e.g. User)"
 
   @doc """
   Authenticate the token.
