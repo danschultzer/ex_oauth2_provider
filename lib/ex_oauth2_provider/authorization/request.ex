@@ -93,7 +93,12 @@ defmodule ExOauth2Provider.Authorization.Request do
   defp issue_grant(%{resource_owner: resource_owner, client: application, request: request} = params) do
     grant_params = request
     |> Map.take(["redirect_uri", "scope"])
-    |> Map.new(fn {k, v} -> {String.to_atom(k), v} end) # Convert string keys to atoms
+    |> Map.new(fn {k, v} ->
+      case k do
+        "scope" -> {:scopes, v}
+        _       -> {String.to_atom(k), v}
+      end
+    end)
     |> Map.merge(%{expires_in: ExOauth2Provider.authorization_code_expires_in})
 
     case OauthAccessGrants.create_grant(resource_owner, application, grant_params) do
