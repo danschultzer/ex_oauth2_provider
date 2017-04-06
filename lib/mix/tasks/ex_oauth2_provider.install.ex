@@ -25,6 +25,7 @@ defmodule Mix.Tasks.ExOauth2Provider.Install do
     * `-r`, `--repo` - the repo to generate migration for
     * `--config-file` - the configuration file to update
     * `--resource-owner` - defines the resource owner, default is MyApp.User
+    * `--no-config` -- Don't append to your `config/config.exs` file.
   """
 
   @doc false
@@ -44,10 +45,10 @@ defmodule Mix.Tasks.ExOauth2Provider.Install do
 
     %{
       config: Keyword.get(opts, :config, true),
-      config_file: opts[:config_file] || @config_file,
+      config_file: Keyword.get(opts, :config_file, @config_file),
       app_path: Mix.Project.app_path,
       repos: repos,
-      resource_owner: opts[:resource_owner] || "MyApp.User",
+      resource_owner: Keyword.get(opts, :resource_owner, "MyApp.User"),
       migrations: Keyword.get(opts, :migrations, true),
     }
   end
