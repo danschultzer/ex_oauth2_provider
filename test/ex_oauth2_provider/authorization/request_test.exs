@@ -193,6 +193,7 @@ defmodule ExOauth2Provider.Authorization.RequestTest do
     assert {:native_redirect, %{code: code}} = authorize(resource_owner, @valid_request)
     assert get_access_grant_by_code(code).resource_owner_id == resource_owner.id
     assert get_access_grant_by_code(code).expires_in == ExOauth2Provider.authorization_code_expires_in
+    assert get_access_grant_by_code(code).scopes == @valid_request["scope"]
   end
 
   test "#authorize/2 generates grant with redirection uri", %{resource_owner: resource_owner, application: application} do
