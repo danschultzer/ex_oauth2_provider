@@ -64,14 +64,8 @@ defmodule ExOauth2Provider do
     end
   end
 
-  def resource_owner_struct do
-    if is_nil(@resource_owner_struct), do: raise "ExOauth2Provider requires a resource owner (e.g. User)"
-    @resource_owner_struct
-  end
-  def repo do
-    if is_nil(@repo), do: raise "ExOauth2Provider requires a repo"
-    @repo
-  end
+  def resource_owner_struct, do: @resource_owner_struct
+  def repo, do: @repo
   def default_scopes, do: @default_scopes
   def server_scopes, do: @server_scopes
   def native_redirect_uri, do: @native_redirect_uri
