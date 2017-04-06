@@ -2,29 +2,32 @@ defmodule ExOauth2Provider.Plug do
   @moduledoc """
   ExOauth2Provider.Plug contains functions that assist with interacting with
   ExOauth2Provider via Plugs.
+
   ExOauth2Provider.Plug is not itself a plug.
-  Use the helpers to look up current_token and current_resource.
+
+  Use the helpers to look up current_access_token and current_resource_owner.
+
   ## Example
-      ExOauth2Provider.Plug.current_token(conn)
-      ExOauth2Provider.Plug.current_resource(conn)
+      ExOauth2Provider.Plug.current_access_token(conn)
+      ExOauth2Provider.Plug.current_resource_owner(conn)
   """
 
   import ExOauth2Provider.Keys
 
   @doc """
-  A simple check to see if a request is authenticated
+  Check if a request is authenticated
   """
   @spec authenticated?(Plug.Conn.t) :: atom # boolean
   def authenticated?(conn), do: authenticated?(conn, :default)
 
   @doc """
-  A simple check to see if a request is authenticated
+  Check if a request is authenticated
   """
   @spec authenticated?(Plug.Conn.t, atom) :: atom # boolean
   def authenticated?(conn, type) do
-    case current_token(conn, type) do
-      nil -> false
-      _ -> true
+    case get_current_access_token(conn, type) do
+      {:error, _} -> false
+      {:ok, _}    -> true
     end
   end
 
@@ -32,28 +35,37 @@ defmodule ExOauth2Provider.Plug do
   Fetch the currently authenticated resource if loaded,
   optionally located at a key
   """
-  @spec current_resource(Plug.Conn.t, atom) :: any | nil
-  def current_resource(conn, the_key \\ :default) do
-    conn
-    |> current_token(the_key)
-    |> ExOauth2Provider.repo.preload(:resource_owner)
-    |> get_resource_owner
+  @spec current_resource_owner(Plug.Conn.t, atom) :: any | nil
+  def current_resource_owner(conn, the_key \\ :default) do
+    case current_access_token(conn, the_key) do
+      nil          -> nil
+      access_token -> access_token.resource_owner
+    end
   end
-
-  defp get_resource_owner(nil), do: nil
-  defp get_resource_owner(access_token), do: Map.fetch!(access_token, :resource_owner)
 
   @doc """
   Fetch the currently verified token from the request.
   Optionally located at a key
   """
-  @spec current_token(Plug.Conn.t, atom) :: String.t | nil
-  def current_token(conn, the_key \\ :default) do
-    conn.private[token_key(the_key)]
+  @spec current_access_token(Plug.Conn.t, atom) :: String.t | nil
+  def current_access_token(conn, the_key \\ :default) do
+    case get_current_access_token(conn, the_key) do
+      {:ok, access_token} -> access_token
+      {:error, _}         -> nil
+    end
   end
 
   @doc false
-  def set_current_token(conn, token, the_key \\ :default) do
-    Plug.Conn.put_private(conn, token_key(the_key), token)
+  def get_current_access_token(conn, the_key \\ :default) do
+    case conn.private[access_token_key(the_key)] do
+      {:ok, _} = token    -> token
+      {:error, _} = token -> token
+      _                   -> {:error, :no_session}
+    end
+  end
+
+  @doc false
+  def set_current_access_token(conn, access_token, the_key \\ :default) do
+    Plug.Conn.put_private(conn, access_token_key(the_key), access_token)
   end
 end

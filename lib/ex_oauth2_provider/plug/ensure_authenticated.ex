@@ -1,14 +1,20 @@
 defmodule ExOauth2Provider.Plug.EnsureAuthenticated do
   @moduledoc """
   This plug ensures that the request has been authenticated with an access token.
+
   If one is not found, the `unauthenticated/2` function is invoked with the
   `Plug.Conn.t` object and its params.
+
   ## Example
+
       # Will call the unauthenticated/2 function on your handler
       plug ExOauth2Provider.Plug.EnsureAuthenticated, handler: SomeModule
+
       # look in the :secret location.  You can also do simple claim checks:
       plug ExOauth2Provider.Plug.EnsureAuthenticated, handler: SomeModule, key: :secret
+
       plug ExOauth2Provider.Plug.EnsureAuthenticated, handler: SomeModule, typ: "access"
+
   If the handler option is not passed, `ExOauth2Provider.Plug.ErrorHandler` will provide
   the default behavior.
   """
@@ -29,20 +35,30 @@ defmodule ExOauth2Provider.Plug.EnsureAuthenticated do
   def call(conn, opts) do
     key = Map.get(opts, :key, :default)
 
-    case ExOauth2Provider.Plug.authenticated?(conn, key) do
-      true -> conn
-      false -> handle_error(conn, {:error, :not_authenticated}, opts)
-    end
+    conn
+    |> get_authentication(key, opts)
+    |> handle_authentication
   end
 
+  @doc false
+  defp get_authentication(conn, key, opts),
+    do: {conn, ExOauth2Provider.Plug.get_current_access_token(conn, key), opts}
+
+  @doc false
+  defp handle_authentication({conn, {:ok, _}, _}), do: conn
+  defp handle_authentication({conn, {:error, reason}, opts}),
+    do: handle_error(conn, reason, opts)
+
+  @doc false
   defp handle_error(%Plug.Conn{params: params} = conn, reason, opts) do
     conn = conn |> assign(:ex_oauth2_provider_failure, reason) |> halt
     params = Map.merge(params, %{reason: reason})
-    {mod, meth} = Map.get(opts, :handler)
+    {module, method} = Map.get(opts, :handler)
 
-    apply(mod, meth, [conn, params])
+    apply(module, method, [conn, params])
   end
 
+  @doc false
   defp build_handler_tuple(%{handler: mod}) do
     {mod, :unauthenticated}
   end

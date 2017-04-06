@@ -38,32 +38,31 @@ defmodule ExOauth2Provider.Plug.EnsureScopeTest do
   end
 
   test "is valid when there's no scopes", %{conn: conn, access_token: access_token} do
-    expected_conn =
-      conn
-      |> ExOauth2Provider.Plug.set_current_token(access_token)
-      |> Plug.Conn.fetch_query_params
-      |> run_plug(EnsureScopes, scopes: ~w(), handler: TestHandler)
+    expected_conn = conn
+                    |> ExOauth2Provider.Plug.set_current_access_token({:ok, access_token})
+                    |> Plug.Conn.fetch_query_params
+                    |> run_plug(EnsureScopes, handler: TestHandler,
+                                scopes: ~w())
 
     refute unauthorized?(expected_conn)
   end
 
   test "is valid when all scopes are present", %{conn: conn, access_token: access_token} do
-    expected_conn =
-      conn
-      |> ExOauth2Provider.Plug.set_current_token(access_token)
-      |> Plug.Conn.fetch_query_params
-      |> run_plug(EnsureScopes, scopes: ~w(read write), handler: TestHandler)
+    expected_conn = conn
+                    |> ExOauth2Provider.Plug.set_current_access_token({:ok, access_token})
+                    |> Plug.Conn.fetch_query_params
+                    |> run_plug(EnsureScopes, handler: TestHandler,
+                                scopes: ~w(read write))
 
     refute unauthorized?(expected_conn)
   end
 
   test "is valid when the scope is present", %{conn: conn, access_token: access_token} do
-    expected_conn =
-      conn
-      |> ExOauth2Provider.Plug.set_current_token(access_token)
-      |> Plug.Conn.fetch_query_params
-      |> run_plug(EnsureScopes, handler: TestHandler,
-                  scopes: ~w(read))
+    expected_conn = conn
+                    |> ExOauth2Provider.Plug.set_current_access_token({:ok, access_token})
+                    |> Plug.Conn.fetch_query_params
+                    |> run_plug(EnsureScopes, handler: TestHandler,
+                                scopes: ~w(read))
 
     refute unauthorized?(expected_conn)
   end
@@ -71,12 +70,11 @@ defmodule ExOauth2Provider.Plug.EnsureScopeTest do
   test "is invalid when all scopes are not present", %{conn: conn} do
     access_token = build(:access_token, %{scopes: "read"})
 
-    expected_conn =
-      conn
-      |> ExOauth2Provider.Plug.set_current_token(access_token)
-      |> Plug.Conn.fetch_query_params
-      |> run_plug(EnsureScopes, handler: TestHandler,
-                  scopes: ~w(read write))
+    expected_conn = conn
+                    |> ExOauth2Provider.Plug.set_current_access_token({:ok, access_token})
+                    |> Plug.Conn.fetch_query_params
+                    |> run_plug(EnsureScopes, handler: TestHandler,
+                                scopes: ~w(read write))
 
     assert unauthorized?(expected_conn)
   end
@@ -84,12 +82,11 @@ defmodule ExOauth2Provider.Plug.EnsureScopeTest do
   test "is invalid when access token doesn't have any required scopes", %{conn: conn} do
     access_token = build(:access_token, %{scopes: "other_read"})
 
-    expected_conn =
-      conn
-      |> ExOauth2Provider.Plug.set_current_token(access_token)
-      |> Plug.Conn.fetch_query_params
-      |> run_plug(EnsureScopes, handler: TestHandler,
-                  scopes: ~w(read write))
+    expected_conn = conn
+                    |> ExOauth2Provider.Plug.set_current_access_token({:ok, access_token})
+                    |> Plug.Conn.fetch_query_params
+                    |> run_plug(EnsureScopes, handler: TestHandler,
+                                scopes: ~w(read write))
 
     assert unauthorized?(expected_conn)
   end
@@ -97,12 +94,11 @@ defmodule ExOauth2Provider.Plug.EnsureScopeTest do
   test "is invalid when none of the one_of scopes is present", %{conn: conn} do
     access_token = build(:access_token, %{scopes: "other_read"})
 
-    expected_conn =
-      conn
-      |> ExOauth2Provider.Plug.set_current_token(access_token)
-      |> Plug.Conn.fetch_query_params
-      |> run_plug(EnsureScopes, handler: TestHandler,
-                  one_of: [~w(other_write), ~w(read write)])
+    expected_conn = conn
+                    |> ExOauth2Provider.Plug.set_current_access_token({:ok, access_token})
+                    |> Plug.Conn.fetch_query_params
+                    |> run_plug(EnsureScopes, handler: TestHandler,
+                                one_of: [~w(other_write), ~w(read write)])
 
     assert unauthorized?(expected_conn)
   end
@@ -110,23 +106,21 @@ defmodule ExOauth2Provider.Plug.EnsureScopeTest do
   test "is valid when at least one_of the scopes is present", %{conn: conn} do
     access_token = build(:access_token, %{scopes: "other_read"})
 
-    expected_conn =
-      conn
-      |> ExOauth2Provider.Plug.set_current_token(access_token)
-      |> Plug.Conn.fetch_query_params
-      |> run_plug(EnsureScopes, handler: TestHandler,
-                  one_of: [~w(other_read), ~w(read write)])
+    expected_conn = conn
+                    |> ExOauth2Provider.Plug.set_current_access_token({:ok, access_token})
+                    |> Plug.Conn.fetch_query_params
+                    |> run_plug(EnsureScopes, handler: TestHandler,
+                                one_of: [~w(other_read), ~w(read write)])
 
     refute unauthorized?(expected_conn)
   end
 
   test "halts the connection", %{conn: conn, access_token: access_token} do
-    expected_conn =
-      conn
-      |> ExOauth2Provider.Plug.set_current_token(access_token)
-      |> Plug.Conn.fetch_query_params
-      |> run_plug(EnsureScopes, handler: TestHandler,
-                  scopes: ~w(read :write :other_read))
+    expected_conn = conn
+                    |> ExOauth2Provider.Plug.set_current_access_token({:ok, access_token})
+                    |> Plug.Conn.fetch_query_params
+                    |> run_plug(EnsureScopes, handler: TestHandler,
+                                scopes: ~w(read :write :other_read))
 
     assert expected_conn.halted
   end

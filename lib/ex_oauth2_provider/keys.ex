@@ -2,8 +2,8 @@ defmodule ExOauth2Provider.Keys do
   @moduledoc false
 
   @doc false
-  def token_key(key \\ :default) do
-    String.to_atom("#{base_key(key)}_token")
+  def access_token_key(key \\ :default) do
+    String.to_atom("#{base_key(key)}_access_token")
   end
 
   @doc false

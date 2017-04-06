@@ -28,39 +28,26 @@ defmodule ExOauth2Provider.Plug.EnsureAuthenticatedTest do
 
   test "init/1 sets the handler option to the module that's passed in" do
     %{handler: handler_opts} = EnsureAuthenticated.init(handler: TestHandler)
-
     assert handler_opts == {TestHandler, :unauthenticated}
   end
 
-  test "init/1 defaults the handler option to ExOauth2Provider.Plug.ErrorHandler" do
-    %{handler: handler_opts} = EnsureAuthenticated.init %{}
-
+  test "init/1 with default options" do
+    assert %{handler: handler_opts, key: :default} = EnsureAuthenticated.init %{}
     assert handler_opts == {ExOauth2Provider.Plug.ErrorHandler, :unauthenticated}
   end
 
-  test "init/1 with default options" do
-    options = EnsureAuthenticated.init %{}
-
-    assert options == %{
-      handler: {ExOauth2Provider.Plug.ErrorHandler, :unauthenticated},
-      key: :default
-    }
-  end
-
   test "doesn't call unauth when valid token for default key", context do
-    ensured_conn =
-      context.conn
-      |> ExOauth2Provider.Plug.set_current_token(context.access_token)
-      |> run_plug(EnsureAuthenticated, handler: TestHandler)
+    ensured_conn = context.conn
+                   |> ExOauth2Provider.Plug.set_current_access_token({:ok, context.access_token})
+                   |> run_plug(EnsureAuthenticated, handler: TestHandler)
 
     refute must_authenticate?(ensured_conn)
   end
 
   test "doesn't call unauthenticated when valid token for key", context do
-    ensured_conn =
-      context.conn
-      |> ExOauth2Provider.Plug.set_current_token(context.access_token, :secret)
-      |> run_plug(EnsureAuthenticated, handler: TestHandler, key: :secret)
+    ensured_conn = context.conn
+                   |> ExOauth2Provider.Plug.set_current_access_token({:ok, context.access_token}, :secret)
+                   |> run_plug(EnsureAuthenticated, handler: TestHandler, key: :secret)
 
     refute must_authenticate?(ensured_conn)
   end
@@ -72,23 +59,13 @@ defmodule ExOauth2Provider.Plug.EnsureAuthenticatedTest do
   end
 
   test "calls unauthenticated when no token for key", context do
-    ensured_conn = run_plug(
-      context.conn,
-      EnsureAuthenticated,
-      handler: TestHandler,
-      key: :secret
-    )
+    ensured_conn = run_plug(context.conn, EnsureAuthenticated, handler: TestHandler, key: :secret)
 
     assert must_authenticate?(ensured_conn)
   end
 
   test "it halts the connection", context do
-    ensured_conn = run_plug(
-      context.conn,
-      EnsureAuthenticated,
-      handler: TestHandler,
-      key: :secret
-    )
+    ensured_conn = run_plug(context.conn, EnsureAuthenticated, handler: TestHandler, key: :secret)
 
     assert ensured_conn.halted
   end

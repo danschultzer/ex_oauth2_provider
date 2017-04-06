@@ -142,20 +142,20 @@ defmodule MyApp.MyController do
 end
 ```
 
-### Current resource and token
+### Current resource owner and token
 
-Access to the current resource and token is useful. Note, you'll need to have run the VerifyHeader for token and resource access.
+Access to the current resource owner and token is useful. You'll need to have run the VerifyHeader for token and resource access.
 
 ```elixir
-ExOauth2Provider.Plug.current_token(conn) # access the token in the default location
-ExOauth2Provider.Plug.current_token(conn, :secret) # access the token in the secret location
+ExOauth2Provider.Plug.current_access_token(conn) # access the token in the default location
+ExOauth2Provider.Plug.current_access_token(conn, :secret) # access the token in the secret location
 ```
 
 For the resource
 
 ```elixir
-ExOauth2Provider.Plug.current_resource(conn) # Access the loaded resource in the default location
-ExOauth2Provider.Plug.current_resource(conn, :secret) # Access the loaded resource in the secret location
+ExOauth2Provider.Plug.current_resource_owner(conn) # Access the loaded resource in the default location
+ExOauth2Provider.Plug.current_resource_owner(conn, :secret) # Access the loaded resource in the secret location
 ```
 
 ## Acknowledgement
