@@ -112,8 +112,8 @@ defmodule ExOauth2Provider.OauthAccessTokens do
     |> Map.merge(%{resource_owner_id: resource_owner.id})
     |> case do
       %{application: application} = attrs -> attrs
-                                             |> Map.merge(%{application_id: application.id})
-                                             |> Map.delete(:application)
+                                    |> Map.merge(%{application_id: application.id})
+                                    |> Map.delete(:application)
       attrs -> attrs
     end
     |> Enum.reduce(OauthAccessToken, fn({k,v}, query) ->
