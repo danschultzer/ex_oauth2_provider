@@ -8,6 +8,7 @@ defmodule ExOauth2ProviderTest do
   alias ExOauth2Provider.Test.Repo
 
   test "it rejects" do
+    assert authenticate_token(nil) == {:error, :token_inaccessible}
     assert authenticate_token("secret") == {:error, :token_not_found}
   end
 
