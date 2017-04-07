@@ -43,5 +43,4 @@ defmodule ExOauth2Provider.Token.ClientCredentials do
       {:error, error}     -> Util.add_error(params, error)
     end
   end
-
 end

@@ -3,7 +3,7 @@ defmodule ExOauth2Provider.Token.Util do
   alias ExOauth2Provider.OauthAccessTokens
   alias ExOauth2Provider.OauthAccessGrants.OauthAccessGrant
   alias ExOauth2Provider.Token.Util
-  alias ExOauth2Provider.Token.Util.Error
+  alias ExOauth2Provider.Util.Error
 
   @doc false
   def load_client(%{request: %{"client_id" => client_id, "client_secret" => client_secret}} = params) do

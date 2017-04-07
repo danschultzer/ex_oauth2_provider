@@ -5,7 +5,7 @@ defmodule ExOauth2Provider.Token.AuthorizationCode do
   alias ExOauth2Provider.OauthAccessGrants
   alias ExOauth2Provider.Token.Util
   alias ExOauth2Provider.Token.Util.Response
-  alias ExOauth2Provider.Token.Util.Error
+  alias ExOauth2Provider.Util.Error
 
   @doc """
   Will grant access token by client credentials.

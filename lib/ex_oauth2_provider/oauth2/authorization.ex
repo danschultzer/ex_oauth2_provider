@@ -8,6 +8,7 @@ defmodule ExOauth2Provider.Authorization do
   alias ExOauth2Provider.RedirectURI
   alias ExOauth2Provider.Scopes
   import ExOauth2Provider.Utils
+  alias ExOauth2Provider.Util.Error
 
   @doc """
   Will check if there's already an existing access token with same scope and client
@@ -132,7 +133,7 @@ defmodule ExOauth2Provider.Authorization do
     |> load_client
     |> set_defaults
     |> validate_request
-    |> add_error(access_denied())
+    |> add_error(Error.access_denied())
     |> deny_response
   end
 
@@ -143,11 +144,11 @@ defmodule ExOauth2Provider.Authorization do
   @doc false
   defp load_client(%{request: %{"client_id" => client_id}} = params) do
     case OauthApplications.get_application(client_id) do
-      nil -> add_error(params, invalid_client())
+      nil -> add_error(params, Error.invalid_client())
       client -> Map.merge(params, %{client: client})
     end
   end
-  defp load_client(params), do: add_error(params, invalid_request())
+  defp load_client(params), do: add_error(params, Error.invalid_request())
 
   @doc false
   defp set_defaults(%{error: _} = params), do: params
@@ -176,7 +177,7 @@ defmodule ExOauth2Provider.Authorization do
   defp validate_resource_owner(%{resource_owner: resource_owner} = params) do
     case resource_owner do
       %{id: _} -> params
-      _ -> add_error(params, invalid_request())
+      _ -> add_error(params, Error.invalid_request())
     end
   end
 
@@ -188,7 +189,7 @@ defmodule ExOauth2Provider.Authorization do
     |> Scopes.all?(scopes |> Scopes.to_list)
     |> case do
       true -> params
-      _    -> add_error(params, invalid_scopes())
+      _    -> add_error(params, Error.invalid_scopes())
     end
   end
 
@@ -207,61 +208,25 @@ defmodule ExOauth2Provider.Authorization do
     cond do
       RedirectURI.native_uri?(redirect_uri) -> params
       RedirectURI.valid_for_authorization?(redirect_uri, client.redirect_uri) -> params
-      true -> add_error(params, invalid_redirect_uri())
+      true -> add_error(params, Error.invalid_redirect_uri())
     end
   end
-  defp validate_redirect_uri(params), do: add_error(params, invalid_request())
+  defp validate_redirect_uri(params), do: add_error(params, Error.invalid_request())
 
   @doc false
   defp validate_response_type(%{error: _} = params), do: params
   defp validate_response_type(%{request: %{"response_type" => response_type}} = params) do
     case response_type === "code" do
       true  -> params
-      false -> add_error(params, unsupported_response_type())
+      false -> add_error(params, Error.unsupported_response_type())
     end
   end
-  defp validate_response_type(params), do: add_error(params, invalid_request())
+  defp validate_response_type(params), do: add_error(params, Error.invalid_request())
 
   @doc false
   defp add_error(%{error: _} = params, _), do: params
   defp add_error(params, {:error, error, http_status}) do
     Map.merge(params, %{error: error, error_http_status: http_status})
-  end
-
-  @doc false
-  defp invalid_request do
-    msg = "The request is missing a required parameter, includes an unsupported parameter value, or is otherwise malformed."
-    {:error, %{error: :invalid_request, error_description: msg}, :bad_request}
-  end
-
-  @doc false
-  defp invalid_client do
-    msg = "Client authentication failed due to unknown client, no client authentication included, or unsupported authentication method."
-    {:error, %{error: :invalid_client, error_description: msg}, :unprocessable_entity}
-  end
-
-  @doc false
-  defp invalid_scopes do
-    msg = "The requested scope is invalid, unknown, or malformed."
-    {:error, %{error: :invalid_scope, error_description: msg}, :unprocessable_entity}
-  end
-
-  @doc false
-  defp invalid_redirect_uri do
-    msg = "The redirect uri included is not valid."
-    {:error, %{error: :invalid_redirect_uri, error_description: msg}, :unprocessable_entity}
-  end
-
-  @doc false
-  defp access_denied do
-    msg = "The resource owner or authorization server denied the request."
-    {:error, %{error: :access_denied, error_description: msg}, :unauthorized}
-  end
-
-  @doc false
-  defp unsupported_response_type do
-    msg = "The authorization server does not support this response type."
-    {:error, %{error: :unsupported_response_type, error_description: msg}, :unprocessable_entity}
   end
 
   @doc false
