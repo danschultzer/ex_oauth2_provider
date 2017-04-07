@@ -1,8 +1,8 @@
-defmodule ExOauth2Provider.Authorization.GrantTest do
+defmodule ExOauth2Provider.TokenTest do
   use ExOauth2Provider.TestCase
   doctest ExOauth2Provider
 
-  import ExOauth2Provider.Authorization.Grant
+  import ExOauth2Provider.Token
 
   import ExOauth2Provider.Factory
   import Ecto.Query
@@ -50,20 +50,20 @@ defmodule ExOauth2Provider.Authorization.GrantTest do
     {:ok, %{user: user, application: application}}
   end
 
-  test "#authorize/1 error when invalid grant_type" do
+  test "#grant/1 error when invalid grant_type" do
     request_invalid_grant_type = Map.merge(%{"client_id" => @client_id,
                                              "client_secret" => @client_secret,
                                              "grant_type" => "client_credentials"},
                                            %{"grant_type" => "invalid"})
-    assert {:error, error, :unprocessable_entity} = authorize(request_invalid_grant_type)
+    assert {:error, error, :unprocessable_entity} = grant(request_invalid_grant_type)
     assert error == @invalid_grant_type
   end
 
   describe "for client_credentials" do
-    test "#authorize/1 returns access token", %{application: application} do
-      assert {:ok, access_token} = authorize(%{"client_id" => @client_id,
-                                               "client_secret" => @client_secret,
-                                               "grant_type" => "client_credentials"})
+    test "#grant/1 returns access token", %{application: application} do
+      assert {:ok, access_token} = grant(%{"client_id" => @client_id,
+                                           "client_secret" => @client_secret,
+                                           "grant_type" => "client_credentials"})
       assert access_token.access_token == get_last_access_token().token
       assert get_last_access_token().resource_owner_id == application.resource_owner_id
       assert get_last_access_token().application_id == application.id
@@ -81,8 +81,8 @@ defmodule ExOauth2Provider.Authorization.GrantTest do
       {:ok, %{user: user, application: application, access_grant: access_grant}}
     end
 
-    test "#authorize/1 returns access token", %{user: user, application: application, access_grant: access_grant} do
-      assert {:ok, access_token} = authorize(@valid_request)
+    test "#grant/1 returns access token", %{user: user, application: application, access_grant: access_grant} do
+      assert {:ok, access_token} = grant(@valid_request)
       assert access_token.access_token == get_last_access_token().token
       assert get_last_access_token().resource_owner_id == user.id
       assert get_last_access_token().application_id == application.id
@@ -91,66 +91,66 @@ defmodule ExOauth2Provider.Authorization.GrantTest do
       assert get_last_access_token().refresh_token !== nil
     end
 
-    test "#authorize/1 can't use grant twice", %{} do
-      assert {:ok, _} = authorize(@valid_request)
-      assert {:error, %{error: :invalid_grant}, _} = authorize(@valid_request)
+    test "#grant/1 can't use grant twice", %{} do
+      assert {:ok, _} = grant(@valid_request)
+      assert {:error, %{error: :invalid_grant}, _} = grant(@valid_request)
     end
 
-    test "#authorize/1 doesn't duplicate access token", %{user: user, application: application} do
-      assert {:ok, access_token} = authorize(@valid_request)
+    test "#grant/1 doesn't duplicate access token", %{user: user, application: application} do
+      assert {:ok, access_token} = grant(@valid_request)
       access_grant = fixture(:access_grant, application, user, "new_code")
       valid_request = Map.merge(@valid_request, %{"code" => access_grant.token})
-      assert {:ok, access_token2} = authorize(valid_request)
+      assert {:ok, access_token2} = grant(valid_request)
       assert access_token.access_token == access_token2.access_token
     end
 
-    test "#authorize/1 error when invalid client" do
+    test "#grant/1 error when invalid client" do
       request_invalid_client = Map.merge(@valid_request, %{"client_id" => "invalid"})
-      assert {:error, error, :unprocessable_entity} = authorize(request_invalid_client)
+      assert {:error, error, :unprocessable_entity} = grant(request_invalid_client)
       assert error == @invalid_client_error
     end
 
-    test "#authorize/1 error when invalid secret" do
+    test "#grant/1 error when invalid secret" do
       request_invalid_client = Map.merge(@valid_request, %{"client_secret" => "invalid"})
-      assert {:error, error, :unprocessable_entity} = authorize(request_invalid_client)
+      assert {:error, error, :unprocessable_entity} = grant(request_invalid_client)
       assert error == @invalid_client_error
     end
 
-    test "#authorize/1 error when invalid grant" do
+    test "#grant/1 error when invalid grant" do
       request_invalid_grant = Map.merge(@valid_request, %{"code" => "invalid"})
-      assert {:error, error, :unprocessable_entity} = authorize(request_invalid_grant)
+      assert {:error, error, :unprocessable_entity} = grant(request_invalid_grant)
       assert error == @invalid_grant
     end
 
-    test "#authorize/1 error when grant owned by another client", %{access_grant: access_grant} do
+    test "#grant/1 error when grant owned by another client", %{access_grant: access_grant} do
       new_application = insert(:application, %{uid: "new_app", resource_owner_id: 0})
       changeset = Ecto.Changeset.change access_grant, application_id: new_application.id
       ExOauth2Provider.repo.update! changeset
 
-      assert {:error, error, :unprocessable_entity} = authorize(@valid_request)
+      assert {:error, error, :unprocessable_entity} = grant(@valid_request)
       assert error == @invalid_grant
     end
 
-    test "#authorize/1 error when grant expired", %{access_grant: access_grant} do
+    test "#grant/1 error when grant expired", %{access_grant: access_grant} do
       inserted_at = NaiveDateTime.utc_now |> NaiveDateTime.add(-access_grant.expires_in, :second)
       access_grant
       |> Ecto.Changeset.change(%{inserted_at: inserted_at})
       |> ExOauth2Provider.repo.update()
 
-      assert {:error, error, :unprocessable_entity} = authorize(@valid_request)
+      assert {:error, error, :unprocessable_entity} = grant(@valid_request)
       assert error == @invalid_grant
     end
 
-    test "#authorize/1 error when grant revoked", %{access_grant: access_grant} do
+    test "#grant/1 error when grant revoked", %{access_grant: access_grant} do
       ExOauth2Provider.OauthAccessGrants.revoke(access_grant)
 
-      assert {:error, error, :unprocessable_entity} = authorize(@valid_request)
+      assert {:error, error, :unprocessable_entity} = grant(@valid_request)
       assert error == @invalid_grant
     end
 
-    test "#authorize/1 error when invalid redirect_uri" do
+    test "#grant/1 error when invalid redirect_uri" do
       request_invalid_redirect_uri = Map.merge(@valid_request, %{"redirect_uri" => "invalid"})
-      assert {:error, error, :unprocessable_entity} = authorize(request_invalid_redirect_uri)
+      assert {:error, error, :unprocessable_entity} = grant(request_invalid_redirect_uri)
       assert error == @invalid_grant
     end
   end

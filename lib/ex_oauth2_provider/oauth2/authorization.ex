@@ -1,4 +1,4 @@
-defmodule ExOauth2Provider.Authorization.Request do
+defmodule ExOauth2Provider.Authorization do
   @moduledoc """
   Functions for dealing with authorization code.
   """

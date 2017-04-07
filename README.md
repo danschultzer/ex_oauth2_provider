@@ -2,7 +2,7 @@
 
 [![Build Status](https://travis-ci.org/danschultzer/ex_oauth2_provider.svg?branch=master)](https://travis-ci.org/danschultzer/ex_oauth2_provider)
 
-The no brainer library to add OAuth 2 provider functionality to your elixir or phoenix app.
+The no brainer library to add OAuth 2 provider functionality to your elixir or Phoenix app.
 
 ## Installation
 
@@ -34,57 +34,63 @@ mix ecto.gen.migration --change "    create table(:users) do\n      add :email, 
 
 And use the struct in [test/support/dummy/models/user.ex](test/support/dummy/models/user.ex).
 
-## Authorization Code Flow
+## Authorize Code Flow
+
+### Authorization Request
+
+You'll need to ensure that a resource_owner is already authenticated on these pages, and pass the struct as first argument in the following methods.
 
 ```elixir
-# GET /oauth/authorize
-case AuthorizationCode.preauthorize(resource_owner, params) do
-  {:ok, client, scopes} ->
-    # render authorization page
-  {:native_redirect, %{code: code}} ->
-    # redirect to authorized page showing code
-  {:redirect, redirect_uri} ->
-    # redirect
-  {:error, error, http_status} ->
-    # render error page
+# GET /oauth/authorize?response_type=code&client_id=CLIENT_ID&redirect_uri=CALLBACK_URL&scope=read
+case ExOauth2Provider.Authorization.preauthorize(resource_owner, params) do
+  {:ok, client, scopes}             -> # render authorization page
+  {:redirect, redirect_uri}         -> # redirect to redirect_uri
+  {:native_redirect, %{code: code}} -> # redirect to a local token :show endpoint
+  {:error, error, http_status}      -> # render error page
 end
 
-# POST /oauth/authorize
-AuthorizationCode.authorize(params) do
-  {:redirect, redirect_uri} ->
-    # redirect
-  {:native_redirect, %{code: code}} ->
-    # redirect to authorized page showing code
-  {:error, error, http_status} ->
-    # JSON response
+# POST /oauth/authorize?response_type=code&client_id=CLIENT_ID&redirect_uri=CALLBACK_URL&scope=read
+ExOauth2Provider.Authorization.authorize(resource_owner, params) do
+  {:redirect, redirect_uri}         -> # redirect to redirect_uri
+  {:native_redirect, %{code: code}} -> # redirect to a token :show endpoint
+  {:error, error, http_status}      -> # render error page
 end
 
-# DELETE /oauth/authorize
-AuthorizationCode.deny(params) do
-  {:redirect, redirect_uri} ->
-    # redirect
-  {:error, error, http_status} ->
-    # JSON response
+# DELETE /oauth/authorize?response_type=code&client_id=CLIENT_ID&redirect_uri=CALLBACK_URL&scope=read
+ExOauth2Provider.Authorization.deny(resource_owner, params) do
+  {:redirect, redirect_uri}         -> # redirect to redirect_uri
+  {:error, error, http_status}      -> # render error page
 end
 ```
 
-## Access token grant
+### Authorization Code Grant
 
 ```elixir
-# GET /oauth/token
-case AccessToken.authorize(params) do
+# POST /oauth/token?client_id=CLIENT_ID&client_secret=CLIENT_SECRET&grant_type=authorization_code&code=AUTHORIZATION_CODE&redirect_uri=CALLBACK_URL
+case ExOauth2Provider.Token.grant(params) do
+  {:ok, access_token}               -> # JSON response
+  {:error, error, http_status}      -> # JSON response
+end
+```
+
+### Revoke
+
+```elixir
+# GET /oauth/revoke?client_id=CLIENT_ID&client_secret=CLIENT_SECRET&grant_type=authorization_code&code=AUTHORIZATION_CODE&redirect_uri=CALLBACK_URL
+case ExOauth2Provider.Token.revoke(params) do
   {:ok, access_token}          -> # JSON response
   {:error, error, http_status} -> # JSON response
 end
 ```
 
-## Revoke access token
+### Other grant types
 
+#### Client credentials
 ```elixir
-# GET /oauth/revoke
-case AccessToken.revoke(params) do
-  {:ok, access_token}          -> # JSON response
-  {:error, error, http_status} -> # JSON response
+# POST /oauth/token?client_id=CLIENT_ID&client_secret=CLIENT_SECRET&grant_type=client_credentials
+case ExOauth2Provider.Token.grant(params) do
+  {:ok, access_token}               -> # JSON response
+  {:error, error, http_status}      -> # JSON response
 end
 ```
 

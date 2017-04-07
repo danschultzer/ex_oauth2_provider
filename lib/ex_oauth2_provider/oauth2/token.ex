@@ -1,4 +1,4 @@
-defmodule ExOauth2Provider.Authorization.Grant do
+defmodule ExOauth2Provider.Token do
   @moduledoc """
   Functions for dealing with authorization grant.
   """
@@ -8,8 +8,9 @@ defmodule ExOauth2Provider.Authorization.Grant do
 
   @doc """
   Will attempt to authorize an access grant.
+
   ## Authorization Code Grant Example
-    ExOauth2Provider.Authorization.Grant.authorize(%{
+    ExOauth2Provider.Token.grant(%{
       "code" => "1jf6a",
       "client_id" => "Jf5rM8hQBc",
       "client_secret" => "secret",
@@ -22,7 +23,7 @@ defmodule ExOauth2Provider.Authorization.Grant do
 
   ## Client Credentials Grant Example
     resource_owner
-    |> ExOauth2Provider.Authorization.Grant.authorize(%{
+    |> ExOauth2Provider.Token.grant(%{
       "grant_type" => "client_credentials",
       "client_id" => "Jf5rM8hQBc",
       "client_secret" => "secret"
@@ -31,13 +32,13 @@ defmodule ExOauth2Provider.Authorization.Grant do
     {:ok, access_token}
     {:error, %{error: error, error_description: _}, http_status}
   """
-  def authorize(%{"grant_type" => "client_credentials"} = request) do
+  def grant(%{"grant_type" => "client_credentials"} = request) do
     %{request: request}
     |> load_client
     |> issue_access_token_by_creds
     |> authorize_response
   end
-  def authorize(%{"grant_type" => "authorization_code"} = request) do
+  def grant(%{"grant_type" => "authorization_code"} = request) do
     %{request: request}
     |> load_client
     |> load_access_grant
@@ -45,8 +46,8 @@ defmodule ExOauth2Provider.Authorization.Grant do
     |> issue_access_token_by_grant
     |> authorize_response
   end
-  def authorize(%{"grant_type" => _}), do: unsupported_grant_type()
-  def authorize(_), do: invalid_request()
+  def grant(%{"grant_type" => _}), do: unsupported_grant_type()
+  def grant(_), do: invalid_request()
 
   @doc false
   defp issue_access_token_by_creds(%{error: _} = params), do: params

@@ -1,8 +1,8 @@
-defmodule ExOauth2Provider.Authorization.RequestTest do
+defmodule ExOauth2Provider.AuthorizationTest do
   use ExOauth2Provider.TestCase
   doctest ExOauth2Provider
 
-  import ExOauth2Provider.Authorization.Request
+  import ExOauth2Provider.Authorization
   import ExOauth2Provider.QueryHelper
   alias ExOauth2Provider.OauthAccessGrants
   alias ExOauth2Provider.Scopes
