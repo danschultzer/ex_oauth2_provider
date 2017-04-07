@@ -29,11 +29,8 @@ defmodule ExOauth2Provider.RedirectURI do
   @doc """
   Check if uri matches client uri
   """
-  def matches?(uri, client_uri) when is_binary(uri) do
-    matches?(URI.parse(uri), client_uri)
-  end
-  def matches?(uri, client_uri) when is_binary(client_uri) do
-    matches?(uri, URI.parse(client_uri))
+  def matches?(uri, client_uri) when is_binary(uri) and is_binary(client_uri) do
+    matches?(URI.parse(uri), URI.parse(client_uri))
   end
   def matches?(%URI{} = uri, %URI{} = client_uri) do
     uri = uri
