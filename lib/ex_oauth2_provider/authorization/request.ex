@@ -284,7 +284,7 @@ defmodule ExOauth2Provider.Authorization.Request do
   end
 
   @doc false
-  defp build_redirect_response(%{request: %{"redirect_uri" => redirect_uri}} = _, payload) do
+  defp build_redirect_response(%{request: %{"redirect_uri" => redirect_uri}}, payload) do
     case RedirectURI.native_uri?(redirect_uri) do
       true -> {:native_redirect, payload}
       _    -> {:redirect, RedirectURI.uri_with_query(redirect_uri, payload)}
@@ -292,10 +292,10 @@ defmodule ExOauth2Provider.Authorization.Request do
   end
 
   @doc false
-  defp build_standard_response(%{grant: _} = _, payload) do
+  defp build_standard_response(%{grant: _}, payload) do
     {:ok, payload}
   end
-  defp build_standard_response(%{error: error, error_http_status: error_http_status} = _, _) do
+  defp build_standard_response(%{error: error, error_http_status: error_http_status}, _) do
     {:error, error, error_http_status}
   end
   defp build_standard_response(%{error: error}, _) do # For DB errors

@@ -102,7 +102,7 @@ defmodule ExOauth2Provider.Authorization.Grant do
   end
 
   @doc false
-  defp authorize_response(%{access_token: token} = _) do
+  defp authorize_response(%{access_token: token}) do
     build_response(%{access_token: token})
   end
   defp authorize_response(%{error: _} = params) do

@@ -39,7 +39,7 @@ defmodule ExOauth2Provider.OauthAccessTokens do
       nil
 
   """
-  def get_matching_token_for(%{id: resource_owner_id} = _, %OauthApplication{id: application_id} = _, scopes) do
+  def get_matching_token_for(%{id: resource_owner_id}, %OauthApplication{id: application_id}, scopes) do
     OauthAccessToken
     |> where([x], x.application_id == ^application_id)
     |> where([x], x.resource_owner_id == ^resource_owner_id)
@@ -70,7 +70,7 @@ defmodule ExOauth2Provider.OauthAccessTokens do
       iex> get_active_tokens_for(user)
       [%OauthAccessToken{}, ...]
   """
-  def get_active_tokens_for(%{id: resource_owner_id} = _) do
+  def get_active_tokens_for(%{id: resource_owner_id}) do
     ExOauth2Provider.repo.all(from o in OauthAccessToken,
                               where: o.resource_owner_id == ^resource_owner_id and
                                      is_nil(o.revoked_at))
@@ -162,7 +162,7 @@ defmodule ExOauth2Provider.OauthAccessTokens do
     |> unique_constraint(:refresh_token)
   end
 
-  defp put_application(changeset, %{application: %OauthApplication{} = application} = _),
+  defp put_application(changeset, %{application: %OauthApplication{} = application}),
     do: put_assoc(changeset, :application, application)
   defp put_application(changeset, _), do: changeset
 

@@ -35,7 +35,7 @@ defmodule ExOauth2Provider.Mixin.Expirable do
           true
       """
       def is_expired?(nil), do: true
-      def is_expired?(%{expires_in: expires_in, inserted_at: inserted_at} = data) do
+      def is_expired?(%{expires_in: expires_in, inserted_at: inserted_at}) do
         case expires_in do
           nil -> false
           _ ->
