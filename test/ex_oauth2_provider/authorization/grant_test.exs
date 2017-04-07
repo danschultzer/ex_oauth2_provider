@@ -88,7 +88,7 @@ defmodule ExOauth2Provider.Authorization.GrantTest do
       assert get_last_access_token().application_id == application.id
       assert get_last_access_token().scopes == access_grant.scopes
       assert get_last_access_token().expires_in == ExOauth2Provider.access_token_expires_in
-      assert get_last_access_token().refresh_token != nil
+      assert get_last_access_token().refresh_token !== nil
     end
 
     test "#authorize/1 can't use grant twice", %{} do

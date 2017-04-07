@@ -65,13 +65,13 @@ defmodule ExOauth2Provider.OauthApplicationsTest do
   test "create_application/2 adds random secret", %{user: user} do
     {:ok, application} = OauthApplications.create_application(user, @valid_attrs)
     {:ok, application2} = OauthApplications.create_application(user, @valid_attrs)
-    assert application.secret != application2.secret
+    assert application.secret !== application2.secret
   end
 
   test "create_application/2 adds random uid", %{user: user} do
     {:ok, application} = OauthApplications.create_application(user, @valid_attrs)
     {:ok, application2} = OauthApplications.create_application(user, @valid_attrs)
-    assert application.uid != application2.uid
+    assert application.uid !== application2.uid
   end
 
   test "create_application/2 adds custom uid", %{user: user} do

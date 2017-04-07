@@ -215,7 +215,7 @@ defmodule ExOauth2Provider.Authorization.Request do
   @doc false
   defp validate_response_type(%{error: _} = params), do: params
   defp validate_response_type(%{request: %{"response_type" => response_type}} = params) do
-    case response_type == "code" do
+    case response_type === "code" do
       true  -> params
       false -> add_error(params, unsupported_response_type())
     end
@@ -304,8 +304,8 @@ defmodule ExOauth2Provider.Authorization.Request do
 
   @doc false
   defp can_redirect?(%{error: %{error: error_name}, request: %{"redirect_uri" => redirect_uri}}) do
-    error_name != :invalid_redirect_uri &&
-    error_name != :invalid_client &&
+    error_name !== :invalid_redirect_uri &&
+    error_name !== :invalid_client &&
     !RedirectURI.native_uri?(redirect_uri)
   end
   defp can_redirect?(%{error: _}), do: false
