@@ -152,7 +152,7 @@ defmodule ExOauth2Provider.Authorization do
   @doc false
   defp set_defaults(%{error: _} = params), do: params
   defp set_defaults(%{request: request, client: client} = params) do
-    redirect_uri = String.split(client.redirect_uri) |> Kernel.hd
+    redirect_uri = client.redirect_uri |> String.split |> Kernel.hd
 
     request = %{"redirect_uri" => redirect_uri, "scope" => Scopes.default_server_scopes |> Scopes.to_string}
     |> Map.merge(request)
