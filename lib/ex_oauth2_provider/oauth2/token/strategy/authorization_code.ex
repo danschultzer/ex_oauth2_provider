@@ -45,9 +45,9 @@ defmodule ExOauth2Provider.Token.AuthorizationCode do
     end)
 
     case result do
-      {:ok, {:error} = error}    -> Util.add_error(params, error)
+      {:ok, {:error} = error}    -> Error.add_error(params, error)
       {:ok, {:ok, access_token}} -> Map.merge(params, %{access_token: access_token})
-      {:error, error}            -> Util.add_error(params, error)
+      {:error, error}            -> Error.add_error(params, error)
     end
   end
 
@@ -67,11 +67,11 @@ defmodule ExOauth2Provider.Token.AuthorizationCode do
       |> ExOauth2Provider.repo.preload(:application)
 
     case access_grant do
-      nil          -> Util.add_error(params, Error.invalid_grant())
+      nil          -> Error.add_error(params, Error.invalid_grant())
       access_grant -> Map.merge(params, %{access_grant: access_grant})
     end
   end
-  defp load_access_grant(params), do: Util.add_error(params, Error.invalid_grant())
+  defp load_access_grant(params), do: Error.add_error(params, Error.invalid_grant())
 
 
   @doc false
@@ -79,9 +79,9 @@ defmodule ExOauth2Provider.Token.AuthorizationCode do
   defp validate_redirect_uri(%{request: %{"redirect_uri" => redirect_uri}, access_grant: grant} = params) do
     case grant.redirect_uri === redirect_uri do
       true  -> params
-      false -> Util.add_error(params, Error.invalid_grant())
+      false -> Error.add_error(params, Error.invalid_grant())
     end
   end
-  defp validate_redirect_uri(params), do: Util.add_error(params, Error.invalid_grant())
+  defp validate_redirect_uri(params), do: Error.add_error(params, Error.invalid_grant())
 
 end

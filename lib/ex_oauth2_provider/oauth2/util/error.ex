@@ -1,5 +1,11 @@
 defmodule ExOauth2Provider.Util.Error do
   @doc false
+  def add_error(%{error: _} = params, _), do: params
+  def add_error(params, {:error, error, http_status}) do
+    Map.merge(params, %{error: error, error_http_status: http_status})
+  end
+
+  @doc false
   def invalid_request do
     msg = "The request is missing a required parameter, includes an unsupported parameter value, or is otherwise malformed."
     {:error, %{error: :invalid_request, error_description: msg}, :bad_request}

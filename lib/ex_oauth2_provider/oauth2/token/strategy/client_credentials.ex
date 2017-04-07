@@ -2,6 +2,7 @@ defmodule ExOauth2Provider.Token.ClientCredentials do
   @moduledoc """
   Functions for dealing with client credentials strategy.
   """
+  alias ExOauth2Provider.Util.Error
   alias ExOauth2Provider.Token.Util
   alias ExOauth2Provider.Token.Util.Response
 
@@ -40,7 +41,7 @@ defmodule ExOauth2Provider.Token.ClientCredentials do
 
     case Util.create_access_token(client.resource_owner, token_params) do
       {:ok, access_token} -> Map.merge(params, %{access_token: access_token})
-      {:error, error}     -> Util.add_error(params, error)
+      {:error, error}     -> Error.add_error(params, error)
     end
   end
 end

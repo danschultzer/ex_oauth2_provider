@@ -1,24 +1,28 @@
 defmodule ExOauth2Provider.Authorization do
   @moduledoc """
-  Functions for dealing with authorization code.
+  Functions for dealing with authorization flow.
   """
   alias ExOauth2Provider.OauthApplications
   alias ExOauth2Provider.OauthAccessTokens
   alias ExOauth2Provider.OauthAccessGrants
   alias ExOauth2Provider.RedirectURI
   alias ExOauth2Provider.Scopes
-  import ExOauth2Provider.Utils
+  alias ExOauth2Provider.Authorization.Util.Response
   alias ExOauth2Provider.Util.Error
+  alias ExOauth2Provider.Authorization.Util
+  alias ExOauth2Provider.Authorization.Util.Response
 
   @doc """
   Will check if there's already an existing access token with same scope and client
   for the resource owner.
+
   ## Example
     resource_owner
     |> ExOauth2Provider.Authorization.Request.preauthorize(%{
       "client_id" => "Jf5rM8hQBc",
       "response_type" => "code"
     })
+
   ## Response
     {:ok, client, scopes}                                         # Show request page with client and scopes
     {:error, %{error: error, error_description: _}, http_status}  # Show error page with error and http status
@@ -27,12 +31,12 @@ defmodule ExOauth2Provider.Authorization do
   """
   def preauthorize(resource_owner, %{} = request) do
     %{resource_owner: resource_owner, request: request}
-    |> load_client
-    |> set_defaults
+    |> Util.load_client
+    |> Util.set_defaults
     |> validate_request
     |> check_previous_authorization
     |> reissue_grant
-    |> preauthorize_response
+    |> Response.preauthorize_response
   end
 
   @doc false
@@ -52,19 +56,10 @@ defmodule ExOauth2Provider.Authorization do
   end
   defp reissue_grant(params), do: params
 
-  @doc false
-  defp preauthorize_response(%{client: client, request: %{"scope" => scopes}} = params) do
-    case params do
-      %{grant: grant} -> build_response(params, %{code: grant.token})
-      %{error: error} -> build_response(params, error)
-      _ -> {:ok, client, Scopes.to_list(scopes)}
-    end
-  end
-  defp preauthorize_response(%{error: error} = params), do: build_response(params, error)
-
   @doc """
   This is used when a resource owner has authorized access. If successful,
   this will generate an access token grant.
+
   ## Example
     resource_owner
     |> ExOauth2Provider.Authorization.Request.authorize(%{
@@ -74,6 +69,7 @@ defmodule ExOauth2Provider.Authorization do
       "state" => "46012",                       # Optional
       "redirect_uri" => "https://example.com/"  # Optional
     })
+
   ## Response
     {:ok, code}                                                  # A grant was generated
     {:error, %{error: error, error_description: _}, http_status} # Error occurred
@@ -82,11 +78,11 @@ defmodule ExOauth2Provider.Authorization do
   """
   def authorize(resource_owner, %{} = request) do
     %{resource_owner: resource_owner, request: request}
-    |> load_client
-    |> set_defaults
+    |> Util.load_client
+    |> Util.set_defaults
     |> validate_request
     |> issue_grant
-    |> authorize_response
+    |> Response.authorize_response
   end
 
   @doc false
@@ -104,62 +100,32 @@ defmodule ExOauth2Provider.Authorization do
 
     case OauthAccessGrants.create_grant(resource_owner, application, grant_params) do
       {:ok, grant} -> Map.merge(params, %{grant: grant})
-      {:error, error} -> add_error(params, error)
+      {:error, error} -> Error.add_error(params, error)
     end
   end
 
-  @doc false
-  defp authorize_response(%{} = params) do
-    case params do
-      %{grant: grant} -> build_response(params, %{code: grant.token})
-      %{error: error} -> build_response(params, error)
-    end
-  end
 
   @doc """
   This is used when a resource owner has rejected access.
+
   ## Example
     resource_owner
     |> ExOauth2Provider.Authorization.Request.deny(%{
       "client_id" => "Jf5rM8hQBc",
       "response_type" => "code"
     })
+
   ## Response type
     {:error, %{error: error, error_description: _}, http_status} # Error occurred
     {:redirect, redirect_uri}                                    # Redirect
   """
   def deny(resource_owner, %{} = request) do
     %{resource_owner: resource_owner, request: request}
-    |> load_client
-    |> set_defaults
+    |> Util.load_client
+    |> Util.set_defaults
     |> validate_request
-    |> add_error(Error.access_denied())
-    |> deny_response
-  end
-
-  @doc false
-  defp deny_response(%{error: error} = params),
-    do: build_response(params, error)
-
-  @doc false
-  defp load_client(%{request: %{"client_id" => client_id}} = params) do
-    case OauthApplications.get_application(client_id) do
-      nil -> add_error(params, Error.invalid_client())
-      client -> Map.merge(params, %{client: client})
-    end
-  end
-  defp load_client(params), do: add_error(params, Error.invalid_request())
-
-  @doc false
-  defp set_defaults(%{error: _} = params), do: params
-  defp set_defaults(%{request: request, client: client} = params) do
-    redirect_uri = client.redirect_uri |> String.split |> Kernel.hd
-
-    request = %{"redirect_uri" => redirect_uri, "scope" => Scopes.default_server_scopes |> Scopes.to_string}
-    |> Map.merge(request)
-
-    params
-    |> Map.merge(%{request: request})
+    |> Error.add_error(Error.access_denied())
+    |> Response.deny_response
   end
 
   @doc false
@@ -177,7 +143,7 @@ defmodule ExOauth2Provider.Authorization do
   defp validate_resource_owner(%{resource_owner: resource_owner} = params) do
     case resource_owner do
       %{id: _} -> params
-      _ -> add_error(params, Error.invalid_request())
+      _        -> Error.add_error(params, Error.invalid_request())
     end
   end
 
@@ -189,7 +155,7 @@ defmodule ExOauth2Provider.Authorization do
     |> Scopes.all?(scopes |> Scopes.to_list)
     |> case do
       true -> params
-      _    -> add_error(params, Error.invalid_scopes())
+      _    -> Error.add_error(params, Error.invalid_scopes())
     end
   end
 
@@ -208,71 +174,18 @@ defmodule ExOauth2Provider.Authorization do
     cond do
       RedirectURI.native_uri?(redirect_uri) -> params
       RedirectURI.valid_for_authorization?(redirect_uri, client.redirect_uri) -> params
-      true -> add_error(params, Error.invalid_redirect_uri())
+      true -> Error.add_error(params, Error.invalid_redirect_uri())
     end
   end
-  defp validate_redirect_uri(params), do: add_error(params, Error.invalid_request())
+  defp validate_redirect_uri(params), do: Error.add_error(params, Error.invalid_request())
 
   @doc false
   defp validate_response_type(%{error: _} = params), do: params
   defp validate_response_type(%{request: %{"response_type" => response_type}} = params) do
     case response_type === "code" do
       true  -> params
-      false -> add_error(params, Error.unsupported_response_type())
+      false -> Error.add_error(params, Error.unsupported_response_type())
     end
   end
-  defp validate_response_type(params), do: add_error(params, Error.invalid_request())
-
-  @doc false
-  defp add_error(%{error: _} = params, _), do: params
-  defp add_error(params, {:error, error, http_status}) do
-    Map.merge(params, %{error: error, error_http_status: http_status})
-  end
-
-  @doc false
-  defp build_response(%{request: request} = params, payload) do
-    payload = add_state(payload, request)
-
-    case can_redirect?(params) do
-      true -> build_redirect_response(params, payload)
-      _ -> build_standard_response(params, payload)
-    end
-  end
-  defp add_state(payload, request) do
-    case request["state"] do
-      nil -> payload
-      state ->
-        %{"state" => state}
-        |> Map.merge(payload)
-        |> remove_empty_values
-    end
-  end
-
-  @doc false
-  defp build_redirect_response(%{request: %{"redirect_uri" => redirect_uri}}, payload) do
-    case RedirectURI.native_uri?(redirect_uri) do
-      true -> {:native_redirect, payload}
-      _    -> {:redirect, RedirectURI.uri_with_query(redirect_uri, payload)}
-    end
-  end
-
-  @doc false
-  defp build_standard_response(%{grant: _}, payload) do
-    {:ok, payload}
-  end
-  defp build_standard_response(%{error: error, error_http_status: error_http_status}, _) do
-    {:error, error, error_http_status}
-  end
-  defp build_standard_response(%{error: error}, _) do # For DB errors
-    {:error, error, :bad_request}
-  end
-
-  @doc false
-  defp can_redirect?(%{error: %{error: error_name}, request: %{"redirect_uri" => redirect_uri}}) do
-    error_name !== :invalid_redirect_uri &&
-    error_name !== :invalid_client &&
-    !RedirectURI.native_uri?(redirect_uri)
-  end
-  defp can_redirect?(%{error: _}), do: false
-  defp can_redirect?(%{request: %{}}), do: true
+  defp validate_response_type(params), do: Error.add_error(params, Error.invalid_request())
 end
