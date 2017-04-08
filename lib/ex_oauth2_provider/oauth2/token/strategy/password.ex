@@ -23,9 +23,9 @@ defmodule ExOauth2Provider.Token.Password do
     {:ok, access_token}
     {:error, %{error: error, error_description: _}, http_status}
   """
-  def grant(%{"grant_type" => "password"} = request) do
+  def grant(%{"grant_type" => "password"} = request, password_auth \\ ExOauth2Provider.password_auth()) do
     %{request: request}
-    |> get_password_auth_method
+    |> get_password_auth_method(password_auth)
     |> load_resource_owner
     |> Utils.load_client
     |> set_defaults
@@ -35,11 +35,11 @@ defmodule ExOauth2Provider.Token.Password do
   end
 
   @doc false
-  defp get_password_auth_method(params) do
-    case ExOauth2Provider.password_auth do
-      {module, method} -> Map.merge(params, %{password_auth: {module, method}})
-      _                -> Error.add_error(params, Error.unsupported_grant_type())
-    end
+  defp get_password_auth_method(params, {module, method}) do
+    Map.merge(params, %{password_auth: {module, method}})
+  end
+  defp get_password_auth_method(params, _) do
+    Error.add_error(params, Error.unsupported_grant_type())
   end
 
   @doc false
@@ -47,7 +47,7 @@ defmodule ExOauth2Provider.Token.Password do
   defp load_resource_owner(%{password_auth: {module, method}, request: %{"username" => username, "password" => password}} = params) do
     case apply(module, method, [username, password]) do
       {:ok, resource_owner} -> Map.merge(params, %{resource_owner: resource_owner})
-      {:error, reason}       -> Map.merge(params, %{error: :unauthorized, error_description: reason, error_http_status: :unauthorized})
+      {:error, reason}      -> Map.merge(params, %{error: :unauthorized, error_description: reason, error_http_status: :unauthorized})
     end
   end
   defp load_resource_owner(params), do: Error.add_error(params, Error.invalid_request())
@@ -60,7 +60,7 @@ defmodule ExOauth2Provider.Token.Password do
                      # client_credentials MUST NOT use refresh tokens
                      use_refresh_token: false}
 
-    case Utils.create_access_token(resource_owner, token_params) do
+    case Utils.find_or_create_access_token(resource_owner, token_params) do
       {:ok, access_token} -> Map.merge(params, %{access_token: access_token})
       {:error, error}     -> Error.add_error(params, error)
     end

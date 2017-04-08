@@ -11,7 +11,7 @@ defmodule ExOauth2Provider.Mixin.Revocable do
       ## Examples
 
           iex> revoke(data)
-          %Data{revoked_at: ~N[2017-04-04 19:21:22.292762], ...}
+          {:ok, %Data{revoked_at: ~N[2017-04-04 19:21:22.292762], ...}}
 
           iex> revoke(invalid_data)
           {:error, %Ecto.Changeset{}}
@@ -41,7 +41,7 @@ defmodule ExOauth2Provider.Mixin.Revocable do
       end
 
       @doc """
-      Checks if ectod ata has been revoked.
+      Checks if ecto data has been revoked.
 
       ## Examples
 

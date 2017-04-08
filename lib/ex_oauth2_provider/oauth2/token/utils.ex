@@ -18,12 +18,10 @@ defmodule ExOauth2Provider.Token.Utils do
   def load_client(params), do: Error.add_error(params, Error.invalid_request())
 
   @doc false
-  def create_access_token({:error, _} = error, _), do: error
-  def create_access_token({:ok, %OauthAccessGrant{} = access_grant}, token_params),
-    do: create_access_token(access_grant.resource_owner, token_params)
-  # def create_access_token({:ok, %AccessTokens.AccessToken{} = access_token}, token_params),
-  #   do: create_access_token(access_token.resource_owner, token_params)
-  def create_access_token(%{id: _} = resource_owner, token_params) do
+  def find_or_create_access_token({:error, _} = error, _), do: error
+  def find_or_create_access_token({:ok, %OauthAccessGrant{} = access_grant}, token_params),
+    do: find_or_create_access_token(access_grant.resource_owner, token_params)
+  def find_or_create_access_token(%{id: _} = resource_owner, token_params) do
     token_params = %{expires_in: ExOauth2Provider.access_token_expires_in}
                    |> Map.merge(token_params)
     OauthAccessTokens.find_or_create_token(resource_owner, token_params)

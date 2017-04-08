@@ -5,6 +5,8 @@ defmodule ExOauth2Provider.Token.Strategy.PasswordTest do
   import ExOauth2Provider.Test.Fixture
   import ExOauth2Provider.Test.QueryHelper
 
+  alias ExOauth2Provider.Token.Password
+
   @client_id            "Jf5rM8hQBc"
   @client_secret        "secret"
   @username             "testuser@example.com"
@@ -56,6 +58,13 @@ defmodule ExOauth2Provider.Token.Strategy.PasswordTest do
   test "#grant/1 error when invalid scope" do
     assert {:error, error, :unprocessable_entity} = grant(Map.merge(@valid_request, %{"scope" => "invalid"}))
     assert error == @invalid_scope
+  end
+
+  test "#grant/1 error when no password auth set" do
+    assert {:error, error, :unprocessable_entity} = Password.grant(@valid_request, nil)
+    assert error == %{error: :unsupported_grant_type,
+                      error_description: "The authorization grant type is not supported by the authorization server."
+                    }
   end
 
   test "#grant/1 returns access token", %{application: application} do

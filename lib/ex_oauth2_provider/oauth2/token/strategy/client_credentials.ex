@@ -40,7 +40,7 @@ defmodule ExOauth2Provider.Token.ClientCredentials do
                      # client_credentials MUST NOT use refresh tokens
                      use_refresh_token: false}
 
-    case Utils.create_access_token(client.resource_owner, token_params) do
+    case Utils.find_or_create_access_token(client.resource_owner, token_params) do
       {:ok, access_token} -> Map.merge(params, %{access_token: access_token})
       {:error, error}     -> Error.add_error(params, error)
     end

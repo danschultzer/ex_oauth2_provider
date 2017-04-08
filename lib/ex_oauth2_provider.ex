@@ -13,19 +13,19 @@ defmodule ExOauth2Provider do
         use_refresh_token: false
   """
 
-  @config                        Application.get_env(:ex_oauth2_provider, ExOauth2Provider, [])
-  @fallback_config               Application.get_env(:phoenix_oauth2_provider, PhoenixOauth2Provider, [])
+  @config                        Application.get_env(:ex_oauth2_provider, ExOauth2Provider, Application.get_env(:phoenix_oauth2_provider, PhoenixOauth2Provider, []))
 
-  @repo                          Keyword.get(@config, :repo, Keyword.get(@fallback_config, :repo))
-  @resource_owner_struct         Keyword.get(@config, :resource_owner, Keyword.get(@fallback_config, :resource_owner))
-  @default_scopes                Keyword.get(@config, :default_scopes, Keyword.get(@fallback_config, :default_scopes, []))
-  @optional_scopes               Keyword.get(@config, :optional_scopes, Keyword.get(@fallback_config, :optional_scopes, []))
+  @repo                          Keyword.get(@config, :repo)
+  @resource_owner_struct         Keyword.get(@config, :resource_owner)
+  @default_scopes                Keyword.get(@config, :default_scopes, [])
+  @optional_scopes               Keyword.get(@config, :optional_scopes, [])
   @server_scopes                 @default_scopes ++ @optional_scopes
-  @native_redirect_uri           Keyword.get(@config, :native_redirect_uri, Keyword.get(@fallback_config, :native_redirect_uri, "urn:ietf:wg:oauth:2.0:oob"))
-  @authorization_code_expires_in Keyword.get(@config, :authorization_code_expires_in, Keyword.get(@fallback_config, :authorization_code_expires_in, 600))
-  @access_token_expires_in       Keyword.get(@config, :access_token_expires_in, Keyword.get(@fallback_config, :access_token_expires_in, 7200))
-  @use_refresh_token             Keyword.get(@config, :use_refresh_token, Keyword.get(@fallback_config,  :use_refresh_token, false))
-  @password_auth                 Keyword.get(@config, :password_auth, Keyword.get(@fallback_config,  :password_auth, false))
+  @native_redirect_uri           Keyword.get(@config, :native_redirect_uri, "urn:ietf:wg:oauth:2.0:oob")
+  @authorization_code_expires_in Keyword.get(@config, :authorization_code_expires_in, 600)
+  @access_token_expires_in       Keyword.get(@config, :access_token_expires_in, 7200)
+  @use_refresh_token             Keyword.get(@config, :use_refresh_token, false)
+  @password_auth                 Keyword.get(@config, :password_auth, nil)
+  @refresh_token_revoked_on_use  Keyword.get(@config, :revoke_refresh_token_on_use, true)
 
   @doc """
   Authenticate the token.
@@ -33,9 +33,10 @@ defmodule ExOauth2Provider do
   @spec authenticate_token(String.t) :: {:ok, map} |
                                         {:error, any}
   def authenticate_token(nil), do: {:error, :token_inaccessible}
-  def authenticate_token(token) do
+  def authenticate_token(token, refresh_token_revoked_on_use? \\ ExOauth2Provider.refresh_token_revoked_on_use?) do
     token
     |> load_access_token
+    |> revoke_previous_refresh_token(refresh_token_revoked_on_use?)
     |> validate_access_token
     |> load_resource
   end
@@ -47,7 +48,7 @@ defmodule ExOauth2Provider do
     end
   end
 
-  defp validate_access_token({:error, reason}), do: {:error, reason}
+  defp validate_access_token({:error, _} = error), do: error
   defp validate_access_token({:ok, access_token}) do
     case ExOauth2Provider.OauthAccessTokens.is_accessible?(access_token) do
       true -> {:ok, access_token}
@@ -55,11 +56,20 @@ defmodule ExOauth2Provider do
     end
   end
 
-  defp load_resource({:error, reason}), do: {:error, reason}
+  defp load_resource({:error, _} = error), do: error
   defp load_resource({:ok, access_token}) do
     access_token = @repo.preload(access_token, :resource_owner)
 
     case access_token.resource_owner do
+      nil -> {:error, :no_association_found}
+      _   -> {:ok, access_token}
+    end
+  end
+
+  defp revoke_previous_refresh_token({:error, _} = error, _), do: error
+  defp revoke_previous_refresh_token({:ok, _} = params, false), do: params
+  defp revoke_previous_refresh_token({:ok, access_token}, true) do
+    case ExOauth2Provider.OauthAccessTokens.revoke_previous_refresh_token(access_token) do
       nil -> {:error, :no_association_found}
       _   -> {:ok, access_token}
     end
@@ -72,6 +82,7 @@ defmodule ExOauth2Provider do
   def native_redirect_uri, do: @native_redirect_uri
   def authorization_code_expires_in, do: @authorization_code_expires_in
   def access_token_expires_in, do: @access_token_expires_in
-  def refresh_token_enabled, do: @use_refresh_token
+  def use_refresh_token?, do: @use_refresh_token
   def password_auth, do: @password_auth
+  def refresh_token_revoked_on_use?, do: @refresh_token_revoked_on_use
 end

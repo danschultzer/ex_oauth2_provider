@@ -34,9 +34,9 @@ mix ecto.gen.migration --change "    create table(:users) do\n      add :email, 
 
 And use the struct in [test/support/dummy/models/user.ex](test/support/dummy/models/user.ex).
 
-## Authorize Code Flow
+## Authorize code flow
 
-### Authorization Request
+### Authorization request
 
 You'll need to ensure that a resource_owner is already authenticated on these pages, and pass the struct as first argument in the following methods.
 
@@ -63,7 +63,7 @@ ExOauth2Provider.Authorization.deny(resource_owner, params) do
 end
 ```
 
-### Authorization Code Grant
+### Authorization code grant
 
 ```elixir
 # POST /oauth/token?client_id=CLIENT_ID&client_secret=CLIENT_SECRET&grant_type=authorization_code&code=AUTHORIZATION_CODE&redirect_uri=CALLBACK_URL
@@ -73,21 +73,50 @@ case ExOauth2Provider.Token.grant(params) do
 end
 ```
 
-### Revoke
-
-```elixir
-# GET /oauth/revoke?client_id=CLIENT_ID&client_secret=CLIENT_SECRET&grant_type=authorization_code&code=AUTHORIZATION_CODE&redirect_uri=CALLBACK_URL
-case ExOauth2Provider.Token.revoke(params) do
-  {:ok, access_token}          -> # JSON response
-  {:error, error, http_status} -> # JSON response
-end
-```
-
-### Other grant types
+### Other supported token grants
 
 #### Client credentials
 ```elixir
 # POST /oauth/token?client_id=CLIENT_ID&client_secret=CLIENT_SECRET&grant_type=client_credentials
+case ExOauth2Provider.Token.grant(params) do
+  {:ok, access_token}               -> # JSON response
+  {:error, error, http_status}      -> # JSON response
+end
+```
+
+#### Refresh token
+```elixir
+# POST /oauth/token?client_id=CLIENT_ID&client_secret=CLIENT_SECRET&grant_type=refresh_token&refresh_token=REFRESH_TOKEN
+case ExOauth2Provider.Token.grant(params) do
+  {:ok, access_token}               -> # JSON response
+  {:error, error, http_status}      -> # JSON response
+end
+```
+
+#### Username and password
+
+You'll need to provide an authorization method that accepts username and password as arguments, and returns `{:ok, resource_owner}` or `{:error, reason}`. Something like this:
+
+```elixir
+# Configuration
+config :ex_oauth2_provider, ExOauth2Provider,
+  password_auth: {MyModule, :authenticate}
+
+# The module and method we'll use
+defmodule MyModule
+  def authenticate(username, password) do
+    user = repo.get_by(User, email: username)
+    cond do
+      user == nil                       -> {:error, :no_user_found}
+      check_pw(user.password, password) -> {:ok, user}
+      true                              -> {:error, :invalid_password}
+    end
+  end
+end
+```
+
+```elixir
+# POST /oauth/token?client_id=CLIENT_ID&grant_type=password&username=USERNAME&password=PASSWORD
 case ExOauth2Provider.Token.grant(params) do
   {:ok, access_token}               -> # JSON response
   {:error, error, http_status}      -> # JSON response

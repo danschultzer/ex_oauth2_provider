@@ -17,6 +17,16 @@ defmodule ExOauth2Provider.OauthAccessTokensTest do
     assert id == token.id
   end
 
+  test "get_token_by_refresh_token/2", %{user: user, application: application} do
+    {:ok, token} = OauthAccessTokens.create_token(user, %{application: application, use_refresh_token: true})
+    assert %OauthAccessToken{id: id} = OauthAccessTokens.get_token_by_refresh_token(application, token.refresh_token)
+    assert id == token.id
+
+    refute OauthAccessTokens.get_token_by_refresh_token(application, "invalid")
+    other_app = fixture(:application, user, %{uid: "new_app"})
+    refute OauthAccessTokens.get_token_by_refresh_token(other_app, token.refresh_token)
+  end
+
   test "get_matching_token_for/1", %{user: user, application: application} do
     {:ok, token1} = OauthAccessTokens.create_token(user, %{application: application})
     assert %OauthAccessToken{id: id} = OauthAccessTokens.get_matching_token_for(user, application, nil)
@@ -66,6 +76,12 @@ defmodule ExOauth2Provider.OauthAccessTokensTest do
     {:ok, token} = OauthAccessTokens.create_token(user)
     {:ok, token2} = OauthAccessTokens.create_token(user)
     assert token.token !== token2.token
+  end
+
+  test "create_token/2 adds previous_refresh_token", %{user: user} do
+    {:ok, old_token} = OauthAccessTokens.create_token(user, %{use_refresh_token: true})
+    {:ok, new_token} = OauthAccessTokens.create_token(user, %{use_refresh_token: true, previous_refresh_token: old_token})
+    assert new_token.previous_refresh_token === old_token.refresh_token
   end
 
   test "create_token/2 adds random refresh token", %{user: user} do

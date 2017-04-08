@@ -28,6 +28,24 @@ defmodule ExOauth2Provider.OauthAccessTokens do
   end
 
   @doc """
+  Gets an access token by the refresh token.
+
+  Raises `Ecto.NoResultsError` if the OauthAccesstoken does not exist.
+
+  ## Examples
+
+      iex> get_token_by_refresh_token(application, "c341a5c7b331ef076eb4954668d54f590e0009e06b81b100191aa22c93044f3d")
+      %OauthAccessGrant{}
+
+      iex> get_token_by_refresh_token(application, "75d72f326a69444a9287ea264617058dbbfe754d7071b8eef8294cbf4e7e0fdc")
+      ** (Ecto.NoResultsError)
+
+  """
+  def get_token_by_refresh_token(%OauthApplication{} = application, refresh_token) do
+    ExOauth2Provider.repo.get_by(OauthAccessToken, application_id: application.id, refresh_token: refresh_token)
+  end
+
+  @doc """
   Gets the most recent access token.
 
   ## Examples
@@ -148,10 +166,56 @@ defmodule ExOauth2Provider.OauthAccessTokens do
   end
   def is_accessible?(nil), do: false
 
+  @doc """
+  Revokes token with `refresh_token` equal to
+  `previous_refresh_token` and clears `:previous_refresh_token`
+  attribute.
+
+  ## Examples
+
+      iex> revoke_previous_refresh_token(data)
+      {:ok, %OauthAccessGrant{}}
+
+      iex> revoke_previous_refresh_token(invalid_data)
+      {:error, %Ecto.Changeset{}}
+  """
+  def revoke_previous_refresh_token(%OauthAccessToken{previous_refresh_token: ""} = token), do: token
+  def revoke_previous_refresh_token(%OauthAccessToken{previous_refresh_token: nil} = token), do: token
+  def revoke_previous_refresh_token(%OauthAccessToken{previous_refresh_token: previous_refresh_token} = token) do
+    token
+    |> get_by_refresh_token_for(previous_refresh_token)
+    |> revoke
+
+    token
+    |> reset_previous_refresh_token
+  end
+
+  @doc false
+  defp get_by_refresh_token_for(%OauthAccessToken{application_id: application_id, resource_owner_id: resource_owner_id}, refresh_token) do
+    application_id
+    |> is_nil
+    |> (case do
+      true -> OauthAccessToken |> where([x], is_nil(x.application_id))
+      false -> OauthAccessToken |> where([x], x.application_id == ^application_id)
+    end)
+    |> where([x], x.resource_owner_id == ^resource_owner_id)
+    |> where([x], x.refresh_token == ^refresh_token)
+    |> limit(1)
+    |> ExOauth2Provider.repo.one
+
+  end
+
+  @doc false
+  defp reset_previous_refresh_token(%OauthAccessToken{} = access_token) do
+    changeset = Ecto.Changeset.change access_token, previous_refresh_token: ""
+    ExOauth2Provider.repo.update(changeset)
+  end
+
   defp new_token_changeset(%OauthAccessToken{} = token, params) do
     token
     |> cast(params, [:expires_in, :scopes])
     |> put_token
+    |> put_previous_refresh_token(params[:previous_refresh_token])
     |> put_refresh_token(params[:use_refresh_token])
     |> put_application(params)
     |> validate_application
@@ -174,6 +238,10 @@ defmodule ExOauth2Provider.OauthAccessTokens do
 
   defp put_token(%{} = changeset),
     do: change(changeset, %{token: ExOauth2Provider.Utils.generate_token})
+
+  defp put_previous_refresh_token(%{} = changeset, %OauthAccessToken{} = refresh_token),
+    do: change(changeset, %{previous_refresh_token: refresh_token.refresh_token})
+  defp put_previous_refresh_token(%{} = changeset, _), do: changeset
 
   defp put_refresh_token(%{} = changeset, true),
     do: change(changeset, %{refresh_token: ExOauth2Provider.Utils.generate_token})

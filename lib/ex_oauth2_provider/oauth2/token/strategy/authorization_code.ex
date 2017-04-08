@@ -36,12 +36,12 @@ defmodule ExOauth2Provider.Token.AuthorizationCode do
   defp issue_access_token_by_grant(%{access_grant: access_grant, request: _} = params) do
     token_params = %{scopes: access_grant.scopes,
                      application: access_grant.application,
-                     use_refresh_token: ExOauth2Provider.refresh_token_enabled}
+                     use_refresh_token: ExOauth2Provider.use_refresh_token?}
 
     result = ExOauth2Provider.repo.transaction(fn ->
       access_grant
       |> revoke_grant
-      |> Utils.create_access_token(token_params)
+      |> Utils.find_or_create_access_token(token_params)
     end)
 
     case result do
