@@ -1,6 +1,7 @@
 defmodule ExOauth2Provider do
   @moduledoc """
   A module that provides OAuth 2 based server for Elixir applications.
+
   ## Configuration
       config :ex_oauth2_provider, ExOauth2Provider,
         repo: App.Repo,
@@ -10,7 +11,14 @@ defmodule ExOauth2Provider do
         native_redirect_uri: "urn:ietf:wg:oauth:2.0:oob",
         authorization_code_expires_in: 600,
         access_token_expires_in: 7200,
-        use_refresh_token: false
+        use_refresh_token: false,
+        revoke_refresh_token_on_use: false
+
+  If `revoke_refresh_token_on_use` is set to true,
+  refresh tokens will be revoked after a related access token is used.
+
+  If `revoke_refresh_token_on_use` is not set to true,
+  previous tokens are revoked as soon as a new access token is created.
   """
 
   @config                        Application.get_env(:ex_oauth2_provider, ExOauth2Provider, Application.get_env(:phoenix_oauth2_provider, PhoenixOauth2Provider, []))
@@ -25,7 +33,7 @@ defmodule ExOauth2Provider do
   @access_token_expires_in       Keyword.get(@config, :access_token_expires_in, 7200)
   @use_refresh_token             Keyword.get(@config, :use_refresh_token, false)
   @password_auth                 Keyword.get(@config, :password_auth, nil)
-  @refresh_token_revoked_on_use  Keyword.get(@config, :revoke_refresh_token_on_use, true)
+  @refresh_token_revoked_on_use  Keyword.get(@config, :revoke_refresh_token_on_use, false)
 
   @doc """
   Authenticate the token.
