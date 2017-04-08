@@ -25,6 +25,7 @@ defmodule ExOauth2Provider do
   @authorization_code_expires_in Keyword.get(@config, :authorization_code_expires_in, Keyword.get(@fallback_config, :authorization_code_expires_in, 600))
   @access_token_expires_in       Keyword.get(@config, :access_token_expires_in, Keyword.get(@fallback_config, :access_token_expires_in, 7200))
   @use_refresh_token             Keyword.get(@config, :use_refresh_token, Keyword.get(@fallback_config,  :use_refresh_token, false))
+  @password_auth                 Keyword.get(@config, :password_auth, Keyword.get(@fallback_config,  :password_auth, false))
 
   @doc """
   Authenticate the token.
@@ -72,4 +73,5 @@ defmodule ExOauth2Provider do
   def authorization_code_expires_in, do: @authorization_code_expires_in
   def access_token_expires_in, do: @access_token_expires_in
   def refresh_token_enabled, do: @use_refresh_token
+  def password_auth, do: @password_auth
 end
