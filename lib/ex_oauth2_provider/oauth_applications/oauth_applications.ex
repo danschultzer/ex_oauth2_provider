@@ -6,6 +6,7 @@ defmodule ExOauth2Provider.OauthApplications do
   import Ecto.{Query, Changeset}, warn: false
   alias ExOauth2Provider.OauthApplications.OauthApplication
   alias ExOauth2Provider.OauthAccessTokens
+  alias ExOauth2Provider.Scopes
 
   @doc """
   Returns the list of applications.
@@ -41,23 +42,23 @@ defmodule ExOauth2Provider.OauthApplications do
   end
 
 
-    @doc """
-    Gets a single application for a resource owner.
+  @doc """
+  Gets a single application for a resource owner.
 
-    Raises `Ecto.NoResultsError` if the OauthApplication does not exist for resource owner.
+  Raises `Ecto.NoResultsError` if the OauthApplication does not exist for resource owner.
 
-    ## Examples
+  ## Examples
 
-        iex> get_application_for!(resource_owner, "c341a5c7b331ef076eb4954668d54f590e0009e06b81b100191aa22c93044f3d")
-        %OauthApplication{}
+      iex> get_application_for!(resource_owner, "c341a5c7b331ef076eb4954668d54f590e0009e06b81b100191aa22c93044f3d")
+      %OauthApplication{}
 
-        iex> get_application_for!(resource_owner, "75d72f326a69444a9287ea264617058dbbfe754d7071b8eef8294cbf4e7e0fdc")
-        ** (Ecto.NoResultsError)
+      iex> get_application_for!(resource_owner, "75d72f326a69444a9287ea264617058dbbfe754d7071b8eef8294cbf4e7e0fdc")
+      ** (Ecto.NoResultsError)
 
-    """
-    def get_application_for!(%{id: resource_owner_id}, uid) do
-      ExOauth2Provider.repo.get_by!(OauthApplication, uid: uid, resource_owner_id: resource_owner_id)
-    end
+  """
+  def get_application_for!(%{id: resource_owner_id}, uid) do
+    ExOauth2Provider.repo.get_by!(OauthApplication, uid: uid, resource_owner_id: resource_owner_id)
+  end
 
   @doc """
   Gets a single application.
@@ -176,6 +177,22 @@ defmodule ExOauth2Provider.OauthApplications do
       |> where([o], is_nil(o.revoked_at))
       |> ExOauth2Provider.repo.all
       |> Enum.map(fn(o) -> OauthAccessTokens.revoke(o) end)
+    end
+  end
+
+  @doc false
+  def scopes_is_subset?(%OauthApplication{} = application, scopes) do
+    application
+    |> all_scopes
+    |> Scopes.all?(scopes |> Scopes.to_list)
+  end
+
+  @doc false
+  defp all_scopes(%OauthApplication{scopes: application_scopes}) do
+    case application_scopes do
+      nil -> Scopes.server_scopes
+      ""  -> Scopes.server_scopes
+      _   -> application_scopes |> Scopes.to_list
     end
   end
 
