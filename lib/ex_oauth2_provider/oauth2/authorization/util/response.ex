@@ -1,14 +1,14 @@
 defmodule ExOauth2Provider.Authorization.Util.Response do
   alias ExOauth2Provider.RedirectURI
   alias ExOauth2Provider.Scopes
-  import ExOauth2Provider.Utils
+  import ExOauth2Provider.Util
 
   @doc false
   def preauthorize_response(%{client: client, request: %{"scope" => scopes}} = params) do
     case params do
       %{grant: grant} -> build_response(params, %{code: grant.token})
       %{error: error} -> build_response(params, error)
-      _ -> {:ok, client, Scopes.to_list(scopes)}
+      _               -> {:ok, client, Scopes.to_list(scopes)}
     end
   end
   def preauthorize_response(%{error: error} = params),
@@ -32,7 +32,7 @@ defmodule ExOauth2Provider.Authorization.Util.Response do
 
     case can_redirect?(params) do
       true -> build_redirect_response(params, payload)
-      _ -> build_standard_response(params, payload)
+      _    -> build_standard_response(params, payload)
     end
   end
 
