@@ -3,7 +3,7 @@ defmodule ExOauth2Provider.Authorization do
   Handler for dealing with authorization flow.
   """
   alias ExOauth2Provider.Authorization.Code
-  alias ExOauth2Provider.Util.Error
+  alias ExOauth2Provider.Utils.Error
 
   def preauthorize(resource_owner, %{"response_type" => "code"} = request),
     do: Code.preauthorize(resource_owner, request)

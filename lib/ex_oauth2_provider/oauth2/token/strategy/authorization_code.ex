@@ -3,9 +3,9 @@ defmodule ExOauth2Provider.Token.AuthorizationCode do
   Functions for dealing with authorization code strategy.
   """
   alias ExOauth2Provider.OauthAccessGrants
-  alias ExOauth2Provider.Token.Util
-  alias ExOauth2Provider.Token.Util.Response
-  alias ExOauth2Provider.Util.Error
+  alias ExOauth2Provider.Token.Utils
+  alias ExOauth2Provider.Token.Utils.Response
+  alias ExOauth2Provider.Utils.Error
 
   @doc """
   Will grant access token by client credentials.
@@ -24,7 +24,7 @@ defmodule ExOauth2Provider.Token.AuthorizationCode do
   """
   def grant(%{"grant_type" => "authorization_code"} = request) do
     %{request: request}
-    |> Util.load_client
+    |> Utils.load_client
     |> load_access_grant
     |> validate_redirect_uri
     |> issue_access_token_by_grant
@@ -41,7 +41,7 @@ defmodule ExOauth2Provider.Token.AuthorizationCode do
     result = ExOauth2Provider.repo.transaction(fn ->
       access_grant
       |> revoke_grant
-      |> Util.create_access_token(token_params)
+      |> Utils.create_access_token(token_params)
     end)
 
     case result do

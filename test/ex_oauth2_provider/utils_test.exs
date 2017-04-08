@@ -1,4 +1,4 @@
-defmodule ExOauth2Provider.UtilsTest do
+defmodule ExOauth2Provider.UtilTest do
   use ExUnit.Case
   import ExOauth2Provider.Utils
 

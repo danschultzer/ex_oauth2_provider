@@ -7,10 +7,10 @@ defmodule ExOauth2Provider.Authorization.Code do
   alias ExOauth2Provider.OauthAccessGrants
   alias ExOauth2Provider.RedirectURI
   alias ExOauth2Provider.Scopes
-  alias ExOauth2Provider.Authorization.Util.Response
-  alias ExOauth2Provider.Util.Error
-  alias ExOauth2Provider.Authorization.Util
-  alias ExOauth2Provider.Authorization.Util.Response
+  alias ExOauth2Provider.Authorization.Utils.Response
+  alias ExOauth2Provider.Utils.Error
+  alias ExOauth2Provider.Authorization.Utils
+  alias ExOauth2Provider.Authorization.Utils.Response
 
   @doc """
   Will check if there's already an existing access token with same scope and client
@@ -31,8 +31,8 @@ defmodule ExOauth2Provider.Authorization.Code do
   """
   def preauthorize(resource_owner, %{} = request) do
     %{resource_owner: resource_owner, request: request}
-    |> Util.load_client
-    |> Util.set_defaults
+    |> Utils.load_client
+    |> Utils.set_defaults
     |> validate_request
     |> check_previous_authorization
     |> reissue_grant
@@ -78,8 +78,8 @@ defmodule ExOauth2Provider.Authorization.Code do
   """
   def authorize(resource_owner, %{} = request) do
     %{resource_owner: resource_owner, request: request}
-    |> Util.load_client
-    |> Util.set_defaults
+    |> Utils.load_client
+    |> Utils.set_defaults
     |> validate_request
     |> issue_grant
     |> Response.authorize_response
@@ -121,8 +121,8 @@ defmodule ExOauth2Provider.Authorization.Code do
   """
   def deny(resource_owner, %{} = request) do
     %{resource_owner: resource_owner, request: request}
-    |> Util.load_client
-    |> Util.set_defaults
+    |> Utils.load_client
+    |> Utils.set_defaults
     |> validate_request
     |> Error.add_error(Error.access_denied())
     |> Response.deny_response

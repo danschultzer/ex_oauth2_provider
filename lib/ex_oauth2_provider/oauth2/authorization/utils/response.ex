@@ -1,7 +1,7 @@
-defmodule ExOauth2Provider.Authorization.Util.Response do
+defmodule ExOauth2Provider.Authorization.Utils.Response do
   alias ExOauth2Provider.RedirectURI
   alias ExOauth2Provider.Scopes
-  import ExOauth2Provider.Util
+  import ExOauth2Provider.Utils
 
   @doc false
   def preauthorize_response(%{client: client, request: %{"scope" => scopes}} = params) do

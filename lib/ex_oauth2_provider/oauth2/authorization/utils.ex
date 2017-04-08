@@ -1,6 +1,6 @@
-defmodule ExOauth2Provider.Authorization.Util do
+defmodule ExOauth2Provider.Authorization.Utils do
   alias ExOauth2Provider.OauthApplications
-  alias ExOauth2Provider.Util.Error
+  alias ExOauth2Provider.Utils.Error
   alias ExOauth2Provider.Scopes
 
   @doc false

@@ -4,8 +4,7 @@ defmodule ExOauth2Provider.Token do
   """
   alias ExOauth2Provider.Token.AuthorizationCode
   alias ExOauth2Provider.Token.ClientCredentials
-  alias ExOauth2Provider.Util.Error
-  alias ExOauth2Provider.Token.Util.Response
+  alias ExOauth2Provider.Utils.Error
 
   def grant(%{"grant_type" => "authorization_code"} = request),
     do: AuthorizationCode.grant(request)

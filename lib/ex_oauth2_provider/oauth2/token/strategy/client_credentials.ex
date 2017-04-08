@@ -2,9 +2,9 @@ defmodule ExOauth2Provider.Token.ClientCredentials do
   @moduledoc """
   Functions for dealing with client credentials strategy.
   """
-  alias ExOauth2Provider.Util.Error
-  alias ExOauth2Provider.Token.Util
-  alias ExOauth2Provider.Token.Util.Response
+  alias ExOauth2Provider.Utils.Error
+  alias ExOauth2Provider.Token.Utils
+  alias ExOauth2Provider.Token.Utils.Response
 
   @doc """
   Will grant access token by client credentials.
@@ -23,7 +23,7 @@ defmodule ExOauth2Provider.Token.ClientCredentials do
   """
   def grant(%{"grant_type" => "client_credentials"} = request) do
     %{request: request}
-    |> Util.load_client
+    |> Utils.load_client
     |> issue_access_token_by_creds
     |> Response.authorize_response
   end
@@ -39,7 +39,7 @@ defmodule ExOauth2Provider.Token.ClientCredentials do
                      # client_credentials MUST NOT use refresh tokens
                      use_refresh_token: false}
 
-    case Util.create_access_token(client.resource_owner, token_params) do
+    case Utils.create_access_token(client.resource_owner, token_params) do
       {:ok, access_token} -> Map.merge(params, %{access_token: access_token})
       {:error, error}     -> Error.add_error(params, error)
     end
