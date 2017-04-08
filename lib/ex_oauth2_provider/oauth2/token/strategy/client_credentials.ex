@@ -24,6 +24,7 @@ defmodule ExOauth2Provider.Token.ClientCredentials do
   def grant(%{"grant_type" => "client_credentials"} = request) do
     %{request: request}
     |> Utils.load_client
+    |> validate_request
     |> issue_access_token_by_creds
     |> Response.authorize_response
   end
@@ -44,4 +45,8 @@ defmodule ExOauth2Provider.Token.ClientCredentials do
       {:error, error}     -> Error.add_error(params, error)
     end
   end
+
+  @doc false
+  defp validate_request(params),
+    do: params
 end

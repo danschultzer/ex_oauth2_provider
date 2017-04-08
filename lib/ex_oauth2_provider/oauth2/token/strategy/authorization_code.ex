@@ -26,7 +26,7 @@ defmodule ExOauth2Provider.Token.AuthorizationCode do
     %{request: request}
     |> Utils.load_client
     |> load_access_grant
-    |> validate_redirect_uri
+    |> validate_request
     |> issue_access_token_by_grant
     |> Response.authorize_response
   end
@@ -73,6 +73,11 @@ defmodule ExOauth2Provider.Token.AuthorizationCode do
   end
   defp load_access_grant(params), do: Error.add_error(params, Error.invalid_grant())
 
+  @doc false
+  defp validate_request(params) do
+    params
+    |> validate_redirect_uri
+  end
 
   @doc false
   defp validate_redirect_uri(%{error: _} = params), do: params
@@ -83,5 +88,4 @@ defmodule ExOauth2Provider.Token.AuthorizationCode do
     end
   end
   defp validate_redirect_uri(params), do: Error.add_error(params, Error.invalid_grant())
-
 end
