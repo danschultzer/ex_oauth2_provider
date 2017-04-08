@@ -23,14 +23,14 @@ defmodule ExOauth2Provider.Token.Password do
     {:ok, access_token}
     {:error, %{error: error, error_description: _}, http_status}
   """
-  def grant(%{"grant_type" => "password"} = request, password_auth \\ ExOauth2Provider.password_auth()) do
+  def grant(%{"grant_type" => "password"} = request, password_auth \\ ExOauth2Provider.password_auth(), use_refresh_token? \\ ExOauth2Provider.use_refresh_token?) do
     %{request: request}
     |> get_password_auth_method(password_auth)
     |> load_resource_owner
     |> Utils.load_client
     |> set_defaults
     |> validate_request
-    |> issue_access_token
+    |> issue_access_token(use_refresh_token?)
     |> Response.authorize_response
   end
 
@@ -53,12 +53,11 @@ defmodule ExOauth2Provider.Token.Password do
   defp load_resource_owner(params), do: Error.add_error(params, Error.invalid_request())
 
   @doc false
-  defp issue_access_token(%{error: _} = params), do: params
-  defp issue_access_token(%{client: client, resource_owner: resource_owner, request: request} = params) do
+  defp issue_access_token(%{error: _} = params, _), do: params
+  defp issue_access_token(%{client: client, resource_owner: resource_owner, request: request} = params, use_refresh_token?) do
     token_params = %{application: client,
                     scopes: request["scope"],
-                     # client_credentials MUST NOT use refresh tokens
-                     use_refresh_token: false}
+                    use_refresh_token: use_refresh_token?}
 
     case Utils.find_or_create_access_token(resource_owner, token_params) do
       {:ok, access_token} -> Map.merge(params, %{access_token: access_token})
