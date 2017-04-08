@@ -1,5 +1,8 @@
 defmodule ExOauth2Provider.OauthApplicationsTest do
   use ExOauth2Provider.TestCase
+
+  import ExOauth2Provider.Test.Fixture
+
   alias ExOauth2Provider.OauthApplications
   alias ExOauth2Provider.OauthApplications.OauthApplication
   alias ExOauth2Provider.OauthAccessTokens
@@ -8,12 +11,12 @@ defmodule ExOauth2Provider.OauthApplicationsTest do
   @invalid_attrs  %{}
 
   setup do
-    {:ok, %{user: ExOauth2Provider.Factory.insert(:user)}}
+    {:ok, %{user: fixture(:user)}}
   end
 
   test "list_applications_for/1", %{user: user} do
     {:ok, application} = OauthApplications.create_application(user, @valid_attrs)
-    {:ok, _} = OauthApplications.create_application(ExOauth2Provider.Factory.insert(:user), @valid_attrs)
+    {:ok, _} = OauthApplications.create_application(fixture(:user), @valid_attrs)
     assert [app] = OauthApplications.list_applications_for(user)
     assert app.id == application.id
   end
@@ -36,18 +39,18 @@ defmodule ExOauth2Provider.OauthApplicationsTest do
     assert application.id == id
 
     assert_raise Ecto.NoResultsError, fn ->
-      OauthApplications.get_application_for!(ExOauth2Provider.Factory.insert(:user), application.uid)
+      OauthApplications.get_application_for!(fixture(:user), application.uid)
     end
   end
 
   test "get_authorized_applications_for/1", %{user: user} do
-    application = ExOauth2Provider.Factory.insert(:application, resource_owner_id: 0)
-    application2 = ExOauth2Provider.Factory.insert(:application, uid: "newapp", resource_owner_id: 0)
+    application = fixture(:application, fixture(:user), %{})
+    application2 = fixture(:application, fixture(:user), %{uid: "newapp"})
     {:ok, token} = OauthAccessTokens.create_token(user, %{application: application})
     OauthAccessTokens.create_token(user, %{application: application2})
     assert [application, application2] == OauthApplications.get_authorized_applications_for(user)
 
-    assert [] == OauthApplications.get_authorized_applications_for(ExOauth2Provider.Factory.insert(:user))
+    assert [] == OauthApplications.get_authorized_applications_for(fixture(:user))
 
     OauthAccessTokens.revoke(token)
     assert [application2] == OauthApplications.get_authorized_applications_for(user)
@@ -129,7 +132,7 @@ defmodule ExOauth2Provider.OauthApplicationsTest do
   end
 
   test "revoke_all_access_tokens_for/2", %{user: user} do
-    application = ExOauth2Provider.Factory.insert(:application, resource_owner_id: 0)
+    application = fixture(:application, fixture(:user), %{})
     {:ok, token} = OauthAccessTokens.create_token(user, %{application: application})
     {:ok, token2} = OauthAccessTokens.create_token(user, %{application: application})
     {:ok, token3} = OauthAccessTokens.create_token(user, %{application: application})

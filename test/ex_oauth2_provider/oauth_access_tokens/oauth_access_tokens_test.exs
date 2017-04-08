@@ -1,11 +1,14 @@
 defmodule ExOauth2Provider.OauthAccessTokensTest do
   use ExOauth2Provider.TestCase
+
+  import ExOauth2Provider.Test.Fixture
+
   alias ExOauth2Provider.OauthAccessTokens
   alias ExOauth2Provider.OauthAccessTokens.OauthAccessToken
 
   setup do
-    user = ExOauth2Provider.Factory.insert(:user)
-    {:ok, %{user: user, application: ExOauth2Provider.Factory.insert(:application, resource_owner: user)}}
+    user = fixture(:user)
+    {:ok, %{user: user, application: fixture(:application, user, %{})}}
   end
 
   test "get_token/1", %{user: user} do
@@ -37,7 +40,7 @@ defmodule ExOauth2Provider.OauthAccessTokensTest do
     assert id == token1.id
 
     assert nil == OauthAccessTokens.get_matching_token_for(user, application, "other_read")
-    assert nil == OauthAccessTokens.get_matching_token_for(ExOauth2Provider.Factory.insert(:user), application, nil)
+    assert nil == OauthAccessTokens.get_matching_token_for(fixture(:user), application, nil)
   end
 
   test "get_active_tokens_for/1", %{user: user, application: application} do
@@ -47,7 +50,7 @@ defmodule ExOauth2Provider.OauthAccessTokensTest do
     OauthAccessTokens.revoke(token)
     assert [] = OauthAccessTokens.get_active_tokens_for(user)
 
-    assert [] == OauthAccessTokens.get_active_tokens_for(ExOauth2Provider.Factory.insert(:user))
+    assert [] == OauthAccessTokens.get_active_tokens_for(fixture(:user))
   end
 
   test "create_token/2 with valid attributes", %{user: user} do
@@ -105,7 +108,7 @@ defmodule ExOauth2Provider.OauthAccessTokensTest do
     {:ok, token} = OauthAccessTokens.find_or_create_token(user)
 
     {:ok, token2} = :user
-    |> ExOauth2Provider.Factory.insert
+    |> fixture
     |> OauthAccessTokens.find_or_create_token
     assert token.id !== token2.id
 

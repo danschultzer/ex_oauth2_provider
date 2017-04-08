@@ -1,10 +1,9 @@
 defmodule ExOauth2Provider.Token.Strategy.PasswordTest do
   use ExOauth2Provider.TestCase
-  doctest ExOauth2Provider
 
   import ExOauth2Provider.Token
-  import ExOauth2Provider.Factory
-  import Ecto.Query
+  import ExOauth2Provider.Test.Fixture
+  import ExOauth2Provider.Test.QueryHelper
 
   @client_id            "Jf5rM8hQBc"
   @client_secret        "secret"
@@ -25,21 +24,9 @@ defmodule ExOauth2Provider.Token.Strategy.PasswordTest do
                            error_description: "The requested scope is invalid, unknown, or malformed."
                          }
 
-  def get_last_access_token do
-    ExOauth2Provider.repo.one(from x in ExOauth2Provider.OauthAccessTokens.OauthAccessToken,
-      order_by: [desc: x.id], limit: 1)
-  end
-
-  def fixture(:application) do
-    insert(:application, %{uid: @client_id, secret: @client_secret, resource_owner_id: fixture(:resource_owner).id, scopes: "app:read app:write"})
-  end
-
-  def fixture(:resource_owner) do
-    insert(:user, email: @username)
-  end
-
   setup do
-    application = fixture(:application)
+    user = fixture(:user, %{email: @username})
+    application = fixture(:application, user, %{uid: @client_id, secret: @client_secret, scopes: "app:read app:write"})
     {:ok, %{application: application}}
   end
 

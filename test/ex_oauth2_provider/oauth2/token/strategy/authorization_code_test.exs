@@ -1,11 +1,9 @@
 defmodule ExOauth2Provider.Token.Strategy.AuthorizationCodeTest do
   use ExOauth2Provider.TestCase
-  doctest ExOauth2Provider
 
   import ExOauth2Provider.Token
-
-  import ExOauth2Provider.Factory
-  import Ecto.Query
+  import ExOauth2Provider.Test.Fixture
+  import ExOauth2Provider.Test.QueryHelper
 
   @client_id          "Jf5rM8hQBc"
   @client_secret      "secret"
@@ -24,38 +22,21 @@ defmodule ExOauth2Provider.Token.Strategy.AuthorizationCodeTest do
                           error_description: "The provided authorization grant is invalid, expired, revoked, does not match the redirection URI used in the authorization request, or was issued to another client."
                         }
 
-  def get_last_access_token do
-    ExOauth2Provider.repo.one(from x in ExOauth2Provider.OauthAccessTokens.OauthAccessToken,
-      order_by: [desc: x.id], limit: 1)
-  end
-
-  def fixture(:application) do
-    insert(:application, %{uid: @client_id, secret: @client_secret, resource_owner_id: fixture(:resource_owner).id})
-  end
-
-  def fixture(:resource_owner) do
-    insert(:user)
-  end
-
-  def fixture(:access_grant, application, user, code \\ nil) do
-    insert(:access_grant, %{application_id: application.id, resource_owner_id: user.id, token: code || @code, scopes: "read", redirect_uri: @redirect_uri})
-  end
-
   setup do
-    user = fixture(:resource_owner)
-    application = fixture(:application)
-    {:ok, %{user: user, application: application}}
+    resource_owner = fixture(:user)
+    application = fixture(:application, fixture(:user), %{uid: @client_id, secret: @client_secret})
+    {:ok, %{resource_owner: resource_owner, application: application}}
   end
 
-  setup %{user: user, application: application} do
-    access_grant = fixture(:access_grant, application, user)
-    {:ok, %{user: user, application: application, access_grant: access_grant}}
+  setup %{resource_owner: resource_owner, application: application} do
+    access_grant = fixture(:access_grant, application, resource_owner, @code, @redirect_uri)
+    {:ok, %{resource_owner: resource_owner, application: application, access_grant: access_grant}}
   end
 
-  test "#grant/1 returns access token", %{user: user, application: application, access_grant: access_grant} do
+  test "#grant/1 returns access token", %{resource_owner: resource_owner, application: application, access_grant: access_grant} do
     assert {:ok, access_token} = grant(@valid_request)
     assert access_token.access_token == get_last_access_token().token
-    assert get_last_access_token().resource_owner_id == user.id
+    assert get_last_access_token().resource_owner_id == resource_owner.id
     assert get_last_access_token().application_id == application.id
     assert get_last_access_token().scopes == access_grant.scopes
     assert get_last_access_token().expires_in == ExOauth2Provider.access_token_expires_in
@@ -67,9 +48,9 @@ defmodule ExOauth2Provider.Token.Strategy.AuthorizationCodeTest do
     assert {:error, %{error: :invalid_grant}, _} = grant(@valid_request)
   end
 
-  test "#grant/1 doesn't duplicate access token", %{user: user, application: application} do
+  test "#grant/1 doesn't duplicate access token", %{resource_owner: resource_owner, application: application} do
     assert {:ok, access_token} = grant(@valid_request)
-    access_grant = fixture(:access_grant, application, user, "new_code")
+    access_grant = fixture(:access_grant, application, resource_owner, "new_code", @redirect_uri)
     valid_request = Map.merge(@valid_request, %{"code" => access_grant.token})
     assert {:ok, access_token2} = grant(valid_request)
     assert access_token.access_token == access_token2.access_token
@@ -94,7 +75,7 @@ defmodule ExOauth2Provider.Token.Strategy.AuthorizationCodeTest do
   end
 
   test "#grant/1 error when grant owned by another client", %{access_grant: access_grant} do
-    new_application = insert(:application, %{uid: "new_app", resource_owner_id: 0})
+    new_application = fixture(:application, fixture(:user), %{uid: "new_app"})
     changeset = Ecto.Changeset.change access_grant, application_id: new_application.id
     ExOauth2Provider.repo.update! changeset
 

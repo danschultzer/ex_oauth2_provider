@@ -1,14 +1,11 @@
 defmodule ExOauth2Provider.Authorization.CodeTest do
   use ExOauth2Provider.TestCase
-  doctest ExOauth2Provider
-
+  
+  import ExOauth2Provider.Test.Fixture
+  import ExOauth2Provider.Test.QueryHelper
   import ExOauth2Provider.Authorization
-  import ExOauth2Provider.QueryHelper
-  alias ExOauth2Provider.OauthAccessGrants
-  alias ExOauth2Provider.Scopes
 
-  import ExOauth2Provider.Factory
-  import Ecto.Query
+  alias ExOauth2Provider.Scopes
 
   @client_id                "Jf5rM8hQBc"
   @valid_request            %{"client_id" => @client_id, "response_type" => "code", "scope" => "app:read app:write"}
@@ -28,40 +25,10 @@ defmodule ExOauth2Provider.Authorization.CodeTest do
                               error_description: "The resource owner or authorization server denied the request."
                             }
 
-  def fixture(:application) do
-    insert(:application, %{uid: @client_id, resource_owner_id: 0, scopes: "app:read app:write"})
-  end
-
-  def fixture(:resource_owner) do
-    insert(:user)
-  end
-
-  def fixture(:access_token, application, scopes, resource_owner) do
-    insert(:access_token, application: application, scopes: scopes, resource_owner: resource_owner)
-  end
-
-  def set_application_redirect_uri(application, uri) do
-    changeset = Ecto.Changeset.change application, redirect_uri: uri
-    ExOauth2Provider.repo.update! changeset
-  end
-
-  def set_application_scopes(application, scopes) do
-    changeset = Ecto.Changeset.change application, scopes: scopes
-    ExOauth2Provider.repo.update! changeset
-  end
-
-  def set_access_token_scopes(access_token, scopes) do
-    changeset = Ecto.Changeset.change access_token, scopes: scopes
-    ExOauth2Provider.repo.update! changeset
-  end
-
-  def get_last_access_grant do
-    ExOauth2Provider.repo.one(from x in OauthAccessGrants.OauthAccessGrant,
-      order_by: [desc: x.id], limit: 1)
-  end
-
   setup do
-    {:ok, %{resource_owner: fixture(:resource_owner), application: fixture(:application)}}
+    resource_owner = fixture(:user)
+    application = fixture(:application, fixture(:user), %{uid: @client_id, scopes: "app:read app:write"})
+    {:ok, %{resource_owner: resource_owner, application: application}}
   end
 
   test "#preauthorize/2 error when no resource owner" do
@@ -84,7 +51,7 @@ defmodule ExOauth2Provider.Authorization.CodeTest do
   end
 
   test "#preauthorize/2 when previous access token with different application scopes", %{resource_owner: resource_owner, application: application} do
-    access_token = fixture(:access_token, application, "app:read", resource_owner)
+    access_token = fixture(:access_token, resource_owner, %{application: application, scopes: "app:read"})
     assert preauthorize(resource_owner, @valid_request) == {:ok, application, Scopes.to_list(@valid_request["scope"])}
 
     set_access_token_scopes(access_token, "app:read app:write")
@@ -123,7 +90,7 @@ defmodule ExOauth2Provider.Authorization.CodeTest do
   end
 
   test "#preauthorize/2 when previous access token with same scopes", %{resource_owner: resource_owner, application: application} do
-    fixture(:access_token, application, @valid_request["scope"], resource_owner)
+    fixture(:access_token, resource_owner, %{application: application, scopes: @valid_request["scope"]})
     assert preauthorize(resource_owner, @valid_request) == {:native_redirect, %{code: get_last_access_grant().token}}
   end
 

@@ -1,10 +1,9 @@
 defmodule ExOauth2Provider.Token.Strategy.ClientCredentialsTest do
   use ExOauth2Provider.TestCase
-  doctest ExOauth2Provider
 
   import ExOauth2Provider.Token
-  import ExOauth2Provider.Factory
-  import Ecto.Query
+  import ExOauth2Provider.Test.Fixture
+  import ExOauth2Provider.Test.QueryHelper
 
   @client_id            "Jf5rM8hQBc"
   @client_secret        "secret"
@@ -15,21 +14,9 @@ defmodule ExOauth2Provider.Token.Strategy.ClientCredentialsTest do
                           error_description: "Client authentication failed due to unknown client, no client authentication included, or unsupported authentication method."
                         }
 
-  def get_last_access_token do
-    ExOauth2Provider.repo.one(from x in ExOauth2Provider.OauthAccessTokens.OauthAccessToken,
-      order_by: [desc: x.id], limit: 1)
-  end
-
-  def fixture(:application) do
-    insert(:application, %{uid: @client_id, secret: @client_secret, resource_owner_id: fixture(:resource_owner).id})
-  end
-
-  def fixture(:resource_owner) do
-    insert(:user)
-  end
-
   setup do
-    application = fixture(:application)
+    user = fixture(:user)
+    application = fixture(:application, user, %{uid: @client_id, secret: @client_secret})
     {:ok, %{application: application}}
   end
 

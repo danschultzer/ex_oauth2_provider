@@ -1,7 +1,9 @@
 defmodule ExOauth2Provider.OauthAccessGrantTest do
-  import ExOauth2Provider.QueryHelper
-
   use ExOauth2Provider.TestCase
+
+  import ExOauth2Provider.Test.QueryHelper
+  import ExOauth2Provider.Test.Fixture
+
   alias ExOauth2Provider.OauthAccessGrants
   alias ExOauth2Provider.OauthAccessGrants.OauthAccessGrant
   alias ExOauth2Provider.OauthApplications
@@ -9,8 +11,8 @@ defmodule ExOauth2Provider.OauthAccessGrantTest do
   @valid_attrs    %{expires_in: 600, redirect_uri: "https://example.org/endpoint"}
 
   setup do
-    user = ExOauth2Provider.Factory.insert(:user)
-    {:ok, %{user: user, application: ExOauth2Provider.Factory.insert(:application, %{resource_owner: user})}}
+    user = fixture(:user)
+    {:ok, %{user: user, application: fixture(:application, user, %{})}}
   end
 
   test "get_token!/1", %{user: user} do

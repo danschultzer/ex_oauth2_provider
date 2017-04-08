@@ -1,16 +1,14 @@
 defmodule ExOauth2Provider.TokenTest do
   use ExOauth2Provider.TestCase
-  doctest ExOauth2Provider
 
   import ExOauth2Provider.Token
-
-  import ExOauth2Provider.Factory
+  import ExOauth2Provider.Test.Fixture
 
   @client_id          "Jf5rM8hQBc"
   @client_secret      "secret"
 
   setup do
-    application = insert(:application, %{uid: @client_id, secret: @client_secret, resource_owner_id: insert(:user).id})
+    application = fixture(:application, fixture(:user), %{})
     {:ok, %{application: application}}
   end
 

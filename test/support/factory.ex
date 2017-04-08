@@ -40,18 +40,4 @@ defmodule ExOauth2Provider.Factory do
       email: sequence(:email, &"foo-#{&1}@example.com")
     }
   end
-
-  def access_token_with_user(params \\ %{}) do
-    {:ok, access_token} = :user
-    |> insert
-    |> ExOauth2Provider.OauthAccessTokens.create_token(params)
-
-    access_token
-  end
-
-  def update_access_token_inserted_at(access_token, amount, units \\ :second) do
-    inserted_at = access_token.inserted_at |> NaiveDateTime.add(amount, units)
-    Ecto.Changeset.change(access_token, inserted_at: inserted_at)
-      |> @repo.update!
-  end
 end

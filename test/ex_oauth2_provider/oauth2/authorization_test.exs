@@ -1,10 +1,9 @@
 defmodule ExOauth2Provider.AuthorizationTest do
   use ExOauth2Provider.TestCase
-  doctest ExOauth2Provider
 
   import ExOauth2Provider.Authorization
-
-  import ExOauth2Provider.Factory
+  import ExOauth2Provider.Test.Fixture
+  import ExOauth2Provider.Test.QueryHelper
 
   @client_id              "Jf5rM8hQBc"
   @client_secret          "secret"
@@ -16,14 +15,9 @@ defmodule ExOauth2Provider.AuthorizationTest do
                             error_description: "The authorization server does not support this response type."
                           }
 
-  def set_application_redirect_uri(application, uri) do
-    changeset = Ecto.Changeset.change application, redirect_uri: uri
-    ExOauth2Provider.repo.update! changeset
-  end
-
   setup do
-    user = insert(:user)
-    application = insert(:application, %{uid: @client_id, secret: @client_secret, resource_owner_id: user.id})
+    user = fixture(:user)
+    application = fixture(:application, user, %{uid: @client_id, secret: @client_secret})
     {:ok, %{resource_owner: user, application: application}}
   end
 
