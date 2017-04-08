@@ -1,4 +1,8 @@
 defmodule ExOauth2Provider.Authorization.Utils do
+  @moduledoc """
+  Utils for dealing with authorization requests.
+  """
+
   alias ExOauth2Provider.OauthApplications
   alias ExOauth2Provider.Utils.Error
   alias ExOauth2Provider.Scopes

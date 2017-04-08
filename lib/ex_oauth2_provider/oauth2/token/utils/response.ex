@@ -1,4 +1,8 @@
 defmodule ExOauth2Provider.Token.Utils.Response do
+  @moduledoc """
+  Functions for token request responses.
+  """
+
   @doc false
   def authorize_response(%{access_token: token}) do
     build_response(%{access_token: token})

@@ -1,4 +1,8 @@
 defmodule ExOauth2Provider.Authorization.Utils.Response do
+  @moduledoc """
+  Functions for authorization request responses.
+  """
+
   alias ExOauth2Provider.RedirectURI
   alias ExOauth2Provider.Scopes
   import ExOauth2Provider.Utils

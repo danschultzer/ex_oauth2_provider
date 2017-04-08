@@ -1,4 +1,8 @@
 defmodule ExOauth2Provider.Utils.Error do
+  @moduledoc """
+  Functions for request error handling.
+  """
+
   @doc false
   def add_error(%{error: _} = params, _), do: params
   def add_error(params, {:error, error, http_status}) do
