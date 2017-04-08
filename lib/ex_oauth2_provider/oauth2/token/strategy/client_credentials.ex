@@ -26,7 +26,7 @@ defmodule ExOauth2Provider.Token.ClientCredentials do
     |> Utils.load_client
     |> validate_request
     |> issue_access_token_by_creds
-    |> Response.authorize_response
+    |> Response.response
   end
 
   @doc false

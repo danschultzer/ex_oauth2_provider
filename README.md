@@ -73,6 +73,16 @@ case ExOauth2Provider.Token.grant(params) do
 end
 ```
 
+### Revoke
+
+```elixir
+# GET /oauth/revoke?client_id=CLIENT_ID&client_secret=CLIENT_SECRET&token=ACCESS_TOKEN
+case ExOauth2Provider.Token.revoke(params) do
+  {:ok, %{}}                   -> # JSON response
+  {:error, error, http_status} -> # JSON response
+end
+```
+
 ### Other supported token grants
 
 #### Client credentials

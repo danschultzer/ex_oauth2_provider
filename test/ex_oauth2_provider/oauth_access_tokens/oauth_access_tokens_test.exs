@@ -11,20 +11,44 @@ defmodule ExOauth2Provider.OauthAccessTokensTest do
     {:ok, %{user: user, application: fixture(:application, user, %{})}}
   end
 
-  test "get_token/1", %{user: user} do
+  test "get_by_token/1", %{user: user} do
     {:ok, token} = OauthAccessTokens.create_token(user)
-    assert %OauthAccessToken{id: id} = OauthAccessTokens.get_token(token.token)
+    assert %OauthAccessToken{id: id} = OauthAccessTokens.get_by_token(token.token)
     assert id == token.id
   end
 
-  test "get_token_by_refresh_token/2", %{user: user, application: application} do
-    {:ok, token} = OauthAccessTokens.create_token(user, %{application: application, use_refresh_token: true})
-    assert %OauthAccessToken{id: id} = OauthAccessTokens.get_token_by_refresh_token(application, token.refresh_token)
+  test "get_by_refresh_token/2", %{user: user} do
+    {:ok, token} = OauthAccessTokens.create_token(user, %{use_refresh_token: true})
+    assert %OauthAccessToken{id: id} = OauthAccessTokens.get_by_refresh_token(token.refresh_token)
     assert id == token.id
+  end
 
-    refute OauthAccessTokens.get_token_by_refresh_token(application, "invalid")
-    other_app = fixture(:application, user, %{uid: "new_app"})
-    refute OauthAccessTokens.get_token_by_refresh_token(other_app, token.refresh_token)
+  test "get_by_previous_refresh_token_for/2", %{user: user} do
+    {:ok, old_token} = OauthAccessTokens.create_token(user, %{use_refresh_token: true})
+    {:ok, new_token} = OauthAccessTokens.create_token(user, %{use_refresh_token: true, previous_refresh_token: old_token})
+    assert %OauthAccessToken{id: id} = OauthAccessTokens.get_by_previous_refresh_token_for(new_token)
+    assert id == old_token.id
+
+    refute OauthAccessTokens.get_by_previous_refresh_token_for(old_token)
+
+    {:ok, new_token_different_user} = OauthAccessTokens.create_token(fixture(:user), %{use_refresh_token: true, previous_refresh_token: old_token})
+    refute OauthAccessTokens.get_by_previous_refresh_token_for(new_token_different_user)
+  end
+
+  test "get_by_previous_refresh_token_for/2 with application", %{user: user, application: application} do
+    {:ok, old_token} = OauthAccessTokens.create_token(user, %{application: application, use_refresh_token: true})
+    {:ok, new_token} = OauthAccessTokens.create_token(user, %{application: application, use_refresh_token: true, previous_refresh_token: old_token})
+    assert %OauthAccessToken{id: id} = OauthAccessTokens.get_by_previous_refresh_token_for(new_token)
+    assert id == old_token.id
+
+    refute OauthAccessTokens.get_by_previous_refresh_token_for(old_token)
+
+    {:ok, new_token_different_user} = OauthAccessTokens.create_token(fixture(:user), %{application: application, use_refresh_token: true, previous_refresh_token: old_token})
+    refute OauthAccessTokens.get_by_previous_refresh_token_for(new_token_different_user)
+
+    new_application = fixture(:application, user, %{uid: "new_app"})
+    {:ok, new_token_different_app} = OauthAccessTokens.create_token(user, %{application: new_application, use_refresh_token: true, previous_refresh_token: old_token})
+    refute OauthAccessTokens.get_by_previous_refresh_token_for(new_token_different_app )
   end
 
   test "get_matching_token_for/1", %{user: user, application: application} do

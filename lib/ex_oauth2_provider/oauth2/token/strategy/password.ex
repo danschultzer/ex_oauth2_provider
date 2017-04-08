@@ -31,7 +31,7 @@ defmodule ExOauth2Provider.Token.Password do
     |> set_defaults
     |> validate_request
     |> issue_access_token(use_refresh_token?)
-    |> Response.authorize_response
+    |> Response.response
   end
 
   @doc false

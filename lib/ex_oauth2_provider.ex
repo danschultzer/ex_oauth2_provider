@@ -50,7 +50,7 @@ defmodule ExOauth2Provider do
   end
 
   defp load_access_token(token) do
-    case ExOauth2Provider.OauthAccessTokens.get_token(token) do
+    case ExOauth2Provider.OauthAccessTokens.get_by_token(token) do
       nil          -> {:error, :token_not_found}
       access_token -> {:ok, access_token}
     end

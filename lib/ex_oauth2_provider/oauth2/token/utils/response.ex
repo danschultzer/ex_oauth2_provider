@@ -4,11 +4,17 @@ defmodule ExOauth2Provider.Token.Utils.Response do
   """
 
   @doc false
-  def authorize_response(%{access_token: token}) do
+  def response(%{access_token: token}) do
     build_response(%{access_token: token})
   end
-  def authorize_response(%{error: _} = params) do
+  def response(%{error: _} = params) do
     build_response(params)
+  end
+
+  @doc false
+  def revocation_response(%{error: _, should_return_error: true} = params), do: response(params)
+  def revocation_response(%{}) do
+    {:ok, %{}}
   end
 
   @doc false

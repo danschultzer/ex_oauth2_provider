@@ -28,13 +28,13 @@ defmodule ExOauth2Provider.Token.RefreshToken do
     |> Utils.load_client
     |> load_access_token_by_refresh_token
     |> issue_access_token_by_refresh_token(refresh_token_revoked_on_use?)
-    |> Response.authorize_response
+    |> Response.response
   end
 
   @doc false
   defp load_access_token_by_refresh_token(%{client: client, request: %{"refresh_token" => refresh_token}} = params) do
     access_token = client
-                   |> OauthAccessTokens.get_token_by_refresh_token(refresh_token)
+                   |> OauthAccessTokens.get_by_refresh_token_for(refresh_token)
                    |> ExOauth2Provider.repo.preload(:resource_owner)
                    |> ExOauth2Provider.repo.preload(:application)
 

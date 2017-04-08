@@ -44,13 +44,6 @@ defmodule <%= inspect mod %> do
       add :expires_in,             :integer
       add :revoked_at,             :naive_datetime
       add :scopes,                 :string
-
-      # If there is a previous_refresh_token column,
-      # refresh tokens will be revoked after a related access token is used.
-      # If there is no previous_refresh_token column,
-      # previous tokens are revoked as soon as a new access token is created.
-      # Comment out this line if you'd rather have refresh tokens
-      # instantly revoked.
       add :previous_refresh_token, :string, null: false, default: ""
 
       timestamps()

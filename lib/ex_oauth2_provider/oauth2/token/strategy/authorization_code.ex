@@ -28,7 +28,7 @@ defmodule ExOauth2Provider.Token.AuthorizationCode do
     |> load_access_grant
     |> validate_request
     |> issue_access_token_by_grant(use_refresh_token?)
-    |> Response.authorize_response
+    |> Response.response
   end
 
   @doc false
