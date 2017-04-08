@@ -6,7 +6,6 @@ defmodule ExOauth2Provider.Authorization.Code do
   alias ExOauth2Provider.OauthAccessTokens
   alias ExOauth2Provider.OauthAccessGrants
   alias ExOauth2Provider.RedirectURI
-  alias ExOauth2Provider.Scopes
   alias ExOauth2Provider.Authorization.Utils.Response
   alias ExOauth2Provider.Utils.Error
   alias ExOauth2Provider.Authorization.Utils
@@ -30,9 +29,8 @@ defmodule ExOauth2Provider.Authorization.Code do
     {:native_redirect, %{code: code}}                             # Redirect to :show page
   """
   def preauthorize(resource_owner, %{} = request) do
-    %{resource_owner: resource_owner, request: request}
-    |> Utils.load_client
-    |> Utils.set_defaults
+    resource_owner
+    |> Utils.prehandle_request(request)
     |> validate_request
     |> check_previous_authorization
     |> reissue_grant
@@ -77,9 +75,8 @@ defmodule ExOauth2Provider.Authorization.Code do
     {:native_redirect, %{code: code}}                            # Redirect to :show page
   """
   def authorize(resource_owner, %{} = request) do
-    %{resource_owner: resource_owner, request: request}
-    |> Utils.load_client
-    |> Utils.set_defaults
+    resource_owner
+    |> Utils.prehandle_request(request)
     |> validate_request
     |> issue_grant
     |> Response.authorize_response
@@ -120,9 +117,8 @@ defmodule ExOauth2Provider.Authorization.Code do
     {:redirect, redirect_uri}                                    # Redirect
   """
   def deny(resource_owner, %{} = request) do
-    %{resource_owner: resource_owner, request: request}
-    |> Utils.load_client
-    |> Utils.set_defaults
+    resource_owner
+    |> Utils.prehandle_request(request)
     |> validate_request
     |> Error.add_error(Error.access_denied())
     |> Response.deny_response

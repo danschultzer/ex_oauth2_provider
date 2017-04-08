@@ -8,15 +8,17 @@ defmodule ExOauth2Provider.Authorization.Utils.Response do
   import ExOauth2Provider.Utils
 
   @doc false
-  def preauthorize_response(%{client: client, request: %{"scope" => scopes}} = params) do
+  def error_response(%{error: error} = params),
+    do: build_response(params, error)
+
+  @doc false
+  def preauthorize_response(%{} = params) do
     case params do
-      %{grant: grant} -> build_response(params, %{code: grant.token})
-      %{error: error} -> build_response(params, error)
-      _               -> {:ok, client, Scopes.to_list(scopes)}
+      %{grant: grant}                                  -> build_response(params, %{code: grant.token})
+      %{error: error}                                  -> build_response(params, error)
+      %{client: client, request: %{"scope" => scopes}} -> {:ok, client, Scopes.to_list(scopes)}
     end
   end
-  def preauthorize_response(%{error: error} = params),
-    do: build_response(params, error)
 
   @doc false
   def authorize_response(%{} = params) do

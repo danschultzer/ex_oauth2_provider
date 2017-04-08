@@ -6,7 +6,6 @@ defmodule ExOauth2Provider.Token.Utils do
   alias ExOauth2Provider.OauthApplications
   alias ExOauth2Provider.OauthAccessTokens
   alias ExOauth2Provider.OauthAccessGrants.OauthAccessGrant
-  alias ExOauth2Provider.Token.Utils
   alias ExOauth2Provider.Utils.Error
 
   @doc false
