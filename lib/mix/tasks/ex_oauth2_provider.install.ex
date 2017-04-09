@@ -118,29 +118,27 @@ config :ex_oauth2_provider, ExOauth2Provider,
   end
 
   defp write_config(string, %{config: true, config_file: config_file} = config) do
-    log_config = log_config?(string, config_file)
-    Enum.into [config_string: string, log_config?: log_config], config
+    case do_write_config(string, config_file) do
+      {:error, reason} ->
+        Mix.shell.info(reason)
+        Enum.into [config_string: string, log_config?: true], config
+      {:ok, reason} ->
+        Mix.shell.info(reason)
+        Enum.into [config_string: string, log_config?: false], config
+    end
   end
   defp write_config(string, config), do: Enum.into([log_config?: true, config_string: string], config)
 
-  defp log_config?(string, config_file) do
-    case File.exists? config_file do
+  defp do_write_config(string, config_file) do
+    source = if File.exists?(config_file), do: File.read!(config_file), else: false
+    cond do
+      source == false ->
+        {:error, "Could not find #{config_file}. Configuration was not added!"}
+      String.contains? source, "config :ex_oauth2_provider, ExOauth2Provider" ->
+        {:error, "Configuration was not added because one already exists!"}
       true ->
-        log_config_update(string, config_file)
-      false ->
-        Mix.shell.info "Could not find #{config_file}. Configuration was not added!"
-        true
-    end
-  end
-  defp log_config_update(string, config_file) do
-    case String.contains? File.read!(config_file), "config :ex_oauth2_provider, ExOauth2Provider" do
-      true ->
-        Mix.shell.info "Configuration was not added because one already exists!"
-        true
-      false ->
-        File.write!(config_file, File.read!(config_file) <> "\n" <> string)
-        Mix.shell.info "Your config/config.exs file was updated."
-        false
+        File.write!(config_file, source <> "\n" <> string)
+        {:ok, "Your config/config.exs file was updated."}
     end
   end
 end
