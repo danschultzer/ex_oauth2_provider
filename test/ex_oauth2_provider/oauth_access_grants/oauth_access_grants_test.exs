@@ -36,7 +36,7 @@ defmodule ExOauth2Provider.OauthAccessGrantTest do
   test "create_grant/2 adds random token", %{user: user, application: application} do
     {:ok, grant} = OauthAccessGrants.create_grant(user, application, @valid_attrs)
     {:ok, grant2} = OauthAccessGrants.create_grant(user, application, @valid_attrs)
-    assert grant.token !== grant2.token
+    assert grant.token != grant2.token
   end
 
   test "create_grant/2 with missing expires_in", %{application: application, user: user} do

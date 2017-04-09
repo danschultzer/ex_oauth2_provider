@@ -67,8 +67,8 @@ defmodule ExOauth2Provider.Authorization.Utils.Response do
   end
 
   defp can_redirect?(%{error: %{error: error_name}, request: %{"redirect_uri" => redirect_uri}}) do
-    error_name !== :invalid_redirect_uri &&
-    error_name !== :invalid_client &&
+    error_name != :invalid_redirect_uri &&
+    error_name != :invalid_client &&
     !RedirectURI.native_uri?(redirect_uri)
   end
   defp can_redirect?(%{error: _}), do: false
