@@ -187,7 +187,6 @@ defmodule ExOauth2Provider.OauthApplications do
     |> Scopes.all?(scopes |> Scopes.to_list)
   end
 
-  @doc false
   defp all_scopes(%OauthApplication{scopes: application_scopes}) do
     case application_scopes do
       nil -> Scopes.server_scopes

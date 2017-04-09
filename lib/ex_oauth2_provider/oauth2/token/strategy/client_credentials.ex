@@ -10,16 +10,15 @@ defmodule ExOauth2Provider.Token.ClientCredentials do
   Will grant access token by client credentials.
 
   ## Example
-    resource_owner
-    |> ExOauth2Provider.Token.grant(%{
-      "grant_type" => "client_credentials",
-      "client_id" => "Jf5rM8hQBc",
-      "client_secret" => "secret"
-    })
+      resource_owner
+      |> ExOauth2Provider.Token.grant(%{
+        "grant_type" => "client_credentials",
+        "client_id" => "Jf5rM8hQBc",
+        "client_secret" => "secret"
+      })
   ## Response
-    {:ok, access_token}
-    {:error, %{error: error, error_description: _}, http_status}
-
+      {:ok, access_token}
+      {:error, %{error: error, error_description: _}, http_status}
   """
   def grant(%{"grant_type" => "client_credentials"} = request) do
     %{request: request}
@@ -29,7 +28,6 @@ defmodule ExOauth2Provider.Token.ClientCredentials do
     |> Response.response
   end
 
-  @doc false
   defp issue_access_token_by_creds(%{error: _} = params), do: params
   defp issue_access_token_by_creds(%{client: client} = params) do
     client = client
@@ -46,7 +44,6 @@ defmodule ExOauth2Provider.Token.ClientCredentials do
     end
   end
 
-  @doc false
   defp validate_request(params),
     do: params
 end

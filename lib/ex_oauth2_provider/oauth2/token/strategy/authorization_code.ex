@@ -11,16 +11,16 @@ defmodule ExOauth2Provider.Token.AuthorizationCode do
   Will grant access token by client credentials.
 
   ## Example
-    ExOauth2Provider.Token.grant(%{
-      "code" => "1jf6a",
-      "client_id" => "Jf5rM8hQBc",
-      "client_secret" => "secret",
-      "redirect_uri" => "https://example.com/",
-      "grant_type" => "authorization_code"
-    })
+      ExOauth2Provider.Token.grant(%{
+        "code" => "1jf6a",
+        "client_id" => "Jf5rM8hQBc",
+        "client_secret" => "secret",
+        "redirect_uri" => "https://example.com/",
+        "grant_type" => "authorization_code"
+      })
   ## Response
-    {:ok, access_token}
-    {:error, %{error: error, error_description: _}, http_status}
+      {:ok, access_token}
+      {:error, %{error: error, error_description: _}, http_status}
   """
   def grant(%{"grant_type" => "authorization_code"} = request, use_refresh_token? \\ ExOauth2Provider.use_refresh_token?) do
     %{request: request}
@@ -31,7 +31,6 @@ defmodule ExOauth2Provider.Token.AuthorizationCode do
     |> Response.response
   end
 
-  @doc false
   defp issue_access_token_by_grant(%{error: _} = params, _), do: params
   defp issue_access_token_by_grant(%{access_grant: access_grant, request: _} = params, use_refresh_token?) do
     token_params = %{scopes: access_grant.scopes,
@@ -51,7 +50,6 @@ defmodule ExOauth2Provider.Token.AuthorizationCode do
     end
   end
 
-  @doc false
   defp revoke_grant(%OauthAccessGrants.OauthAccessGrant{} = access_grant) do
     case OauthAccessGrants.is_revoked?(access_grant) do
       true  -> Error.invalid_grant()
@@ -59,7 +57,6 @@ defmodule ExOauth2Provider.Token.AuthorizationCode do
     end
   end
 
-  @doc false
   defp load_access_grant(%{client: client, request: %{"code" => code}} = params) do
     access_grant = client
       |> OauthAccessGrants.get_grant(code)
@@ -73,13 +70,11 @@ defmodule ExOauth2Provider.Token.AuthorizationCode do
   end
   defp load_access_grant(params), do: Error.add_error(params, Error.invalid_grant())
 
-  @doc false
   defp validate_request(params) do
     params
     |> validate_redirect_uri
   end
 
-  @doc false
   defp validate_redirect_uri(%{error: _} = params), do: params
   defp validate_redirect_uri(%{request: %{"redirect_uri" => redirect_uri}, access_grant: grant} = params) do
     case grant.redirect_uri === redirect_uri do

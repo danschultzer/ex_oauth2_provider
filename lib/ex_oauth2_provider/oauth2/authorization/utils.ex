@@ -1,7 +1,5 @@
 defmodule ExOauth2Provider.Authorization.Utils do
-  @moduledoc """
-  Utils for dealing with authorization requests.
-  """
+  @moduledoc false
 
   alias ExOauth2Provider.OauthApplications
   alias ExOauth2Provider.Utils.Error
@@ -14,7 +12,6 @@ defmodule ExOauth2Provider.Authorization.Utils do
     |> set_defaults
   end
 
-  @doc false
   defp load_client(%{request: %{"client_id" => client_id}} = params) do
     case OauthApplications.get_application(client_id) do
       nil    -> Error.add_error(params, Error.invalid_client())
@@ -23,7 +20,6 @@ defmodule ExOauth2Provider.Authorization.Utils do
   end
   defp load_client(params), do: Error.add_error(params, Error.invalid_request())
 
-  @doc false
   defp set_defaults(%{error: _} = params), do: params
   defp set_defaults(%{request: request, client: client} = params) do
     redirect_uri = client.redirect_uri |> String.split |> Kernel.hd

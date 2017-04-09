@@ -11,17 +11,17 @@ defmodule ExOauth2Provider.Token.Password do
   Will grant access token by password authentication.
 
   ## Example
-    resource_owner
-    |> ExOauth2Provider.Token.grant(%{
-      "grant_type" => "password",
-      "client_id" => "Jf5rM8hQBc",
-      "client_secret" => "secret",
-      "username" => "testuser@example.com",
-      "password" => "secret"
-    })
+      resource_owner
+      |> ExOauth2Provider.Token.grant(%{
+        "grant_type" => "password",
+        "client_id" => "Jf5rM8hQBc",
+        "client_secret" => "secret",
+        "username" => "testuser@example.com",
+        "password" => "secret"
+      })
   ## Response
-    {:ok, access_token}
-    {:error, %{error: error, error_description: _}, http_status}
+      {:ok, access_token}
+      {:error, %{error: error, error_description: _}, http_status}
   """
   def grant(%{"grant_type" => "password"} = request, password_auth \\ ExOauth2Provider.password_auth(), use_refresh_token? \\ ExOauth2Provider.use_refresh_token?) do
     %{request: request}
@@ -34,7 +34,6 @@ defmodule ExOauth2Provider.Token.Password do
     |> Response.response
   end
 
-  @doc false
   defp get_password_auth_method(params, {module, method}) do
     Map.merge(params, %{password_auth: {module, method}})
   end
@@ -42,7 +41,6 @@ defmodule ExOauth2Provider.Token.Password do
     Error.add_error(params, Error.unsupported_grant_type())
   end
 
-  @doc false
   defp load_resource_owner(%{error: _} = params), do: params
   defp load_resource_owner(%{password_auth: {module, method}, request: %{"username" => username, "password" => password}} = params) do
     case apply(module, method, [username, password]) do
@@ -52,7 +50,6 @@ defmodule ExOauth2Provider.Token.Password do
   end
   defp load_resource_owner(params), do: Error.add_error(params, Error.invalid_request())
 
-  @doc false
   defp issue_access_token(%{error: _} = params, _), do: params
   defp issue_access_token(%{client: client, resource_owner: resource_owner, request: request} = params, use_refresh_token?) do
     token_params = %{application: client,
@@ -65,9 +62,8 @@ defmodule ExOauth2Provider.Token.Password do
     end
   end
 
-  @doc false
-  def set_defaults(%{error: _} = params), do: params
-  def set_defaults(%{request: request, client: client} = params) do
+  defp set_defaults(%{error: _} = params), do: params
+  defp set_defaults(%{request: request, client: client} = params) do
     scopes = params.request["scope"] || client.scopes
 
     request = request |> Map.merge(%{"scope" => scopes})
@@ -76,13 +72,11 @@ defmodule ExOauth2Provider.Token.Password do
     |> Map.merge(%{request: request})
   end
 
-  @doc false
   defp validate_request(params) do
     params
     |> validate_scopes
   end
 
-  @doc false
   defp validate_scopes(%{error: _} = params), do: params
   defp validate_scopes(%{request: %{"scope" => scopes}, client: client} = params) do
     case OauthApplications.scopes_is_subset?(client, scopes) do

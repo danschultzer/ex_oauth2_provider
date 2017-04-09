@@ -16,20 +16,20 @@ defmodule ExOauth2Provider.Token.Revoke do
   the access token model.
 
   ## Example confidential client
-    ExOauth2Provider.Token.revoke(%{
-      "client_id" => "Jf5rM8hQBc",
-      "client_secret" => "secret",
-      "token" => "fi3S9u"
-    })
+      ExOauth2Provider.Token.revoke(%{
+        "client_id" => "Jf5rM8hQBc",
+        "client_secret" => "secret",
+        "token" => "fi3S9u"
+      })
   ## Response
-    {:ok, %{}}
+      {:ok, %{}}
 
   ## Example public client
-    ExOauth2Provider.Token.revoke(%{
-      "token" => "fi3S9u"
-    })
+      ExOauth2Provider.Token.revoke(%{
+        "token" => "fi3S9u"
+      })
   ## Response
-    {:ok, %{}}
+      {:ok, %{}}
   """
   def revoke(request) do
     %{request: request}

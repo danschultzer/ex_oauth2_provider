@@ -79,7 +79,6 @@ defmodule ExOauth2Provider.OauthAccessTokens do
     |> check_matching_scopes(scopes)
   end
 
-  @doc false
   defp check_matching_scopes(nil, _), do: nil
   defp check_matching_scopes(token, scopes) do
     token_scopes   = token.scopes |> ExOauth2Provider.Scopes.to_list
@@ -228,7 +227,6 @@ defmodule ExOauth2Provider.OauthAccessTokens do
       |> reset_previous_refresh_token
     end
 
-    @doc false
     defp reset_previous_refresh_token(%OauthAccessToken{} = access_token) do
       changeset = Ecto.Changeset.change access_token, previous_refresh_token: ""
       ExOauth2Provider.repo.update(changeset)

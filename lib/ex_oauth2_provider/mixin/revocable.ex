@@ -1,7 +1,5 @@
 defmodule ExOauth2Provider.Mixin.Revocable do
-  @moduledoc """
-  Mixing macro that handles revocation.
-  """
+  @moduledoc false
 
   defmacro __using__(_) do
     quote location: :keep do

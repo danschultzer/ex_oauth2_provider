@@ -1,7 +1,5 @@
 defmodule ExOauth2Provider.Authorization.Utils.Response do
-  @moduledoc """
-  Functions for authorization request responses.
-  """
+  @moduledoc false
 
   alias ExOauth2Provider.RedirectURI
   alias ExOauth2Provider.Scopes
@@ -32,7 +30,6 @@ defmodule ExOauth2Provider.Authorization.Utils.Response do
   def deny_response(%{error: error} = params),
     do: build_response(params, error)
 
-  @doc false
   defp build_response(%{request: request} = params, payload) do
     payload = add_state(payload, request)
 
@@ -42,7 +39,6 @@ defmodule ExOauth2Provider.Authorization.Utils.Response do
     end
   end
 
-  @doc false
   defp add_state(payload, request) do
     case request["state"] do
       nil -> payload
@@ -53,7 +49,6 @@ defmodule ExOauth2Provider.Authorization.Utils.Response do
     end
   end
 
-  @doc false
   defp build_redirect_response(%{request: %{"redirect_uri" => redirect_uri}}, payload) do
     case RedirectURI.native_uri?(redirect_uri) do
       true -> {:native_redirect, payload}
@@ -61,7 +56,6 @@ defmodule ExOauth2Provider.Authorization.Utils.Response do
     end
   end
 
-  @doc false
   defp build_standard_response(%{grant: _}, payload) do
     {:ok, payload}
   end
@@ -72,7 +66,6 @@ defmodule ExOauth2Provider.Authorization.Utils.Response do
     {:error, error, :bad_request}
   end
 
-  @doc false
   defp can_redirect?(%{error: %{error: error_name}, request: %{"redirect_uri" => redirect_uri}}) do
     error_name !== :invalid_redirect_uri &&
     error_name !== :invalid_client &&

@@ -1,7 +1,5 @@
 defmodule ExOauth2Provider.Token.Utils do
-  @moduledoc """
-  Utils for dealing with token requests.
-  """
+  @moduledoc false
 
   alias ExOauth2Provider.OauthApplications
   alias ExOauth2Provider.OauthAccessTokens

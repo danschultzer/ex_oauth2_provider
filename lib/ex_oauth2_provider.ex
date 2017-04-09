@@ -36,7 +36,13 @@ defmodule ExOauth2Provider do
   @refresh_token_revoked_on_use  Keyword.get(@config, :revoke_refresh_token_on_use, false)
 
   @doc """
-  Authenticate the token.
+  Authenticate an access token.
+
+  ## Example
+      ExOauth2Provider.authenticate_token("Jf5rM8hQBc")
+  ## Response
+      {:ok, access_token}
+      {:error, reason}
   """
   @spec authenticate_token(String.t) :: {:ok, map} |
                                         {:error, any}
@@ -83,14 +89,24 @@ defmodule ExOauth2Provider do
     end
   end
 
+  @doc false
   def resource_owner_struct, do: @resource_owner_struct
+  @doc false
   def repo, do: @repo
+  @doc false
   def default_scopes, do: @default_scopes
+  @doc false
   def server_scopes, do: @server_scopes
+  @doc false
   def native_redirect_uri, do: @native_redirect_uri
+  @doc false
   def authorization_code_expires_in, do: @authorization_code_expires_in
+  @doc false
   def access_token_expires_in, do: @access_token_expires_in
+  @doc false
   def use_refresh_token?, do: @use_refresh_token
+  @doc false
   def password_auth, do: @password_auth
+  @doc false
   def refresh_token_revoked_on_use?, do: @refresh_token_revoked_on_use
 end

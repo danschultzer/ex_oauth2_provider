@@ -34,15 +34,12 @@ defmodule ExOauth2Provider.Authorization do
     end
   end
 
-  @doc false
   defp unsupported_response_type(resource_owner, request),
     do: handle_error_response(resource_owner, request, Error.unsupported_response_type())
 
-  @doc false
   defp invalid_request(resource_owner, request),
     do: handle_error_response(resource_owner, request, Error.invalid_request())
 
-  @doc false
   defp handle_error_response(resource_owner, request, error) do
     resource_owner
     |> Utils.prehandle_request(request)

@@ -1,7 +1,5 @@
 defmodule ExOauth2Provider.Mixin.Expirable do
-  @moduledoc """
-  Mixing macro that handles expiration.
-  """
+  @moduledoc false
 
   defmacro __using__(_) do
     quote location: :keep do

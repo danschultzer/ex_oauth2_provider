@@ -13,14 +13,14 @@ defmodule ExOauth2Provider.Token do
   Grants an access token based on grant_type strategy.
 
   ## Example
-    resource_owner
-    |> ExOauth2Provider.Token.authorize(%{
-      "grant_type" => "invalid",
-      "client_id" => "Jf5rM8hQBc",
-      "client_secret" => "secret"
-    })
+      resource_owner
+      |> ExOauth2Provider.Token.authorize(%{
+        "grant_type" => "invalid",
+        "client_id" => "Jf5rM8hQBc",
+        "client_secret" => "secret"
+      })
   ## Response
-    {:error, %{error: error, error_description: _}, http_status}
+      {:error, %{error: error, error_description: _}, http_status}
   """
   def grant(request) do
     case request do
@@ -39,14 +39,14 @@ defmodule ExOauth2Provider.Token do
   http://tools.ietf.org/html/rfc7009
 
   ## Example
-    resource_owner
-    |> ExOauth2Provider.Token.revoke(%{
-      "client_id" => "Jf5rM8hQBc",
-      "client_secret" => "secret",
-      "token" => "fi3S9u"
-    })
+      resource_owner
+      |> ExOauth2Provider.Token.revoke(%{
+        "client_id" => "Jf5rM8hQBc",
+        "client_secret" => "secret",
+        "token" => "fi3S9u"
+      })
   ## Response
-    {:ok, %{}}
+      {:ok, %{}}
   """
   def revoke(request) do
     Revoke.revoke(request)

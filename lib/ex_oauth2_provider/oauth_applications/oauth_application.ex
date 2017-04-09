@@ -1,7 +1,5 @@
 defmodule ExOauth2Provider.OauthApplications.OauthApplication do
-  @moduledoc """
-  Ecto schema for oauth access applications
-  """
+  @moduledoc false
 
   use Ecto.Schema
 

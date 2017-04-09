@@ -1,7 +1,5 @@
 defmodule ExOauth2Provider.Token.Utils.Response do
-  @moduledoc """
-  Functions for token request responses.
-  """
+  @moduledoc false
 
   @doc false
   def response(%{access_token: token}) do
@@ -17,13 +15,11 @@ defmodule ExOauth2Provider.Token.Utils.Response do
     {:ok, %{}}
   end
 
-  @doc false
   defp build_response(%{access_token: access_token} = _) do
     {:ok, %{access_token: access_token.token,
             # Access Token type: Bearer.
             # @see https://tools.ietf.org/html/rfc6750
             #   The OAuth 2.0 Authorization Framework: Bearer Token Usage
-            #
             token_type: "bearer",
             expires_in: access_token.expires_in,
             refresh_token: access_token.refresh_token,
