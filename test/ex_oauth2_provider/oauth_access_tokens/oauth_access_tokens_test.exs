@@ -102,6 +102,15 @@ defmodule ExOauth2Provider.OauthAccessTokensTest do
     assert token.token != token2.token
   end
 
+  def access_token_generator(values) do
+    "custom_generated-#{values.resource_owner_id}"
+  end
+
+  test "create_token/2 with custom access token generator", %{user: user} do
+    {:ok, token} = OauthAccessTokens.create_token(user, %{}, %{access_token_generator: {ExOauth2Provider.OauthAccessTokensTest, :access_token_generator}})
+    assert token.token == "custom_generated-#{user.id}"
+  end
+
   test "create_token/2 adds previous_refresh_token", %{user: user} do
     {:ok, old_token} = OauthAccessTokens.create_token(user, %{use_refresh_token: true})
     {:ok, new_token} = OauthAccessTokens.create_token(user, %{use_refresh_token: true, previous_refresh_token: old_token})

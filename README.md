@@ -203,6 +203,31 @@ ExOauth2Provider.Plug.current_resource_owner(conn) # Access the loaded resource 
 ExOauth2Provider.Plug.current_resource_owner(conn, :secret) # Access the loaded resource in the secret location
 ```
 
+### Custom access token generator
+
+You can add your own access token generator by doing the following:
+
+```elixir
+# config/config.exs
+config :ex_oauth2_provider, ExOauth2Provider,
+  access_token_generator: {MyModule, :my_method}
+
+defmodule MyModule
+  def my_method(access_token) do
+    %JWT.token{
+      resource_owner_id: access_token.resource_owner_id,
+      application_id: access_token.application.id,
+      scopes: access_token.scopes,
+      expires_in: access_token.expires_in,
+      created_at: access_token.created_at
+    }
+    |> with_signer(hs256("my_secret"))
+  end
+end
+```
+
+Remember to change the field type for the `token` column in the `oauth_access_tokens` table to accepts tokens larger than 255 characters.
+
 ## Acknowledgement
 
 This library was made thanks to [doorkeeper](https://github.com/doorkeeper-gem/doorkeeper), [guardian](https://github.com/ueberauth/guardian) and [authable](https://github.com/mustafaturan/authable), that gave the conceptual building blocks.

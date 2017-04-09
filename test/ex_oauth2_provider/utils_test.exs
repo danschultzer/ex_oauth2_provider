@@ -13,9 +13,4 @@ defmodule ExOauth2Provider.UtilTest do
   test "generate_token/1 it generate the token with custom length" do
     assert String.length(generate_token(%{size: 1})) < String.length(generate_token(%{size: 2}))
   end
-
-  test "generate_token/1 it generate the token with custom generator" do
-    generator = fn(string) -> Base.encode64(string) end
-    assert String.length(generate_token(%{generator: generator})) < String.length(generate_token())
-  end
 end

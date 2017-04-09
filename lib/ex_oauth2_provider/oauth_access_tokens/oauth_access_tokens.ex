@@ -116,9 +116,9 @@ defmodule ExOauth2Provider.OauthAccessTokens do
       {:error, %Ecto.Changeset{}}
 
   """
-  def create_token(%{id: _} = resource_owner, attrs \\ %{}) do
+  def create_token(%{id: _} = resource_owner, attrs \\ %{}, config \\ ExOauth2Provider.Config) do
     %OauthAccessToken{resource_owner: resource_owner}
-    |> new_token_changeset(attrs)
+    |> new_token_changeset(attrs, config)
     |> ExOauth2Provider.repo.insert()
   end
 
@@ -233,17 +233,18 @@ defmodule ExOauth2Provider.OauthAccessTokens do
     end
   end
 
-  defp new_token_changeset(%OauthAccessToken{} = token, params) do
+  defp new_token_changeset(%OauthAccessToken{} = token, params, config) do
     token
     |> cast(params, [:expires_in, :scopes])
-    |> put_token
     |> put_previous_refresh_token(params[:previous_refresh_token])
     |> put_refresh_token(params[:use_refresh_token])
     |> put_application(params)
     |> validate_application
-    |> validate_required([:token, :resource_owner])
+    |> validate_required([:resource_owner])
     |> assoc_constraint(:resource_owner)
     |> put_scopes
+    |> put_token(config)
+    |> validate_required([:token])
     |> unique_constraint(:token)
     |> unique_constraint(:refresh_token)
   end
@@ -258,8 +259,23 @@ defmodule ExOauth2Provider.OauthAccessTokens do
   end
   defp validate_application(changeset), do: changeset
 
-  defp put_token(%{} = changeset),
-    do: change(changeset, %{token: ExOauth2Provider.Utils.generate_token})
+  defp put_token(%{} = changeset, config) do
+    {module, method} = config.access_token_generator || {ExOauth2Provider.Utils, :generate_token}
+
+    {_, resource_owner} = fetch_field(changeset, :resource_owner)
+    {_, scopes}         = fetch_field(changeset, :scopes)
+    {_, application}    = fetch_field(changeset, :application)
+    {_, expires_in}     = fetch_field(changeset, :expires_in)
+    created_at          = NaiveDateTime.utc_now
+
+    token = apply(module, method, [%{
+      resource_owner_id: resource_owner.id,
+      scopes: scopes,
+      application: application,
+      expires_in: expires_in,
+      created_at: created_at}])
+    change(changeset, %{token: token})
+  end
 
   defp put_previous_refresh_token(%{} = changeset, %OauthAccessToken{} = refresh_token),
     do: change(changeset, %{previous_refresh_token: refresh_token.refresh_token})

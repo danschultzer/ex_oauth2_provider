@@ -13,10 +13,8 @@ defmodule ExOauth2Provider.Utils do
   Generate a random token.
   """
   def generate_token(opts \\ %{}) do
-    generator_method = Map.get(opts, :generator, fn(string) -> Base.encode16(string, case: :lower) end)
     token_size = Map.get(opts, :size, 32)
     string = :crypto.strong_rand_bytes(token_size)
-
-    generator_method.(string)
+    Base.encode16(string, case: :lower)
   end
 end

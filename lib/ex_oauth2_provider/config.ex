@@ -55,4 +55,9 @@ defmodule ExOauth2Provider.Config do
   @doc false
   @force_ssl_in_redirect_uri      Keyword.get(@config, :force_ssl_in_redirect_uri, Mix.env != :dev)
   def force_ssl_in_redirect_uri?, do: @force_ssl_in_redirect_uri
+
+  # Use a custom access token generator
+  @access_token_generator Keyword.get(@config, :access_token_generator, nil)
+  def access_token_generator, do: @access_token_generator
+
 end
