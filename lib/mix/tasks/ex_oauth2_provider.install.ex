@@ -70,9 +70,9 @@ defmodule Mix.Tasks.ExOauth2Provider.Install do
 
   defp next_migration_number(existing_migrations, pad_time \\ 0) do
     timestamp = NaiveDateTime.utc_now
-      |> NaiveDateTime.add(pad_time, :second)
-      |> NaiveDateTime.to_erl
-      |> padded_timestamp
+                |> NaiveDateTime.add(pad_time, :second)
+                |> NaiveDateTime.to_erl
+                |> padded_timestamp
 
     if String.match? existing_migrations, ~r/#{timestamp}_.*\.exs/ do
       next_migration_number(existing_migrations, pad_time + 1)
@@ -95,8 +95,8 @@ defmodule Mix.Tasks.ExOauth2Provider.Install do
 
   def migrations do
     templates_path = :ex_oauth2_provider
-    |> Application.app_dir
-    |> Path.join("priv/templates/migrations")
+                     |> Application.app_dir
+                     |> Path.join("priv/templates/migrations")
 
     for filename <- File.ls!(templates_path) do
       {String.slice(filename, 0..-5), File.read!(Path.join(templates_path, filename))}
@@ -104,32 +104,41 @@ defmodule Mix.Tasks.ExOauth2Provider.Install do
   end
 
   defp update_config(%{config: true} = config) do
-    repos = Enum.map config[:repos], &to_string(&1)
-    """
-config :ex_oauth2_provider, ExOauth2Provider,
-  repo: #{repos},
-  resource_owner: #{config[:resource_owner]}
-"""
+    config
+    |> update_config_string
     |> write_config(config)
   end
   defp update_config(config), do: config
+  defp update_config_string(config) do
+    """
+config :ex_oauth2_provider, ExOauth2Provider,
+  repo: #{Enum.map(config[:repos], &to_string(&1))},
+  resource_owner: #{config[:resource_owner]}
+"""
+  end
 
   defp write_config(string, %{config: true, config_file: config_file} = config) do
-    log_config? = if File.exists? config_file do
-      source = File.read!(config_file)
-      if String.contains? source, "config :ex_oauth2_provider, ExOauth2Provider" do
-        Mix.shell.info "Configuration was not added because one already exists!"
-        true
-      else
-        File.write!(config_file, source <> "\n" <> string)
-        Mix.shell.info "Your config/config.exs file was updated."
-        false
-      end
-    else
-      Mix.shell.info "Could not find #{config_file}. Configuration was not added!"
-      true
+    case do_write_config(string, config_file) do
+      {:error, reason} ->
+        Mix.shell.info(reason)
+        Enum.into [config_string: string, log_config?: true], config
+      {:ok, reason} ->
+        Mix.shell.info(reason)
+        Enum.into [config_string: string, log_config?: false], config
     end
-    Enum.into [config_string: string, log_config?: log_config?], config
   end
   defp write_config(string, config), do: Enum.into([log_config?: true, config_string: string], config)
+
+  defp do_write_config(string, config_file) do
+    source = if File.exists?(config_file), do: File.read!(config_file), else: false
+    cond do
+      source == false ->
+        {:error, "Could not find #{config_file}. Configuration was not added!"}
+      String.contains? source, "config :ex_oauth2_provider, ExOauth2Provider" ->
+        {:error, "Configuration was not added because one already exists!"}
+      true ->
+        File.write!(config_file, source <> "\n" <> string)
+        {:ok, "Your config/config.exs file was updated."}
+    end
+  end
 end
