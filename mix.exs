@@ -10,7 +10,7 @@ defmodule ExOauth2Provider.Mixfile do
      elixirc_paths: elixirc_paths(Mix.env),
      build_embedded: Mix.env == :prod,
      start_permanent: Mix.env == :prod,
-     preferred_cli_env: [credo: :test],
+     preferred_cli_env: [credo: :test, ex_doc: :test],
      deps: deps(),
 
      # Hex
@@ -45,8 +45,8 @@ defmodule ExOauth2Provider.Mixfile do
      # Dev and test dependencies
      {:credo, "~> 0.7", only: [:dev, :test]},
      {:ex_doc, "~> 0.14", only: :dev, runtime: false},
-     {:ex_machina, "~> 1.0", only: :test}
-   ]
+     {:ex_machina, "~> 1.0", only: :test},
+     {:ex_doc, "~> 0.14", only: :dev, runtime: false}]
   end
 
   defp package do
