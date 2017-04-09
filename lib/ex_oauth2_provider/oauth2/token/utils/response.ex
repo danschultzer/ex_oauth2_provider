@@ -15,7 +15,7 @@ defmodule ExOauth2Provider.Token.Utils.Response do
     {:ok, %{}}
   end
 
-  defp build_response(%{access_token: access_token} = _) do
+  defp build_response(%{access_token: access_token}) do
     {:ok, %{access_token: access_token.token,
             # Access Token type: Bearer.
             # @see https://tools.ietf.org/html/rfc6750
@@ -27,7 +27,7 @@ defmodule ExOauth2Provider.Token.Utils.Response do
             created_at: access_token.inserted_at
           }}
   end
-  defp build_response(%{error: error, error_http_status: error_http_status} = _) do
+  defp build_response(%{error: error, error_http_status: error_http_status}) do
     {:error, error, error_http_status}
   end
   defp build_response(%{error: error}) do # For DB errors
