@@ -33,14 +33,10 @@ defmodule ExOauth2Provider.Mixin.Expirable do
           true
       """
       def is_expired?(nil), do: true
+      def is_expired?(%{expires_in: nil, inserted_at: _}), do: false
       def is_expired?(%{expires_in: expires_in, inserted_at: inserted_at}) do
-        case expires_in do
-          nil -> false
-          _ ->
-            expires_at = inserted_at
-              |> NaiveDateTime.add(expires_in, :second)
-            NaiveDateTime.compare(expires_at, NaiveDateTime.utc_now) == :lt
-        end
+          expires_at = NaiveDateTime.add(inserted_at, expires_in, :second)
+          NaiveDateTime.compare(expires_at, NaiveDateTime.utc_now) === :lt
       end
     end
   end
