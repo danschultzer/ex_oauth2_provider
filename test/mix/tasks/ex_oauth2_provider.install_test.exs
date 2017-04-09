@@ -16,9 +16,9 @@ defmodule Mix.Tasks.ExOauth2Provider.InstallTest do
 
   tmp_path = Path.join(tmp_path(), inspect(ExOauth2Provider.Install))
   @migrations_path       Path.join(tmp_path, "migrations")
-  @options               ["-r", to_string(Repo)]
-  @config_file           "tmp/config.exs"
-  @options_with_config   @options ++ ["--config-file", @config_file]
+  @options               ["-r", to_string(Repo), "--no-config"]
+  @config_file           Path.join(tmp_path, "config.exs")
+  @options_with_config   ["-r", to_string(Repo), "--config-file", @config_file]
 
   defp reset_config_file(string \\ "") do
     File.write!(@config_file,  "use Mix.Config\n\n" <> string, [:write])
@@ -76,7 +76,7 @@ defmodule Mix.Tasks.ExOauth2Provider.InstallTest do
     reset_config_file()
     original = File.read!(@config_file)
 
-    run @options ++ ~w(--no-config)
+    run @options_with_config ++ ~w(--no-config)
     source = File.read!(@config_file)
     assert source == original
   end

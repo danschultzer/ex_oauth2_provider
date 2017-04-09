@@ -4,7 +4,7 @@ alias ExOauth2Provider.Test.Repo
 
 # Setting up the database with dummy user model
 Mix.Task.run "ecto.drop", ~w(--quiet)
-Mix.Task.run "ex_oauth2_provider.install"
+Mix.Task.run "ex_oauth2_provider.install", ~w(--no-config)
 Mix.Task.run "ecto.create", ~w(--quiet)
 Mix.Task.run "ecto.migrate"
 
