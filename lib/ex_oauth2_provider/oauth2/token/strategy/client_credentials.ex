@@ -31,14 +31,14 @@ defmodule ExOauth2Provider.Token.ClientCredentials do
   defp issue_access_token_by_creds(%{error: _} = params), do: params
   defp issue_access_token_by_creds(%{client: client} = params) do
     client = client
-    |> ExOauth2Provider.repo.preload(:resource_owner)
+    |> ExOauth2Provider.repo.preload(:owner)
 
     token_params = %{scopes: client.scopes,
                      application: client,
                      # client_credentials MUST NOT use refresh tokens
                      use_refresh_token: false}
 
-    case Utils.find_or_create_access_token(client.resource_owner, token_params) do
+    case Utils.find_or_create_access_token(client.owner, token_params) do
       {:ok, access_token} -> Map.merge(params, %{access_token: access_token})
       {:error, error}     -> Error.add_error(params, error)
     end

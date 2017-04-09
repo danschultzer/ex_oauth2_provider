@@ -3,7 +3,7 @@ defmodule <%= inspect mod %> do
 
   def change do
     create table(:oauth_applications) do
-      add :resource_owner_id, :integer, null: false
+      add :owner_id,          :integer, null: false
       add :name,              :string,  null: false
       add :uid,               :string,  null: false
       add :secret,            :string,  null: false
@@ -14,7 +14,7 @@ defmodule <%= inspect mod %> do
     end
 
     create unique_index(:oauth_applications, [:uid])
-    create index(:oauth_applications, [:resource_owner_id])
+    create index(:oauth_applications, [:owner_id])
 
     create table(:oauth_access_grants) do
       add :resource_owner_id,      :integer,        null: false

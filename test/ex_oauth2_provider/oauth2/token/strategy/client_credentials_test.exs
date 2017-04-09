@@ -15,8 +15,7 @@ defmodule ExOauth2Provider.Token.Strategy.ClientCredentialsTest do
                         }
 
   setup do
-    user = fixture(:user)
-    application = fixture(:application, user, %{uid: @client_id, secret: @client_secret})
+    application = fixture(:application, fixture(:user), %{uid: @client_id, secret: @client_secret})
     {:ok, %{application: application}}
   end
 
@@ -35,7 +34,7 @@ defmodule ExOauth2Provider.Token.Strategy.ClientCredentialsTest do
   test "#grant/1 returns access token", %{application: application} do
     assert {:ok, access_token} = grant(@valid_request)
     assert access_token.access_token == get_last_access_token().token
-    assert get_last_access_token().resource_owner_id == application.resource_owner_id
+    assert get_last_access_token().resource_owner_id == application.owner_id
     assert get_last_access_token().application_id == application.id
     assert get_last_access_token().scopes == application.scopes
     assert get_last_access_token().expires_in == ExOauth2Provider.Config.access_token_expires_in
