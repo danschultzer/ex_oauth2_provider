@@ -20,7 +20,7 @@ defmodule ExOauth2Provider.Token.Utils do
   def find_or_create_access_token({:ok, %OauthAccessGrant{} = access_grant}, token_params),
     do: find_or_create_access_token(access_grant.resource_owner, token_params)
   def find_or_create_access_token(%{id: _} = resource_owner, token_params) do
-    token_params = %{expires_in: ExOauth2Provider.access_token_expires_in}
+    token_params = %{expires_in: ExOauth2Provider.Config.access_token_expires_in}
                    |> Map.merge(token_params)
     OauthAccessTokens.find_or_create_token(resource_owner, token_params)
   end

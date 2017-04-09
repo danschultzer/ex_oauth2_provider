@@ -3,7 +3,7 @@ defmodule ExOauth2Provider.RedirectURITest do
   import ExOauth2Provider.RedirectURI
 
   test "validate native url" do
-    uri = ExOauth2Provider.native_redirect_uri
+    uri = ExOauth2Provider.Config.native_redirect_uri
     assert validate(uri) == {:ok, uri}
   end
 

@@ -23,14 +23,14 @@ defmodule ExOauth2Provider.Token.Password do
       {:ok, access_token}
       {:error, %{error: error, error_description: _}, http_status}
   """
-  def grant(%{"grant_type" => "password"} = request, password_auth \\ ExOauth2Provider.password_auth(), use_refresh_token? \\ ExOauth2Provider.use_refresh_token?) do
+  def grant(%{"grant_type" => "password"} = request, config \\ ExOauth2Provider.Config) do
     %{request: request}
-    |> get_password_auth_method(password_auth)
+    |> get_password_auth_method(config.password_auth)
     |> load_resource_owner
     |> Utils.load_client
     |> set_defaults
     |> validate_request
-    |> issue_access_token(use_refresh_token?)
+    |> issue_access_token(config.use_refresh_token?)
     |> Response.response
   end
 

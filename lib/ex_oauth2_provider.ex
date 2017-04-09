@@ -1,6 +1,6 @@
 defmodule ExOauth2Provider do
   @moduledoc """
-  A module that provides OAuth 2 based server for Elixir applications.
+  A module that provides OAuth 2 capabilities for Elixir applications.
 
   ## Configuration
       config :ex_oauth2_provider, ExOauth2Provider,
@@ -12,7 +12,9 @@ defmodule ExOauth2Provider do
         authorization_code_expires_in: 600,
         access_token_expires_in: 7200,
         use_refresh_token: false,
-        revoke_refresh_token_on_use: false
+        revoke_refresh_token_on_use: false,
+        force_ssl_in_redirect_uri: true,
+        grant_flows: ~w(authorization_code client_credentials)
 
   If `revoke_refresh_token_on_use` is set to true,
   refresh tokens will be revoked after a related access token is used.
@@ -22,19 +24,7 @@ defmodule ExOauth2Provider do
   """
 
   @config                        Application.get_env(:ex_oauth2_provider, ExOauth2Provider, Application.get_env(:phoenix_oauth2_provider, PhoenixOauth2Provider, []))
-
   @repo                          Keyword.get(@config, :repo)
-  @resource_owner_struct         Keyword.get(@config, :resource_owner)
-  @default_scopes                Keyword.get(@config, :default_scopes, [])
-  @optional_scopes               Keyword.get(@config, :optional_scopes, [])
-  @server_scopes                 @default_scopes ++ @optional_scopes
-  @native_redirect_uri           Keyword.get(@config, :native_redirect_uri, "urn:ietf:wg:oauth:2.0:oob")
-  @authorization_code_expires_in Keyword.get(@config, :authorization_code_expires_in, 600)
-  @access_token_expires_in       Keyword.get(@config, :access_token_expires_in, 7200)
-  @use_refresh_token             Keyword.get(@config, :use_refresh_token, false)
-  @password_auth                 Keyword.get(@config, :password_auth, nil)
-  @refresh_token_revoked_on_use  Keyword.get(@config, :revoke_refresh_token_on_use, false)
-  @force_ssl_in_redirect_uri     Keyword.get(@config, :force_ssl_in_redirect_uri, Mix.env != :dev)
 
   @doc """
   Authenticate an access token.
@@ -48,10 +38,10 @@ defmodule ExOauth2Provider do
   @spec authenticate_token(String.t) :: {:ok, map} |
                                         {:error, any}
   def authenticate_token(nil), do: {:error, :token_inaccessible}
-  def authenticate_token(token, refresh_token_revoked_on_use? \\ ExOauth2Provider.refresh_token_revoked_on_use?) do
+  def authenticate_token(token, config \\ ExOauth2Provider.Config) do
     token
     |> load_access_token
-    |> revoke_previous_refresh_token(refresh_token_revoked_on_use?)
+    |> revoke_previous_refresh_token(config.refresh_token_revoked_on_use?)
     |> validate_access_token
     |> load_resource
   end
@@ -91,32 +81,7 @@ defmodule ExOauth2Provider do
   end
 
   @doc false
-  def resource_owner_struct, do: @resource_owner_struct
+  def config, do: @config
   @doc false
   def repo, do: @repo
-  @doc false
-  def default_scopes, do: @default_scopes
-  @doc false
-  def server_scopes, do: @server_scopes
-  @doc false
-  def native_redirect_uri, do: @native_redirect_uri
-  @doc false
-  def authorization_code_expires_in, do: @authorization_code_expires_in
-  @doc false
-  def access_token_expires_in, do: @access_token_expires_in
-  @doc false
-  def use_refresh_token?, do: @use_refresh_token
-  @doc false
-  def password_auth, do: @password_auth
-  @doc false
-  def refresh_token_revoked_on_use?, do: @refresh_token_revoked_on_use
-
-
-  # Forces the usage of the HTTPS protocol in non-native redirect uris
-  # (enabled by default in non-development environments). OAuth2
-  # delegates security in communication to the HTTPS protocol so it is
-  # wise to keep this enabled.
-  @doc false
-  @use_refresh_token Keyword.get(@config, :use_refresh_token, false)
-  def force_ssl_in_redirect_uri?, do: @force_ssl_in_redirect_uri
 end

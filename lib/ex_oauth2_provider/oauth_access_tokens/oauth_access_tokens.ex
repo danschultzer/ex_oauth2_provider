@@ -176,7 +176,7 @@ defmodule ExOauth2Provider.OauthAccessTokens do
   end
   def is_accessible?(nil), do: false
 
-  if ExOauth2Provider.refresh_token_revoked_on_use? do
+  if ExOauth2Provider.Config.refresh_token_revoked_on_use? do
     @doc """
     Gets an old access token by previous refresh token.
 
@@ -274,7 +274,7 @@ defmodule ExOauth2Provider.OauthAccessTokens do
   defp put_scopes(changeset), do: changeset
 
   defp default_scopes_string do
-    ExOauth2Provider.default_scopes
+    ExOauth2Provider.Config.default_scopes
     |> ExOauth2Provider.Scopes.to_string
   end
 end

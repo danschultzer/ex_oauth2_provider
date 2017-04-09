@@ -88,7 +88,7 @@ defmodule ExOauth2Provider.Authorization.Code do
         _       -> {String.to_atom(k), v}
       end
     end)
-    |> Map.merge(%{expires_in: ExOauth2Provider.authorization_code_expires_in})
+    |> Map.merge(%{expires_in: ExOauth2Provider.Config.authorization_code_expires_in})
 
     case OauthAccessGrants.create_grant(resource_owner, application, grant_params) do
       {:ok, grant} -> Map.merge(params, %{grant: grant})

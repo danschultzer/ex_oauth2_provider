@@ -57,7 +57,7 @@ defmodule ExOauth2Provider.RedirectURI do
   Check if an url is native
   """
   def native_redirect_uri?(url) do
-    ExOauth2Provider.native_redirect_uri == url
+    ExOauth2Provider.Config.native_redirect_uri == url
   end
 
   @doc """
@@ -78,6 +78,6 @@ defmodule ExOauth2Provider.RedirectURI do
   end
 
   defp invalid_ssl_uri?(uri) do
-    ExOauth2Provider.force_ssl_in_redirect_uri? and uri.scheme == "http"
+    ExOauth2Provider.Config.force_ssl_in_redirect_uri? and uri.scheme == "http"
   end
 end

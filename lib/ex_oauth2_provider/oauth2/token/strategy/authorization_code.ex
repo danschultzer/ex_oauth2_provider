@@ -22,12 +22,12 @@ defmodule ExOauth2Provider.Token.AuthorizationCode do
       {:ok, access_token}
       {:error, %{error: error, error_description: _}, http_status}
   """
-  def grant(%{"grant_type" => "authorization_code"} = request, use_refresh_token? \\ ExOauth2Provider.use_refresh_token?) do
+  def grant(%{"grant_type" => "authorization_code"} = request, config \\ ExOauth2Provider.Config) do
     %{request: request}
     |> Utils.load_client
     |> load_access_grant
     |> validate_request
-    |> issue_access_token_by_grant(use_refresh_token?)
+    |> issue_access_token_by_grant(config.use_refresh_token?)
     |> Response.response
   end
 

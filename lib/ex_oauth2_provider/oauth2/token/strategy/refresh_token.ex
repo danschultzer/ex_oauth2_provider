@@ -23,11 +23,11 @@ defmodule ExOauth2Provider.Token.RefreshToken do
       {:ok, access_token}
       {:error, %{error: error, error_description: _}, http_status}
   """
-  def grant(%{"grant_type" => "refresh_token"} = request, refresh_token_revoked_on_use? \\ ExOauth2Provider.refresh_token_revoked_on_use?()) do
+  def grant(%{"grant_type" => "refresh_token"} = request, config \\ ExOauth2Provider.Config) do
     %{request: request}
     |> Utils.load_client
     |> load_access_token_by_refresh_token
-    |> issue_access_token_by_refresh_token(refresh_token_revoked_on_use?)
+    |> issue_access_token_by_refresh_token(config.refresh_token_revoked_on_use?)
     |> Response.response
   end
 
@@ -49,7 +49,7 @@ defmodule ExOauth2Provider.Token.RefreshToken do
     result = ExOauth2Provider.repo.transaction(fn ->
       token_params = %{application: refresh_token.application,
                        scopes: refresh_token.scopes,
-                       expires_in: ExOauth2Provider.access_token_expires_in,
+                       expires_in: ExOauth2Provider.Config.access_token_expires_in,
                        use_refresh_token: true}
                      |> add_previous_refresh_token(refresh_token, refresh_token_revoked_on_use?)
 

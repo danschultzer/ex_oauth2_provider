@@ -23,14 +23,14 @@ defmodule ExOauth2Provider.Scopes do
   Default scopes for server
   """
   def default_server_scopes do
-    ExOauth2Provider.default_scopes
+    ExOauth2Provider.Config.default_scopes
   end
 
   @doc """
   All scopes for server
   """
   def server_scopes do
-    ExOauth2Provider.server_scopes
+    ExOauth2Provider.Config.server_scopes
   end
 
   # Fetch scopes from access token

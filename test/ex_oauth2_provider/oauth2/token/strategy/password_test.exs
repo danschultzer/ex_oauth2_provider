@@ -61,7 +61,7 @@ defmodule ExOauth2Provider.Token.Strategy.PasswordTest do
   end
 
   test "#grant/1 error when no password auth set" do
-    assert {:error, error, :unprocessable_entity} = Password.grant(@valid_request, nil)
+    assert {:error, error, :unprocessable_entity} = Password.grant(@valid_request, %{password_auth: nil, use_refresh_token?: true})
     assert error == %{error: :unsupported_grant_type,
                       error_description: "The authorization grant type is not supported by the authorization server."
                     }
@@ -73,12 +73,12 @@ defmodule ExOauth2Provider.Token.Strategy.PasswordTest do
     assert get_last_access_token().resource_owner_id == application.resource_owner_id
     assert get_last_access_token().application_id == application.id
     assert get_last_access_token().scopes == application.scopes
-    assert get_last_access_token().expires_in == ExOauth2Provider.access_token_expires_in
+    assert get_last_access_token().expires_in == ExOauth2Provider.Config.access_token_expires_in
     refute is_nil(get_last_access_token().refresh_token)
   end
 
-  test "#grant/1 doesn't set refresh_token when ExOauth2Provider.use_refresh_token? == false" do
-    assert {:ok, access_token} = Password.grant(@valid_request, ExOauth2Provider.password_auth, false)
+  test "#grant/1 doesn't set refresh_token when ExOauth2Provider.Config.use_refresh_token? == false" do
+    assert {:ok, access_token} = Password.grant(@valid_request, %{password_auth: ExOauth2Provider.Config.password_auth, use_refresh_token?: false})
     assert access_token.access_token == get_last_access_token().token
     assert is_nil(get_last_access_token().refresh_token)
   end

@@ -40,7 +40,7 @@ defmodule ExOauth2ProviderTest do
     access_token  = fixture(:access_token, user, %{use_refresh_token: true})
     access_token2 = fixture(:access_token, user, %{use_refresh_token: true, previous_refresh_token: access_token})
 
-    assert {:ok, access_token2} = authenticate_token(access_token2.token, false)
+    assert {:ok, access_token2} = authenticate_token(access_token2.token, %{refresh_token_revoked_on_use?: false})
     access_token = ExOauth2Provider.repo.get_by(ExOauth2Provider.OauthAccessTokens.OauthAccessToken, token: access_token.token)
     refute ExOauth2Provider.OauthAccessTokens.is_revoked?(access_token)
     access_token2 = ExOauth2Provider.repo.get_by(ExOauth2Provider.OauthAccessTokens.OauthAccessToken, token: access_token2.token)

@@ -38,7 +38,7 @@ defmodule ExOauth2Provider.Token.Strategy.ClientCredentialsTest do
     assert get_last_access_token().resource_owner_id == application.resource_owner_id
     assert get_last_access_token().application_id == application.id
     assert get_last_access_token().scopes == application.scopes
-    assert get_last_access_token().expires_in == ExOauth2Provider.access_token_expires_in
+    assert get_last_access_token().expires_in == ExOauth2Provider.Config.access_token_expires_in
 
     # MUST NOT have refresh token
     assert get_last_access_token().refresh_token == nil

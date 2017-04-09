@@ -69,13 +69,13 @@ defmodule ExOauth2Provider.Token.Strategy.RefreshTokenTest do
     assert access_token.resource_owner_id == new_access_token.resource_owner_id
     assert access_token.application_id == new_access_token.application_id
     assert access_token.scopes == new_access_token.scopes
-    assert ExOauth2Provider.access_token_expires_in == new_access_token.expires_in
+    assert ExOauth2Provider.Config.access_token_expires_in == new_access_token.expires_in
     assert access_token.refresh_token == new_access_token.previous_refresh_token
     assert OauthAccessTokens.is_revoked?(access_token)
   end
 
   test "#grant/1 when refresh_token_revoked_on_use? == false", %{valid_request: valid_request, access_token: access_token} do
-    assert {:ok, new_access_token} = RefreshToken.grant(valid_request, false)
+    assert {:ok, new_access_token} = RefreshToken.grant(valid_request, %{refresh_token_revoked_on_use?: false})
 
     access_token = ExOauth2Provider.repo.get_by(OauthAccessTokens.OauthAccessToken, id: access_token.id)
     new_access_token = ExOauth2Provider.repo.get_by(OauthAccessTokens.OauthAccessToken, token: new_access_token.access_token)

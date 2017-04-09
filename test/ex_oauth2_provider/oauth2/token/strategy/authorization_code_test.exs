@@ -41,12 +41,12 @@ defmodule ExOauth2Provider.Token.Strategy.AuthorizationCodeTest do
     assert get_last_access_token().resource_owner_id == resource_owner.id
     assert get_last_access_token().application_id == application.id
     assert get_last_access_token().scopes == access_grant.scopes
-    assert get_last_access_token().expires_in == ExOauth2Provider.access_token_expires_in
+    assert get_last_access_token().expires_in == ExOauth2Provider.Config.access_token_expires_in
     refute is_nil(get_last_access_token().refresh_token)
   end
 
-  test "#grant/1 doesn't set refresh_token when ExOauth2Provider.use_refresh_token? == false" do
-    assert {:ok, access_token} = AuthorizationCode.grant(@valid_request, false)
+  test "#grant/1 doesn't set refresh_token when ExOauth2Provider.Config.use_refresh_token? == false" do
+    assert {:ok, access_token} = AuthorizationCode.grant(@valid_request, %{use_refresh_token?: false})
     assert access_token.access_token == get_last_access_token().token
     assert is_nil(get_last_access_token().refresh_token)
   end

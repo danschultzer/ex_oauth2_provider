@@ -4,7 +4,7 @@ defmodule ExOauth2Provider.Factory do
   """
 
   @repo           ExOauth2Provider.repo()
-  @resource_owner ExOauth2Provider.resource_owner_struct()
+  @resource_owner ExOauth2Provider.Config.resource_owner_struct()
   @application    ExOauth2Provider.OauthApplications.OauthApplication
   @access_token   ExOauth2Provider.OauthAccessTokens.OauthAccessToken
   @access_grant   ExOauth2Provider.OauthAccessGrants.OauthAccessGrant
