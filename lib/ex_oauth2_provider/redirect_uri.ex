@@ -55,7 +55,7 @@ defmodule ExOauth2Provider.RedirectURI do
   Check if an url is native
   """
   def native_uri?(url) do
-    ExOauth2Provider.native_redirect_uri === url
+    ExOauth2Provider.native_redirect_uri == url
   end
 
   @doc """

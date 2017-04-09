@@ -77,7 +77,7 @@ defmodule ExOauth2Provider.Token.AuthorizationCode do
 
   defp validate_redirect_uri(%{error: _} = params), do: params
   defp validate_redirect_uri(%{request: %{"redirect_uri" => redirect_uri}, access_grant: grant} = params) do
-    case grant.redirect_uri === redirect_uri do
+    case grant.redirect_uri == redirect_uri do
       true  -> params
       false -> Error.add_error(params, Error.invalid_grant())
     end
