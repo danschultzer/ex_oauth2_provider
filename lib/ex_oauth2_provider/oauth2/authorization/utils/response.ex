@@ -50,7 +50,7 @@ defmodule ExOauth2Provider.Authorization.Utils.Response do
   end
 
   defp build_redirect_response(%{request: %{"redirect_uri" => redirect_uri}}, payload) do
-    case RedirectURI.native_uri?(redirect_uri) do
+    case RedirectURI.native_redirect_uri?(redirect_uri) do
       true -> {:native_redirect, payload}
       _    -> {:redirect, RedirectURI.uri_with_query(redirect_uri, payload)}
     end
@@ -69,7 +69,7 @@ defmodule ExOauth2Provider.Authorization.Utils.Response do
   defp can_redirect?(%{error: %{error: error_name}, request: %{"redirect_uri" => redirect_uri}}) do
     error_name != :invalid_redirect_uri &&
     error_name != :invalid_client &&
-    !RedirectURI.native_uri?(redirect_uri)
+    !RedirectURI.native_redirect_uri?(redirect_uri)
   end
   defp can_redirect?(%{error: _}), do: false
   defp can_redirect?(%{request: %{}}), do: true

@@ -1,6 +1,6 @@
 defmodule ExOauth2Provider.Authorization.CodeTest do
   use ExOauth2Provider.TestCase
-  
+
   import ExOauth2Provider.Test.Fixture
   import ExOauth2Provider.Test.QueryHelper
   import ExOauth2Provider.Authorization
@@ -148,12 +148,12 @@ defmodule ExOauth2Provider.Authorization.CodeTest do
   end
 
   test "#authorize/2 generates grant with redirect uri", %{resource_owner: resource_owner, application: application} do
-    set_application_redirect_uri(application, "#{application.redirect_uri}\nhttp://example.com/path")
+    set_application_redirect_uri(application, "#{application.redirect_uri}\nhttps://example.com/path")
 
-    params = Map.merge(@valid_request, %{"redirect_uri" => "http://example.com/path?param=1", "state" => 40612})
+    params = Map.merge(@valid_request, %{"redirect_uri" => "https://example.com/path?param=1", "state" => 40612})
 
     assert {:redirect, redirect_uri} = authorize(resource_owner, params)
-    assert redirect_uri == "http://example.com/path?code=#{get_last_access_grant().token}&param=1&state=40612"
+    assert redirect_uri == "https://example.com/path?code=#{get_last_access_grant().token}&param=1&state=40612"
   end
 
   test "#deny/2 error when no resource owner" do
@@ -176,9 +176,9 @@ defmodule ExOauth2Provider.Authorization.CodeTest do
   end
 
   test "#deny/2 with redirection uri", %{application: application, resource_owner: resource_owner} do
-    set_application_redirect_uri(application, "#{application.redirect_uri}\nhttp://example.com/path")
-    params = Map.merge(@valid_request, %{"redirect_uri" => "http://example.com/path?param=1", "state" => 40612})
+    set_application_redirect_uri(application, "#{application.redirect_uri}\nhttps://example.com/path")
+    params = Map.merge(@valid_request, %{"redirect_uri" => "https://example.com/path?param=1", "state" => 40612})
 
-    assert {:redirect, "http://example.com/path?error=access_denied&error_description=The+resource+owner+or+authorization+server+denied+the+request.&param=1&state=40612"} = deny(resource_owner, params)
+    assert {:redirect, "https://example.com/path?error=access_denied&error_description=The+resource+owner+or+authorization+server+denied+the+request.&param=1&state=40612"} = deny(resource_owner, params)
   end
 end

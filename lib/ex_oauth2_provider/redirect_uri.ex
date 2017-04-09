@@ -14,12 +14,14 @@ defmodule ExOauth2Provider.RedirectURI do
       url ->
         uri = URI.parse(url)
         cond do
-          url == ExOauth2Provider.native_redirect_uri ->
+          native_redirect_uri?(url) ->
             {:ok, url}
           uri.fragment != nil ->
             {:error, "Redirect URI cannot contain fragments"}
           uri.scheme == nil || uri.host == nil ->
-            {:error, "Redirect URI has to be absolute"}
+            {:error, "Redirect URI must be an absolute URI"}
+          invalid_ssl_uri?(uri) ->
+            {:error, "Redirect URI must be an HTTPS/SSL URI"}
           true ->
             {:ok, url}
         end
@@ -54,7 +56,7 @@ defmodule ExOauth2Provider.RedirectURI do
   @doc """
   Check if an url is native
   """
-  def native_uri?(url) do
+  def native_redirect_uri?(url) do
     ExOauth2Provider.native_redirect_uri == url
   end
 
@@ -73,5 +75,9 @@ defmodule ExOauth2Provider.RedirectURI do
     |> URI.decode_query(attrs)
     |> remove_empty_values
     |> URI.encode_query
+  end
+
+  defp invalid_ssl_uri?(uri) do
+    ExOauth2Provider.force_ssl_in_redirect_uri? and uri.scheme == "http"
   end
 end

@@ -34,6 +34,7 @@ defmodule ExOauth2Provider do
   @use_refresh_token             Keyword.get(@config, :use_refresh_token, false)
   @password_auth                 Keyword.get(@config, :password_auth, nil)
   @refresh_token_revoked_on_use  Keyword.get(@config, :revoke_refresh_token_on_use, false)
+  @force_ssl_in_redirect_uri     Keyword.get(@config, :force_ssl_in_redirect_uri, Mix.env != :dev)
 
   @doc """
   Authenticate an access token.
@@ -109,4 +110,13 @@ defmodule ExOauth2Provider do
   def password_auth, do: @password_auth
   @doc false
   def refresh_token_revoked_on_use?, do: @refresh_token_revoked_on_use
+
+
+  # Forces the usage of the HTTPS protocol in non-native redirect uris
+  # (enabled by default in non-development environments). OAuth2
+  # delegates security in communication to the HTTPS protocol so it is
+  # wise to keep this enabled.
+  @doc false
+  @use_refresh_token Keyword.get(@config, :use_refresh_token, false)
+  def force_ssl_in_redirect_uri?, do: @force_ssl_in_redirect_uri
 end

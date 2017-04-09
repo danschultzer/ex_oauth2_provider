@@ -145,7 +145,7 @@ defmodule ExOauth2Provider.Authorization.Code do
   defp validate_redirect_uri(%{error: _} = params), do: params
   defp validate_redirect_uri(%{request: %{"redirect_uri" => redirect_uri}, client: client} = params) do
     cond do
-      RedirectURI.native_uri?(redirect_uri) -> params
+      RedirectURI.native_redirect_uri?(redirect_uri) -> params
       RedirectURI.valid_for_authorization?(redirect_uri, client.redirect_uri) -> params
       true -> Error.add_error(params, Error.invalid_redirect_uri())
     end
