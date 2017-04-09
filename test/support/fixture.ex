@@ -11,6 +11,7 @@ defmodule ExOauth2Provider.Test.Fixture do
 
   def fixture(:access_token, resource_owner, %{} = params) do
     {:ok, access_token} = resource_owner |> ExOauth2Provider.OauthAccessTokens.create_token(params)
+
     access_token
   end
 

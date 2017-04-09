@@ -66,7 +66,7 @@ defmodule ExOauth2Provider do
 
   defp load_resource({:error, _} = error), do: error
   defp load_resource({:ok, access_token}) do
-    access_token = @repo.preload(access_token, :resource_owner)
+    access_token = repo().preload(access_token, :resource_owner)
 
     case access_token.resource_owner do
       nil -> {:error, :no_association_found}
