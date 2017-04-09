@@ -106,10 +106,10 @@ defmodule Mix.Tasks.ExOauth2Provider.Install do
   defp update_config(%{config: true} = config) do
     repos = Enum.map config[:repos], &to_string(&1)
     """
-config :ex_oauth2_provider, ExOauth2Provider,
-  repo: #{repos},
-  resource_owner: #{config[:resource_owner]}
-"""
+    config :ex_oauth2_provider, ExOauth2Provider,
+    repo: #{repos},
+    resource_owner: #{config[:resource_owner]}
+    """
     |> write_config(config)
   end
   defp update_config(config), do: config
