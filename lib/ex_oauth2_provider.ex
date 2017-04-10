@@ -35,6 +35,8 @@ defmodule ExOauth2Provider do
   expire.
   """
 
+  alias ExOauth2Provider.OauthAccessTokens
+
   @config Application.get_env(:ex_oauth2_provider, ExOauth2Provider, Application.get_env(:phoenix_oauth2_provider, PhoenixOauth2Provider, []))
   @repo   Keyword.get(@config, :repo)
 
@@ -59,7 +61,7 @@ defmodule ExOauth2Provider do
   end
 
   defp load_access_token(token) do
-    case ExOauth2Provider.OauthAccessTokens.get_by_token(token) do
+    case OauthAccessTokens.get_by_token(token) do
       nil          -> {:error, :token_not_found}
       access_token -> {:ok, access_token}
     end
@@ -67,7 +69,7 @@ defmodule ExOauth2Provider do
 
   defp validate_access_token({:error, _} = error), do: error
   defp validate_access_token({:ok, access_token}) do
-    case ExOauth2Provider.OauthAccessTokens.is_accessible?(access_token) do
+    case OauthAccessTokens.is_accessible?(access_token) do
       true -> {:ok, access_token}
       _    -> {:error, :token_inaccessible}
     end
@@ -85,8 +87,8 @@ defmodule ExOauth2Provider do
 
   defp revoke_previous_refresh_token({:error, _} = error, _), do: error
   defp revoke_previous_refresh_token({:ok, _} = params, false), do: params
-  defp revoke_previous_refresh_token({:ok, access_token}, true) do
-    case ExOauth2Provider.OauthAccessTokens.revoke_previous_refresh_token(access_token) do
+  defp revoke_previous_refresh_token({:ok, %{} = access_token}, true) do
+    case OauthAccessTokens.revoke_previous_refresh_token(access_token) do
       nil -> {:error, :no_association_found}
       _   -> {:ok, access_token}
     end

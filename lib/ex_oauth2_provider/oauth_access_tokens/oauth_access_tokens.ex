@@ -284,14 +284,14 @@ defmodule ExOauth2Provider.OauthAccessTokens do
         iex> revoke_previous_refresh_token(invalid_data)
         {:error, %Ecto.Changeset{}}
     """
-    def revoke_previous_refresh_token(%OauthAccessToken{previous_refresh_token: ""} = token), do: token
-    def revoke_previous_refresh_token(%OauthAccessToken{previous_refresh_token: nil} = token), do: token
-    def revoke_previous_refresh_token(%OauthAccessToken{} = token) do
-      token
+    def revoke_previous_refresh_token(%OauthAccessToken{previous_refresh_token: ""} = access_token), do: access_token
+    def revoke_previous_refresh_token(%OauthAccessToken{previous_refresh_token: nil} = access_token), do: access_token
+    def revoke_previous_refresh_token(%OauthAccessToken{} = access_token) do
+      access_token
       |> get_by_previous_refresh_token_for
       |> revoke
 
-      token
+      access_token
       |> reset_previous_refresh_token
     end
 
