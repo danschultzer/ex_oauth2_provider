@@ -53,7 +53,8 @@ defmodule ExOauth2Provider.Mixfile do
     [
       maintainers: ["Dan Shultzer", "Benjamin Schultzer"],
       licenses: ["MIT"],
-      links: %{github: "https://github.com/danschultzer/ex_oauth2_provider"}
+      links: %{github: "https://github.com/danschultzer/ex_oauth2_provider"},
+      files: ~w(lib priv/templates) ++ ~w(LICENSE mix.exs README.md)
     ]
   end
 end
