@@ -158,7 +158,7 @@ defmodule ExOauth2Provider.OauthAccessTokens do
     |> find_accessible_token_by_attrs
     |> create_or_return_token(application, attrs)
   end
-  def find_or_create_token(%{id: _} = resource_owner, %{application: application} = attrs) do
+  def find_or_create_token(%{id: _} = resource_owner, %{application: _} = attrs) do
     attrs
     |> Map.merge(%{resource_owner: resource_owner})
     |> find_accessible_token_by_attrs

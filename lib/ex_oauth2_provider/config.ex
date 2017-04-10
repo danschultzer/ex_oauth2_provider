@@ -61,7 +61,33 @@ defmodule ExOauth2Provider.Config do
   def force_ssl_in_redirect_uri?, do: @force_ssl_in_redirect_uri
 
   # Use a custom access token generator
-  @access_token_generator Keyword.get(@config, :access_token_generator, nil)
-  def access_token_generator, do: @access_token_generator
+  @doc false
+  @access_token_generator         Keyword.get(@config, :access_token_generator, nil)
+  def access_token_generator,     do: @access_token_generator
 
+  @doc false
+  @grant_flows                  Keyword.get(@config, :grant_flows, ~w(authorization_code client_credentials))
+  def grant_flows,              do: @grant_flows
+
+  @doc false
+  def calculate_authorization_response_types do
+    %{"authorization_code" => {:code, ExOauth2Provider.Authorization.Code}}
+    |> Enum.filter(fn({k,_}) -> Enum.member?(grant_flows(), k) end)
+    |> Enum.map(fn({_,v}) -> v end)
+  end
+
+  @doc false
+  def calculate_token_grant_types do
+    [authorization_code: ExOauth2Provider.Token.AuthorizationCode,
+     client_credentials: ExOauth2Provider.Token.ClientCredentials,
+     password: ExOauth2Provider.Token.Password,
+     refresh_token: ExOauth2Provider.Token.RefreshToken]
+    |> Enum.filter(fn({k,_}) -> grant_type_can_be_used?(grant_flows(), to_string(k)) end)
+  end
+
+  defp grant_type_can_be_used?(_, "refresh_token"),
+    do: use_refresh_token?()
+  defp grant_type_can_be_used?(grant_flows, grant_type) do
+    Enum.member?(grant_flows, grant_type)
+  end
 end
