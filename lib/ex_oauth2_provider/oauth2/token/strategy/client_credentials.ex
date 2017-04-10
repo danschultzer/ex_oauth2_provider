@@ -10,12 +10,12 @@ defmodule ExOauth2Provider.Token.ClientCredentials do
   Will grant access token by client credentials.
 
   ## Example
-      resource_owner
-      |> ExOauth2Provider.Token.grant(%{
+      ExOauth2Provider.Token.grant(%{
         "grant_type" => "client_credentials",
         "client_id" => "Jf5rM8hQBc",
         "client_secret" => "secret"
       })
+
   ## Response
       {:ok, access_token}
       {:error, %{error: error, error_description: _}, http_status}
@@ -29,21 +29,16 @@ defmodule ExOauth2Provider.Token.ClientCredentials do
   end
 
   defp issue_access_token_by_creds(%{error: _} = params), do: params
-  defp issue_access_token_by_creds(%{client: client} = params) do
-    client = client
-    |> ExOauth2Provider.repo.preload(:owner)
-
-    token_params = %{scopes: client.scopes,
-                     application: client,
+  defp issue_access_token_by_creds(%{client: client, request: request} = params) do
+    token_params = %{scopes: request["scope"],
                      # client_credentials MUST NOT use refresh tokens
                      use_refresh_token: false}
 
-    case Utils.find_or_create_access_token(client.owner, token_params) do
+    case Utils.find_or_create_access_token(client, token_params) do
       {:ok, access_token} -> Map.merge(params, %{access_token: access_token})
       {:error, error}     -> Error.add_error(params, error)
     end
   end
 
-  defp validate_request(params),
-    do: params
+  defp validate_request(params), do: params
 end
