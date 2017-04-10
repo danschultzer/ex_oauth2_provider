@@ -18,6 +18,7 @@ defmodule ExOauth2Provider.Token.AuthorizationCode do
         "redirect_uri" => "https://example.com/",
         "grant_type" => "authorization_code"
       })
+
   ## Response
       {:ok, access_token}
       {:error, %{error: error, error_description: _}, http_status}

@@ -2,7 +2,7 @@
 
 [![Build Status](https://travis-ci.org/danschultzer/ex_oauth2_provider.svg?branch=master)](https://travis-ci.org/danschultzer/ex_oauth2_provider)
 
-The no brainer library to add OAuth 2 provider functionality to your elixir or Phoenix app.
+The no brainer library to use for adding OAuth 2.0 provider capabilities to your Elixir app. You can use [https://github.com/danschultzer/phoenix_oauth2_provider] for easy integration with your Phoenix app.
 
 ## Installation
 
@@ -24,41 +24,41 @@ Run `mix deps.get` to install it, and then run the install script:
 mix ex_oauth2_provider.install
 ```
 
-This will add all necessary migrations to your app.
+This will add the necessary Ecto migrations to your app, and set sample configuration in `config/config.exs`.
 
-You should use a resource owner structure that already exists in your app, e.g. your User struct. If you don't have any user struct, you can add a migration like this:
+You'll need to use a resource owner struct that already exists. This could be your User struct. If you don't have any User struct, you can add a migration like this:
 
 ```bash
 mix ecto.gen.migration --change "    create table(:users) do\n      add :email, :string\n    end"
 ```
 
-And use the struct in [test/support/dummy/models/user.ex](test/support/dummy/models/user.ex).
+And use the struct in [test/support/dummy/models/user.ex](test/support/dummy/models/user.ex). The
 
 ## Authorize code flow
 
 ### Authorization request
 
-You'll need to ensure that a resource_owner is already authenticated on these pages, and pass the struct as first argument in the following methods.
+You'll need to ensure that a resource_owner is already authenticated on these endpoints, and pass the struct as first argument in the following methods.
 
 ```elixir
 # GET /oauth/authorize?response_type=code&client_id=CLIENT_ID&redirect_uri=CALLBACK_URL&scope=read
 case ExOauth2Provider.Authorization.preauthorize(resource_owner, params) do
   {:ok, client, scopes}             -> # render authorization page
-  {:redirect, redirect_uri}         -> # redirect to redirect_uri
-  {:native_redirect, %{code: code}} -> # redirect to a local token :show endpoint
+  {:redirect, redirect_uri}         -> # redirect to external redirect_uri
+  {:native_redirect, %{code: code}} -> # redirect to local :show endpoint
   {:error, error, http_status}      -> # render error page
 end
 
 # POST /oauth/authorize?response_type=code&client_id=CLIENT_ID&redirect_uri=CALLBACK_URL&scope=read
 ExOauth2Provider.Authorization.authorize(resource_owner, params) do
-  {:redirect, redirect_uri}         -> # redirect to redirect_uri
-  {:native_redirect, %{code: code}} -> # redirect to a token :show endpoint
+  {:redirect, redirect_uri}         -> # redirect to external redirect_uri
+  {:native_redirect, %{code: code}} -> # redirect to local :show endpoint
   {:error, error, http_status}      -> # render error page
 end
 
 # DELETE /oauth/authorize?response_type=code&client_id=CLIENT_ID&redirect_uri=CALLBACK_URL&scope=read
 ExOauth2Provider.Authorization.deny(resource_owner, params) do
-  {:redirect, redirect_uri}         -> # redirect to redirect_uri
+  {:redirect, redirect_uri}         -> # redirect to external redirect_uri
   {:error, error, http_status}      -> # render error page
 end
 ```
@@ -73,7 +73,7 @@ case ExOauth2Provider.Token.grant(params) do
 end
 ```
 
-### Revoke
+### Revocation
 
 ```elixir
 # GET /oauth/revoke?client_id=CLIENT_ID&client_secret=CLIENT_SECRET&token=ACCESS_TOKEN
@@ -83,9 +83,12 @@ case ExOauth2Provider.Token.revoke(params) do
 end
 ```
 
+Revocation will return `{:ok, %{}}` status even if the token is invalid.
+
 ### Other supported token grants
 
 #### Client credentials
+
 ```elixir
 # POST /oauth/token?client_id=CLIENT_ID&client_secret=CLIENT_SECRET&grant_type=client_credentials
 case ExOauth2Provider.Token.grant(params) do
@@ -95,6 +98,7 @@ end
 ```
 
 #### Refresh token
+
 ```elixir
 # POST /oauth/token?client_id=CLIENT_ID&client_secret=CLIENT_SECRET&grant_type=refresh_token&refresh_token=REFRESH_TOKEN
 case ExOauth2Provider.Token.grant(params) do
@@ -108,12 +112,12 @@ end
 You'll need to provide an authorization method that accepts username and password as arguments, and returns `{:ok, resource_owner}` or `{:error, reason}`. Something like this:
 
 ```elixir
-# Configuration
+# Configuration in config/config.exs
 config :ex_oauth2_provider, ExOauth2Provider,
-  password_auth: {MyModule, :authenticate}
+  password_auth: {MyApp.MyModule, :authenticate}
 
-# The module and method we'll use
-defmodule MyModule
+# Module example
+defmodule MyApp.MyModule
   def authenticate(username, password) do
     user = repo.get_by(User, email: username)
     cond do

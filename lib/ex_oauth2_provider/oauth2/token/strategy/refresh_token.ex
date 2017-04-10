@@ -12,13 +12,13 @@ defmodule ExOauth2Provider.Token.RefreshToken do
   @doc """
 
   ## Example
-      resource_owner
-      |> ExOauth2Provider.Token.authorize(%{
+      ExOauth2Provider.Token.authorize(%{
         "grant_type" => "refresh_token",
         "client_id" => "Jf5rM8hQBc",
         "client_secret" => "secret",
         "refresh_token" => "1jf6a"
       })
+
   ## Response
       {:ok, access_token}
       {:error, %{error: error, error_description: _}, http_status}

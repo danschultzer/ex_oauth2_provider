@@ -11,8 +11,7 @@ defmodule ExOauth2Provider.Token.Password do
   Will grant access token by password authentication.
 
   ## Example
-      resource_owner
-      |> ExOauth2Provider.Token.grant(%{
+      ExOauth2Provider.Token.grant(%{
         "grant_type" => "password",
         "client_id" => "Jf5rM8hQBc",
         "client_secret" => "secret",
