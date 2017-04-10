@@ -87,6 +87,8 @@ defmodule ExOauth2Provider.Config do
 
   defp grant_type_can_be_used?(_, "refresh_token"),
     do: use_refresh_token?()
+  defp grant_type_can_be_used?(_, "password"),
+    do: not is_nil(password_auth())
   defp grant_type_can_be_used?(grant_flows, grant_type) do
     Enum.member?(grant_flows, grant_type)
   end

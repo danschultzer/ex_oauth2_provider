@@ -99,6 +99,17 @@ end
 
 #### Refresh token
 
+Refresh tokens can be enabled in the configuration:
+
+```elixir
+config :ex_oauth2_provider, ExOauth2Provider,
+  repo: ExOauth2Provider.Test.Repo,
+  resource_owner: Dummy.User,
+  use_refresh_token: true
+```
+
+The `refresh_token` grant flow will automatically be enabled.
+
 ```elixir
 # POST /oauth/token?client_id=CLIENT_ID&client_secret=CLIENT_SECRET&grant_type=refresh_token&refresh_token=REFRESH_TOKEN
 case ExOauth2Provider.Token.grant(params) do
@@ -128,6 +139,8 @@ defmodule MyApp.MyModule
   end
 end
 ```
+
+The `password` grant flow will automatically be enabled.
 
 ```elixir
 # POST /oauth/token?client_id=CLIENT_ID&grant_type=password&username=USERNAME&password=PASSWORD
