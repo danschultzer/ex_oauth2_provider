@@ -7,7 +7,7 @@ defmodule ExOauth2Provider.Mixin.Scopes do
       def put_scopes(%{} = changeset), do: put_scopes(changeset, nil)
       def put_scopes(%{} = changeset, ""), do: put_scopes(changeset, nil)
       def put_scopes(%{} = changeset, server_scopes) do
-        case get_field(changeset, :scopes) |> is_empty do
+        case changeset |> get_field(:scopes) |> is_empty do
           true -> changeset |> change(%{scopes: default_scopes_string(server_scopes)})
           _    -> changeset
         end
