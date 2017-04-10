@@ -31,6 +31,9 @@ defmodule ExOauth2Provider.Mixin.Expirable do
 
           iex> is_expired?(%Data{expires_in: 10, inserted_at: ~N[2017-04-04 19:21:22.292762], ...}}
           true
+
+          iex> is_expired?(%Data{expires_in: nil}}
+          false
       """
       def is_expired?(nil), do: true
       def is_expired?(%{expires_in: nil, inserted_at: _}), do: false

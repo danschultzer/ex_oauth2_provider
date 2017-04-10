@@ -190,6 +190,7 @@ defmodule ExOauth2Provider.OauthAccessTokensTest do
     assert token.id != token2.id
 
     Enum.each(%{application_id: 0,
+                expires_in: nil,
                 expires_in: 0,
                 scopes: "public",
                 scopes: nil}, fn({k, v}) ->
@@ -236,5 +237,10 @@ defmodule ExOauth2Provider.OauthAccessTokensTest do
     inserted_at = NaiveDateTime.utc_now |> NaiveDateTime.add(-2, :second)
     token = %OauthAccessToken{expires_in: 1, revoked_at: nil, inserted_at: inserted_at}
     refute OauthAccessTokens.is_accessible?(token)
+  end
+
+  test "is_accessible?/1#false when never expires" do
+    token = %OauthAccessToken{expires_in: nil, revoked_at: nil, inserted_at: NaiveDateTime.utc_now}
+    assert OauthAccessTokens.is_accessible?(token)
   end
 end
