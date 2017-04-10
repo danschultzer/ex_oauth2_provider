@@ -122,7 +122,7 @@ defmodule ExOauth2Provider.OauthApplications do
       {:error, %Ecto.Changeset{}}
 
   """
-  def create_application(owner, attrs \\ %{}) do
+  def create_application(%{id: _} = owner, attrs \\ %{}) do
     %OauthApplication{}
     |> new_application_changeset(owner, attrs)
     |> ExOauth2Provider.repo.insert()
@@ -202,7 +202,7 @@ defmodule ExOauth2Provider.OauthApplications do
     |> unique_constraint(:uid)
   end
 
-  defp new_application_changeset(%OauthApplication{} = application, owner, params) do
+  defp new_application_changeset(%OauthApplication{} = application, %{id: _} = owner, params) do
     application
     |> cast(params, [:uid, :secret])
     |> put_uid

@@ -2,6 +2,7 @@ defmodule ExOauth2Provider.OauthAccessTokensTest do
   use ExOauth2Provider.TestCase
 
   import ExOauth2Provider.Test.Fixture
+  import ExOauth2Provider.ConfigHelpers
 
   alias ExOauth2Provider.OauthAccessTokens
   alias ExOauth2Provider.OauthAccessTokens.OauthAccessToken
@@ -116,7 +117,9 @@ defmodule ExOauth2Provider.OauthAccessTokensTest do
   end
 
   test "create_token/2 with custom access token generator", %{user: user} do
-    {:ok, token} = OauthAccessTokens.create_token(user, %{}, %{access_token_generator: {ExOauth2Provider.OauthAccessTokensTest, :access_token_generator}})
+    set_config(:access_token_generator, {ExOauth2Provider.OauthAccessTokensTest, :access_token_generator})
+
+    {:ok, token} = OauthAccessTokens.create_token(user, %{})
     assert token.token == "custom_generated-#{user.id}"
   end
 

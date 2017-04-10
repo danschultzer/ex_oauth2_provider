@@ -23,20 +23,20 @@ defmodule ExOauth2Provider.Token.AuthorizationCode do
       {:ok, access_token}
       {:error, %{error: error, error_description: description}, http_status}
   """
-  def grant(%{"grant_type" => "authorization_code"} = request, config \\ ExOauth2Provider.Config) do
+  def grant(%{"grant_type" => "authorization_code"} = request) do
     %{request: request}
     |> Utils.load_client
     |> load_access_grant
     |> validate_request
-    |> issue_access_token_by_grant(config.use_refresh_token?)
-    |> Response.response(config)
+    |> issue_access_token_by_grant
+    |> Response.response
   end
 
-  defp issue_access_token_by_grant(%{error: _} = params, _), do: params
-  defp issue_access_token_by_grant(%{access_grant: access_grant, request: _} = params, use_refresh_token?) do
+  defp issue_access_token_by_grant(%{error: _} = params), do: params
+  defp issue_access_token_by_grant(%{access_grant: access_grant, request: _} = params) do
     token_params = %{scopes: access_grant.scopes,
                      application: access_grant.application,
-                     use_refresh_token: use_refresh_token?}
+                     use_refresh_token: ExOauth2Provider.Config.use_refresh_token?}
 
     result = ExOauth2Provider.repo.transaction(fn ->
       access_grant

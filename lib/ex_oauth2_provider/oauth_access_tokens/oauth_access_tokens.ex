@@ -122,23 +122,23 @@ defmodule ExOauth2Provider.OauthAccessTokens do
       iex> create_token(resource_owner, %{expires_in: "invalid"})
       {:error, %Ecto.Changeset{}}
   """
-  def create_token(owner, attrs \\ %{}, config \\ ExOauth2Provider.Config)
-  def create_token(%OauthApplication{} = application, attrs, config) do
+  def create_token(owner, attrs \\ %{})
+  def create_token(%OauthApplication{} = application, attrs) do
     %OauthAccessToken{application: application}
     |> application_token_changeset(attrs)
-    |> new_token_changeset(attrs, config)
+    |> new_token_changeset(attrs)
     |> ExOauth2Provider.repo.insert()
   end
-  def create_token(%{id: _} = resource_owner, %{application: application} = attrs, config) do
+  def create_token(%{id: _} = resource_owner, %{application: application} = attrs) do
     %OauthAccessToken{application: application, resource_owner: resource_owner}
     |> application_resource_owner_token_changeset(attrs)
-    |> new_token_changeset(attrs, config)
+    |> new_token_changeset(attrs)
     |> ExOauth2Provider.repo.insert()
   end
-  def create_token(%{id: _} = resource_owner, attrs, config) do
+  def create_token(%{id: _} = resource_owner, attrs) do
     %OauthAccessToken{resource_owner: resource_owner}
     |> resource_owner_token_changeset(attrs)
-    |> new_token_changeset(attrs, config)
+    |> new_token_changeset(attrs)
     |> ExOauth2Provider.repo.insert()
   end
 
@@ -319,7 +319,7 @@ defmodule ExOauth2Provider.OauthAccessTokens do
     |> assoc_constraint(:resource_owner)
   end
 
-  defp new_token_changeset(changeset, params, config) do
+  defp new_token_changeset(changeset, params) do
     application = get_field(changeset, :application) || %{scopes: nil}
 
     changeset
@@ -328,11 +328,11 @@ defmodule ExOauth2Provider.OauthAccessTokens do
     |> put_refresh_token(params[:use_refresh_token])
     |> put_scopes(application.scopes)
     |> validate_scopes(application.scopes)
-    |> put_token(config)
+    |> put_token
   end
 
-  defp put_token(%{} = changeset, config) do
-    {module, method} = config.access_token_generator || {ExOauth2Provider.Utils, :generate_token}
+  defp put_token(%{} = changeset) do
+    {module, method} = ExOauth2Provider.Config.access_token_generator() || {ExOauth2Provider.Utils, :generate_token}
 
     {_, resource_owner} = fetch_field(changeset, :resource_owner)
     resource_owner_id   = if is_nil(resource_owner), do: nil, else: resource_owner.id

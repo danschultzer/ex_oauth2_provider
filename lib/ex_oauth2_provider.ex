@@ -37,9 +37,6 @@ defmodule ExOauth2Provider do
 
   alias ExOauth2Provider.OauthAccessTokens
 
-  @config Application.get_env(:ex_oauth2_provider, ExOauth2Provider, Application.get_env(:phoenix_oauth2_provider, PhoenixOauth2Provider, []))
-  @repo   Keyword.get(@config, :repo)
-
   @doc """
   Authenticate an access token.
 
@@ -52,10 +49,10 @@ defmodule ExOauth2Provider do
   @spec authenticate_token(String.t) :: {:ok, map} |
                                         {:error, any}
   def authenticate_token(nil), do: {:error, :token_inaccessible}
-  def authenticate_token(token, config \\ ExOauth2Provider.Config) do
+  def authenticate_token(token) do
     token
     |> load_access_token
-    |> revoke_previous_refresh_token(config.refresh_token_revoked_on_use?)
+    |> revoke_previous_refresh_token(ExOauth2Provider.Config.refresh_token_revoked_on_use?())
     |> validate_access_token
     |> load_resource
   end
@@ -95,7 +92,12 @@ defmodule ExOauth2Provider do
   end
 
   @doc false
-  def config, do: @config
+  def config do
+    Application.get_env(:ex_oauth2_provider, ExOauth2Provider) ||
+    Application.get_env(:phoenix_oauth2_provider, PhoenixOauth2Provider, [])
+  end
   @doc false
-  def repo, do: @repo
+  def repo do
+    Keyword.get(config(), :repo)
+  end
 end

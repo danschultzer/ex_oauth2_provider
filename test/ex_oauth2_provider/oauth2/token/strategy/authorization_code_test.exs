@@ -4,6 +4,7 @@ defmodule ExOauth2Provider.Token.Strategy.AuthorizationCodeTest do
   import ExOauth2Provider.Token
   import ExOauth2Provider.Test.Fixture
   import ExOauth2Provider.Test.QueryHelper
+  import ExOauth2Provider.ConfigHelpers
 
   alias ExOauth2Provider.Token.AuthorizationCode
 
@@ -51,12 +52,15 @@ defmodule ExOauth2Provider.Token.Strategy.AuthorizationCodeTest do
   end
 
   test "#grant/1 returns access token with custom response handler" do
-    assert {:ok, access_token} = AuthorizationCode.grant(@valid_request, %{use_refresh_token?: false, access_token_response_body_handler: {ExOauth2Provider.Token.Strategy.AuthorizationCodeTest, :access_token_response_body_handler}})
+    set_config(:access_token_response_body_handler, {ExOauth2Provider.Token.Strategy.AuthorizationCodeTest, :access_token_response_body_handler})
+    assert {:ok, access_token} = AuthorizationCode.grant(@valid_request)
     assert get_last_access_token().inserted_at == access_token.custom_attr
   end
 
   test "#grant/1 doesn't set refresh_token when ExOauth2Provider.Config.use_refresh_token? == false" do
-    assert {:ok, access_token} = AuthorizationCode.grant(@valid_request, %{use_refresh_token?: false, access_token_response_body_handler: nil})
+    set_config(:use_refresh_token, false)
+
+    assert {:ok, access_token} = AuthorizationCode.grant(@valid_request)
     assert access_token.access_token == get_last_access_token().token
     assert is_nil(get_last_access_token().refresh_token)
   end

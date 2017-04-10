@@ -9,8 +9,8 @@ defmodule ExOauth2Provider.Authorization do
   @doc """
   Check ExOauth2Provider.Authorization.Code for usage.
   """
-  def preauthorize(resource_owner, request, config \\ ExOauth2Provider.Config) do
-    case validate_response_type(request, config) do
+  def preauthorize(resource_owner, request) do
+    case validate_response_type(request) do
       {:error, :invalid_response_type} -> unsupported_response_type(resource_owner, request)
       {:error, :missing_response_type} -> invalid_request(resource_owner, request)
       {:ok, token_module}              -> apply(token_module, :preauthorize, [resource_owner, request])
@@ -20,8 +20,8 @@ defmodule ExOauth2Provider.Authorization do
   @doc """
   Check ExOauth2Provider.Authorization.Code for usage.
   """
-  def authorize(resource_owner, request, config \\ ExOauth2Provider.Config) do
-    case validate_response_type(request, config) do
+  def authorize(resource_owner, request) do
+    case validate_response_type(request) do
       {:error, :invalid_response_type} -> unsupported_response_type(resource_owner, request)
       {:error, :missing_response_type} -> invalid_request(resource_owner, request)
       {:ok, token_module}              -> apply(token_module, :authorize, [resource_owner, request])
@@ -31,8 +31,8 @@ defmodule ExOauth2Provider.Authorization do
   @doc """
   Check ExOauth2Provider.Authorization.Code for usage.
   """
-  def deny(resource_owner, request, config \\ ExOauth2Provider.Config) do
-    case validate_response_type(request, config) do
+  def deny(resource_owner, request) do
+    case validate_response_type(request) do
       {:error, :invalid_response_type} -> unsupported_response_type(resource_owner, request)
       {:error, :missing_response_type} -> invalid_request(resource_owner, request)
       {:ok, token_module}              -> apply(token_module, :deny, [resource_owner, request])
@@ -52,11 +52,11 @@ defmodule ExOauth2Provider.Authorization do
     |> Response.error_response
   end
 
-  defp validate_response_type(%{"response_type" => response_type}, config) do
-    case Keyword.fetch(config.calculate_authorization_response_types(), String.to_atom(response_type)) do
+  defp validate_response_type(%{"response_type" => response_type}) do
+    case Keyword.fetch(ExOauth2Provider.Config.calculate_authorization_response_types(), String.to_atom(response_type)) do
       {:ok, authorization_module} -> {:ok, authorization_module}
       :error                      -> {:error, :invalid_response_type}
     end
   end
-  defp validate_response_type(_, _), do: {:error, :missing_response_type}
+  defp validate_response_type(_), do: {:error, :missing_response_type}
 end

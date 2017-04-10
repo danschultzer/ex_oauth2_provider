@@ -4,6 +4,7 @@ defmodule ExOauth2Provider.Token.Strategy.PasswordTest do
   import ExOauth2Provider.Token
   import ExOauth2Provider.Test.Fixture
   import ExOauth2Provider.Test.QueryHelper
+  import ExOauth2Provider.ConfigHelpers
 
   alias ExOauth2Provider.Token.Password
 
@@ -61,7 +62,8 @@ defmodule ExOauth2Provider.Token.Strategy.PasswordTest do
   end
 
   test "#grant/1 error when no password auth set" do
-    assert {:error, error, :unprocessable_entity} = Password.grant(@valid_request, %{password_auth: nil, use_refresh_token?: true})
+    set_config(:password_auth, nil)
+    assert {:error, error, :unprocessable_entity} = Password.grant(@valid_request)
     assert error == %{error: :unsupported_grant_type,
                       error_description: "The authorization grant type is not supported by the authorization server."
                     }
@@ -83,12 +85,14 @@ defmodule ExOauth2Provider.Token.Strategy.PasswordTest do
   end
 
   test "#grant/1 returns access token with custom response handler" do
-    assert {:ok, access_token} = Password.grant(@valid_request, %{password_auth: ExOauth2Provider.Config.password_auth, use_refresh_token?: true, access_token_response_body_handler: {ExOauth2Provider.Token.Strategy.AuthorizationCodeTest, :access_token_response_body_handler}})
+    set_config(:access_token_response_body_handler, {ExOauth2Provider.Token.Strategy.AuthorizationCodeTest, :access_token_response_body_handler})
+    assert {:ok, access_token} = Password.grant(@valid_request)
     assert get_last_access_token().inserted_at == access_token.custom_attr
   end
 
   test "#grant/1 doesn't set refresh_token when ExOauth2Provider.Config.use_refresh_token? == false" do
-    assert {:ok, access_token} = Password.grant(@valid_request, %{password_auth: ExOauth2Provider.Config.password_auth, use_refresh_token?: false, access_token_response_body_handler: nil})
+    set_config(:use_refresh_token, false)
+    assert {:ok, access_token} = Password.grant(@valid_request)
     assert access_token.access_token == get_last_access_token().token
     assert is_nil(get_last_access_token().refresh_token)
   end

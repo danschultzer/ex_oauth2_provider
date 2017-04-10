@@ -2,20 +2,21 @@ defmodule ExOauth2Provider.Token.Utils.Response do
   @moduledoc false
 
   @doc false
-  def response(%{access_token: token}, config) do
-    build_response(%{access_token: token}, config)
+  def response(%{access_token: token}) do
+    build_response(%{access_token: token})
   end
-  def response(%{error: _} = params, config) do
-    build_response(params, config)
+  def response(%{error: _} = params) do
+    build_response(params)
   end
 
   @doc false
-  def revocation_response(%{error: _, should_return_error: true} = params), do: response(params, nil)
+  def revocation_response(%{error: _, should_return_error: true} = params),
+    do: response(params)
   def revocation_response(%{}) do
     {:ok, %{}}
   end
 
-  defp build_response(%{access_token: access_token}, config) do
+  defp build_response(%{access_token: access_token}) do
     body = %{access_token: access_token.token,
               # Access Token type: Bearer.
               # @see https://tools.ietf.org/html/rfc6750
@@ -25,18 +26,18 @@ defmodule ExOauth2Provider.Token.Utils.Response do
               refresh_token: access_token.refresh_token,
               scope: access_token.scopes,
               created_at: access_token.inserted_at
-            } |> customize_access_token_response(access_token, config)
+            } |> customize_access_token_response(access_token)
     {:ok, body}
   end
-  defp build_response(%{error: error, error_http_status: error_http_status}, _) do
+  defp build_response(%{error: error, error_http_status: error_http_status}) do
     {:error, error, error_http_status}
   end
-  defp build_response(%{error: error}, _) do # For DB errors
+  defp build_response(%{error: error}) do # For DB errors
     {:error, error, :bad_request}
   end
 
-  defp customize_access_token_response(response_body, access_token, config) do
-    case config.access_token_response_body_handler do
+  defp customize_access_token_response(response_body, access_token) do
+    case ExOauth2Provider.Config.access_token_response_body_handler() do
       {module, method} -> apply(module, method, [response_body, access_token])
       _                -> response_body
     end

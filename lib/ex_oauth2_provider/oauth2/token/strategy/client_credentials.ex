@@ -20,12 +20,12 @@ defmodule ExOauth2Provider.Token.ClientCredentials do
       {:ok, access_token}
       {:error, %{error: error, error_description: description}, http_status}
   """
-  def grant(%{"grant_type" => "client_credentials"} = request, config \\ ExOauth2Provider.Config) do
+  def grant(%{"grant_type" => "client_credentials"} = request) do
     %{request: request}
     |> Utils.load_client
     |> validate_request
     |> issue_access_token_by_creds
-    |> Response.response(config)
+    |> Response.response
   end
 
   defp issue_access_token_by_creds(%{error: _} = params), do: params

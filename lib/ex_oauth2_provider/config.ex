@@ -1,76 +1,95 @@
 defmodule ExOauth2Provider.Config do
   @moduledoc false
 
-  @config                        ExOauth2Provider.config
+  defp config() do
+    ExOauth2Provider.config()
+  end
 
   @doc false
-  @resource_owner_struct         Keyword.get(@config, :resource_owner)
-  def resource_owner_struct,     do: @resource_owner_struct
+  def resource_owner_struct do
+    Keyword.get(config(), :resource_owner)
+  end
 
   @doc false
-  @application_resource_owner_struct     Keyword.get(@config, :application_resource_owner, @resource_owner_struct)
-  def application_resource_owner_struct, do: @application_resource_owner_struct
+  def application_resource_owner_struct do
+    Keyword.get(config(), :application_resource_owner, resource_owner_struct())
+  end
 
   # Define default access token scopes for your provider
   @doc false
-  @default_scopes                Keyword.get(@config, :default_scopes, [])
-  def default_scopes,            do: @default_scopes
+  def default_scopes do
+    Keyword.get(config(), :default_scopes, [])
+  end
 
   # Define optional access token scopes for your provider
-  @optional_scopes               Keyword.get(@config, :optional_scopes, [])
+  @doc false
+  defp optional_scopes do
+    Keyword.get(config(), :optional_scopes, [])
+  end
 
   # Combined scopes list for your provider
   @doc false
-  @server_scopes                 @default_scopes ++ @optional_scopes
-  def server_scopes,             do: @server_scopes
+  def server_scopes do
+    default_scopes() ++ optional_scopes()
+  end
 
   @doc false
-  @native_redirect_uri           Keyword.get(@config, :native_redirect_uri, "urn:ietf:wg:oauth:2.0:oob")
-  def native_redirect_uri,       do: @native_redirect_uri
+  def native_redirect_uri do
+     Keyword.get(config(), :native_redirect_uri, "urn:ietf:wg:oauth:2.0:oob")
+  end
 
   @doc false
-  @authorization_code_expires_in     Keyword.get(@config, :authorization_code_expires_in, 600)
-  def authorization_code_expires_in, do: @authorization_code_expires_in
+  def authorization_code_expires_in do
+    Keyword.get(config(), :authorization_code_expires_in, 600)
+  end
 
   @doc false
-  @access_token_expires_in       Keyword.get(@config, :access_token_expires_in, 7200)
-  def access_token_expires_in,   do: @access_token_expires_in
+  def access_token_expires_in do
+    Keyword.get(config(), :access_token_expires_in, 7200)
+  end
 
   # Issue access tokens with refresh token (disabled by default)
   @doc false
-  @use_refresh_token             Keyword.get(@config, :use_refresh_token, false)
-  def use_refresh_token?,        do: @use_refresh_token
+  def use_refresh_token? do
+    Keyword.get(config(), :use_refresh_token, false)
+  end
 
   # Password auth method to use. Disabled by default. When set, it'll enable
   # password auth strategy. Set config as:
   # `password_auth: {MyModule, :my_auth_method}`
   @doc false
-  @password_auth                 Keyword.get(@config, :password_auth, nil)
-  def password_auth,             do: @password_auth
+  def password_auth do
+    Keyword.get(config(), :password_auth, nil)
+  end
 
   @doc false
-  @refresh_token_revoked_on_use      Keyword.get(@config, :revoke_refresh_token_on_use, false)
-  def refresh_token_revoked_on_use?, do: @refresh_token_revoked_on_use
+  def refresh_token_revoked_on_use? do
+    Keyword.get(config(), :revoke_refresh_token_on_use, false)
+  end
 
   # Forces the usage of the HTTPS protocol in non-native redirect uris
   # (enabled by default in non-development environments). OAuth2
   # delegates security in communication to the HTTPS protocol so it is
   # wise to keep this enabled.
   @doc false
-  @force_ssl_in_redirect_uri      Keyword.get(@config, :force_ssl_in_redirect_uri, Mix.env != :dev)
-  def force_ssl_in_redirect_uri?, do: @force_ssl_in_redirect_uri
+  def force_ssl_in_redirect_uri? do
+    Keyword.get(config(), :force_ssl_in_redirect_uri, Mix.env != :dev)
+  end
 
   # Use a custom access token generator
   @doc false
-  @access_token_generator         Keyword.get(@config, :access_token_generator, nil)
-  def access_token_generator,     do: @access_token_generator
+  def access_token_generator do
+    Keyword.get(config(), :access_token_generator, nil)
+  end
 
-  @access_token_response_body_handler     Keyword.get(@config, :access_token_response_body_handler, nil)
-  def access_token_response_body_handler, do: @access_token_response_body_handler
+  def access_token_response_body_handler do
+    Keyword.get(config(), :access_token_response_body_handler, nil)
+  end
 
   @doc false
-  @grant_flows                  Keyword.get(@config, :grant_flows, ~w(authorization_code client_credentials))
-  def grant_flows,              do: @grant_flows
+  def grant_flows do
+    Keyword.get(config(), :grant_flows, ~w(authorization_code client_credentials))
+  end
 
   @doc false
   def calculate_authorization_response_types do
