@@ -231,9 +231,9 @@ defmodule ExOauth2Provider.OauthApplications do
     redirect_uri
     |> ExOauth2Provider.RedirectURI.validate()
     |> case do
-      {:error, error} -> add_error(changeset, :redirect_uri, error)
-      {:ok, _} -> changeset
-    end
+         {:error, error} -> add_error(changeset, :redirect_uri, error)
+         {:ok, _}        -> changeset
+       end
   end
   defp validate_redirect_uri(%{} = changeset), do: changeset
 
