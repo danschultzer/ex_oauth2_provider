@@ -6,19 +6,12 @@ defmodule ExOauth2Provider.OauthAccessGrantTest do
 
   alias ExOauth2Provider.OauthAccessGrants
   alias ExOauth2Provider.OauthAccessGrants.OauthAccessGrant
-  alias ExOauth2Provider.OauthApplications
 
   @valid_attrs    %{expires_in: 600, redirect_uri: "https://example.org/endpoint"}
 
   setup do
     user = fixture(:user)
     {:ok, %{user: user, application: fixture(:application, user, %{scopes: "public read"})}}
-  end
-
-  test "get_token!/1", %{user: user} do
-    {:ok, application} = OauthApplications.create_application(user, %{name: "App", redirect_uri: "https://example.org/endpoint"})
-    assert %OauthApplications.OauthApplication{id: id} = OauthApplications.get_application!(application.uid)
-    assert application.id == id
   end
 
   test "get_grant/1", %{user: user, application: application} do

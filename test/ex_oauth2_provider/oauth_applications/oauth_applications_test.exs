@@ -66,9 +66,9 @@ defmodule ExOauth2Provider.OauthApplicationsTest do
     assert {:error, %Ecto.Changeset{}} = OauthApplications.create_application(user, @invalid_attrs)
   end
 
-  test "create_token/2 with invalid scopes", %{user: user} do
+  test "create_application/2 with invalid scopes", %{user: user} do
     attrs = Map.merge(@valid_attrs, %{scopes: "invalid"})
-    assert {:error, %Ecto.Changeset{}} = OauthAccessTokens.create_token(user, attrs)
+    assert {:error, %Ecto.Changeset{}} = OauthApplications.create_application(user, attrs)
   end
 
   test "create_token/2 with limited scopes", %{user: user} do
@@ -131,10 +131,22 @@ defmodule ExOauth2Provider.OauthApplicationsTest do
     assert changeset.errors[:secret]
   end
 
-  test "change_application/1 requires redirect uri" do
+  test "change_application/1 requires valid redirect uri" do
     application = %OauthApplication{redirect_uri: ""}
     changeset = OauthApplications.change_application(application)
     assert changeset.errors[:redirect_uri]
+  end
+
+  test "create_application/2 require valid redirect uri" do
+    ["",
+     "invalid",
+     "https://example.com invalid",
+     "https://example.com http://example.com"]
+    |> Enum.each(fn(redirect_uri) ->
+      application = %OauthApplication{redirect_uri: redirect_uri}
+      changeset = OauthApplications.change_application(application)
+      assert changeset.errors[:redirect_uri]
+    end)
   end
 
   test "change_application/1 doesn't require scopes" do

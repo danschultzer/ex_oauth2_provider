@@ -198,8 +198,8 @@ defmodule ExOauth2Provider.OauthApplications do
     |> cast(params, [:name, :secret, :redirect_uri, :scopes])
     |> validate_required([:name, :uid, :secret, :redirect_uri])
     |> validate_scopes
-    |> unique_constraint(:uid)
     |> validate_redirect_uri
+    |> unique_constraint(:uid)
   end
 
   defp new_application_changeset(%OauthApplication{} = application, owner, params) do
@@ -214,15 +214,24 @@ defmodule ExOauth2Provider.OauthApplications do
     |> application_changeset(params)
   end
 
-  defp validate_redirect_uri(%{redirect_uri: redirect_uri} = changeset) do
-    redirect_uri
-    |> ExOauth2Provider.RedirectURI.validate()
-    |> case do
-         {:error, error} -> add_error(changeset, :redirect_uri, error)
-         {:ok, _}        -> changeset
-       end
+  defp validate_redirect_uri(changeset) do
+    url = get_field(changeset, :redirect_uri) || ""
+
+    url
+    |> String.split
+    |> Enum.reduce(changeset, fn(url, changeset) ->
+                                validate_redirect_uri(changeset, url)
+                              end)
   end
-  defp validate_redirect_uri(%{} = changeset), do: changeset
+
+  defp validate_redirect_uri(changeset, url) do
+    url
+    |> ExOauth2Provider.RedirectURI.validate
+    |> case do
+       {:error, error} -> add_error(changeset, :redirect_uri, error)
+       {:ok, _}        -> changeset
+     end
+  end
 
   defp put_uid(%{changes: %{uid: _}} = changeset), do: changeset
   defp put_uid(%{} = changeset) do
