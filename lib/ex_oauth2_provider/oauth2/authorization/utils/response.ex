@@ -41,7 +41,7 @@ defmodule ExOauth2Provider.Authorization.Utils.Response do
 
   defp add_state(payload, request) do
     case request["state"] do
-      nil -> payload
+      nil   -> payload
       state ->
         %{"state" => state}
         |> Map.merge(payload)

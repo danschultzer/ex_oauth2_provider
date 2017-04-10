@@ -24,8 +24,8 @@ defmodule ExOauth2Provider do
   previous tokens are revoked as soon as a new access token is created.
   """
 
-  @config                        Application.get_env(:ex_oauth2_provider, ExOauth2Provider, Application.get_env(:phoenix_oauth2_provider, PhoenixOauth2Provider, []))
-  @repo                          Keyword.get(@config, :repo)
+  @config Application.get_env(:ex_oauth2_provider, ExOauth2Provider, Application.get_env(:phoenix_oauth2_provider, PhoenixOauth2Provider, []))
+  @repo   Keyword.get(@config, :repo)
 
   @doc """
   Authenticate an access token.

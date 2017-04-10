@@ -16,7 +16,7 @@ defmodule ExOauth2Provider.Mixin.Expirable do
       """
       def filter_expired(data) do
         case is_expired?(data) do
-          true -> nil
+          true  -> nil
           false -> data
         end
       end

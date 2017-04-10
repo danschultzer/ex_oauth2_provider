@@ -33,7 +33,7 @@ defmodule ExOauth2Provider.Mixin.Revocable do
       """
       def filter_revoked(data) do
         case is_revoked?(data) do
-          true -> nil
+          true  -> nil
           false -> data
         end
       end

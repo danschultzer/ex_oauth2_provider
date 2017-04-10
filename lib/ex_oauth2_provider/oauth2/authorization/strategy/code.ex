@@ -140,15 +140,15 @@ defmodule ExOauth2Provider.Authorization.Code do
     grant_params = request
     |> Map.take(["redirect_uri", "scope"])
     |> Map.new(fn {k, v} ->
-      case k do
-        "scope" -> {:scopes, v}
-        _       -> {String.to_atom(k), v}
-      end
-    end)
+         case k do
+           "scope" -> {:scopes, v}
+           _       -> {String.to_atom(k), v}
+         end
+       end)
     |> Map.merge(%{expires_in: ExOauth2Provider.Config.authorization_code_expires_in})
 
     case OauthAccessGrants.create_grant(resource_owner, application, grant_params) do
-      {:ok, grant} -> Map.merge(params, %{grant: grant})
+      {:ok, grant}    -> Map.merge(params, %{grant: grant})
       {:error, error} -> Error.add_error(params, error)
     end
   end
@@ -196,7 +196,7 @@ defmodule ExOauth2Provider.Authorization.Code do
   defp validate_scopes(%{error: _} = params), do: params
   defp validate_scopes(%{request: %{"scope" => scopes}, client: client} = params) do
     case OauthApplications.scopes_is_subset?(client, scopes) do
-      true -> params
+      true  -> params
       false -> Error.add_error(params, Error.invalid_scopes())
     end
   end

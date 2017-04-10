@@ -61,9 +61,9 @@ defmodule ExOauth2Provider.Token.Revoke do
     token
     |> OauthAccessTokens.get_by_token
     |> case do
-      nil          -> Error.add_error(params, Error.invalid_request())
-      access_token -> Map.merge(params, %{access_token: access_token})
-    end
+         nil          -> Error.add_error(params, Error.invalid_request())
+         access_token -> Map.merge(params, %{access_token: access_token})
+       end
   end
 
   defp get_refresh_token(%{access_token: _} = params), do: params
@@ -72,9 +72,9 @@ defmodule ExOauth2Provider.Token.Revoke do
     token
     |> OauthAccessTokens.get_by_refresh_token
     |> case do
-      nil          -> Error.add_error(params, Error.invalid_request())
-      access_token -> Map.merge(params, %{access_token: access_token})
-    end
+         nil          -> Error.add_error(params, Error.invalid_request())
+         access_token -> Map.merge(params, %{access_token: access_token})
+       end
   end
 
   defp preload_token_associations(%{error: _} = params), do: params

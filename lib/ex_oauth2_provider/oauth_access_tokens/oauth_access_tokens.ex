@@ -208,17 +208,17 @@ defmodule ExOauth2Provider.OauthAccessTokens do
   defp build_access_token_by_attrs_query(attrs) do
     attrs
     |> Enum.reduce(OauthAccessToken, fn({k,v}, query) ->
-      case Enum.member?([:application_id, :resource_owner_id, :scopes], k) and is_nil(v) do
-        true  -> where(query, [o], is_nil(field(o, ^k)))
-        false -> where(query, [o], field(o, ^k) == ^v)
-      end
-    end)
+         case Enum.member?([:application_id, :resource_owner_id, :scopes], k) and is_nil(v) do
+           true  -> where(query, [o], is_nil(field(o, ^k)))
+           false -> where(query, [o], field(o, ^k) == ^v)
+         end
+       end)
     |> limit(1)
   end
 
   defp filter_accessible(access_token) do
     case is_accessible?(access_token) do
-      true -> access_token
+      true  -> access_token
       false -> nil
     end
   end
@@ -261,9 +261,9 @@ defmodule ExOauth2Provider.OauthAccessTokens do
       application_id
       |> is_nil
       |> (case do
-        true  -> OauthAccessToken |> where([x], is_nil(x.application_id))
-        false -> OauthAccessToken |> where([x], x.application_id == ^application_id)
-      end)
+            true  -> OauthAccessToken |> where([x], is_nil(x.application_id))
+            false -> OauthAccessToken |> where([x], x.application_id == ^application_id)
+          end)
       |> where([x], x.resource_owner_id == ^resource_owner_id)
       |> where([x], x.refresh_token == ^previous_refresh_token)
       |> limit(1)
