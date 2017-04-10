@@ -2,7 +2,7 @@
 
 [![Build Status](https://travis-ci.org/danschultzer/ex_oauth2_provider.svg?branch=master)](https://travis-ci.org/danschultzer/ex_oauth2_provider)
 
-The no brainer library to use for adding OAuth 2.0 provider capabilities to your Elixir app. You can use [https://github.com/danschultzer/phoenix_oauth2_provider] for easy integration with your Phoenix app.
+The no brainer library to use for adding OAuth 2.0 provider capabilities to your Elixir app. You can use [phoenix_oauth2_provider](https://github.com/danschultzer/phoenix_oauth2_provider) for easy integration with your Phoenix app.
 
 ## Installation
 
