@@ -6,7 +6,7 @@ defmodule ExOauth2Provider.Utils.Error do
   def add_error(params, {:error, error, http_status}) do
     Map.merge(params, %{error: error, error_http_status: http_status})
   end
-  def add_error(params, error) do
+  def add_error(params, _) do
     Map.merge(params, server_error())
   end
 

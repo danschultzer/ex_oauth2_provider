@@ -65,6 +65,9 @@ defmodule ExOauth2Provider.Config do
   @access_token_generator         Keyword.get(@config, :access_token_generator, nil)
   def access_token_generator,     do: @access_token_generator
 
+  @access_token_response_body_handler     Keyword.get(@config, :access_token_response_body_handler, nil)
+  def access_token_response_body_handler, do: @access_token_response_body_handler
+
   @doc false
   @grant_flows                  Keyword.get(@config, :grant_flows, ~w(authorization_code client_credentials))
   def grant_flows,              do: @grant_flows

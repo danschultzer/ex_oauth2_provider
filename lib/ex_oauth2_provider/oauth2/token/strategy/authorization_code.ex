@@ -29,7 +29,7 @@ defmodule ExOauth2Provider.Token.AuthorizationCode do
     |> load_access_grant
     |> validate_request
     |> issue_access_token_by_grant(config.use_refresh_token?)
-    |> Response.response
+    |> Response.response(config)
   end
 
   defp issue_access_token_by_grant(%{error: _} = params, _), do: params

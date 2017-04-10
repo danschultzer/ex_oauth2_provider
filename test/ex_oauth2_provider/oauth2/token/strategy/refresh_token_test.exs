@@ -74,8 +74,19 @@ defmodule ExOauth2Provider.Token.Strategy.RefreshTokenTest do
     assert OauthAccessTokens.is_revoked?(access_token)
   end
 
+  def access_token_response_body_handler(body, access_token) do
+    body
+    |> Map.merge(%{custom_attr: access_token.inserted_at})
+  end
+
+  test "#grant/1 returns access token with custom response handler", %{valid_request: valid_request} do
+    assert {:ok, body} = RefreshToken.grant(valid_request, %{refresh_token_revoked_on_use?: false, access_token_response_body_handler: {ExOauth2Provider.Token.Strategy.AuthorizationCodeTest, :access_token_response_body_handler}})
+    access_token = ExOauth2Provider.repo.get_by(OauthAccessTokens.OauthAccessToken, token: body.access_token)
+    assert access_token.inserted_at == body.custom_attr
+  end
+
   test "#grant/1 when refresh_token_revoked_on_use? == false", %{valid_request: valid_request, access_token: access_token} do
-    assert {:ok, new_access_token} = RefreshToken.grant(valid_request, %{refresh_token_revoked_on_use?: false})
+    assert {:ok, new_access_token} = RefreshToken.grant(valid_request, %{refresh_token_revoked_on_use?: false, access_token_response_body_handler: nil})
 
     access_token = ExOauth2Provider.repo.get_by(OauthAccessTokens.OauthAccessToken, id: access_token.id)
     new_access_token = ExOauth2Provider.repo.get_by(OauthAccessTokens.OauthAccessToken, token: new_access_token.access_token)

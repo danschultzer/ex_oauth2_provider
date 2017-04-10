@@ -245,6 +245,25 @@ end
 
 Remember to change the field type for the `token` column in the `oauth_access_tokens` table to accepts tokens larger than 255 characters.
 
+### Custom access token response body
+
+You can add extra values to the response body.
+
+```elixir
+# config/config.exs
+config :ex_oauth2_provider, ExOauth2Provider,
+  access_token_response_body_handler: {MyModule, :my_method}
+
+defmodule MyModule
+  def my_method(response_body, access_token) do
+    response_body
+    |> Map.merge(%{user_id: access_token.resource_owner.id})
+  end
+end
+```
+
+Remember to change the field type for the `token` column in the `oauth_access_tokens` table to accepts tokens larger than 255 characters.
+
 ## Acknowledgement
 
 This library was made thanks to [doorkeeper](https://github.com/doorkeeper-gem/doorkeeper), [guardian](https://github.com/ueberauth/guardian) and [authable](https://github.com/mustafaturan/authable), that gave the conceptual building blocks.

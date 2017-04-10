@@ -29,7 +29,7 @@ defmodule ExOauth2Provider.Token.RefreshToken do
     |> Utils.load_client
     |> load_access_token_by_refresh_token
     |> issue_access_token_by_refresh_token(config.refresh_token_revoked_on_use?)
-    |> Response.response
+    |> Response.response(config)
   end
 
   defp load_access_token_by_refresh_token(%{client: client, request: %{"refresh_token" => refresh_token}} = params) do

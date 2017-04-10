@@ -77,8 +77,18 @@ defmodule ExOauth2Provider.Token.Strategy.PasswordTest do
     refute is_nil(get_last_access_token().refresh_token)
   end
 
+  def access_token_response_body_handler(body, access_token) do
+    body
+    |> Map.merge(%{custom_attr: access_token.inserted_at})
+  end
+
+  test "#grant/1 returns access token with custom response handler" do
+    assert {:ok, access_token} = Password.grant(@valid_request, %{password_auth: ExOauth2Provider.Config.password_auth, use_refresh_token?: true, access_token_response_body_handler: {ExOauth2Provider.Token.Strategy.AuthorizationCodeTest, :access_token_response_body_handler}})
+    assert get_last_access_token().inserted_at == access_token.custom_attr
+  end
+
   test "#grant/1 doesn't set refresh_token when ExOauth2Provider.Config.use_refresh_token? == false" do
-    assert {:ok, access_token} = Password.grant(@valid_request, %{password_auth: ExOauth2Provider.Config.password_auth, use_refresh_token?: false})
+    assert {:ok, access_token} = Password.grant(@valid_request, %{password_auth: ExOauth2Provider.Config.password_auth, use_refresh_token?: false, access_token_response_body_handler: nil})
     assert access_token.access_token == get_last_access_token().token
     assert is_nil(get_last_access_token().refresh_token)
   end

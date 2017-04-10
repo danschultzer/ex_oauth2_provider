@@ -30,7 +30,7 @@ defmodule ExOauth2Provider.Token.Password do
     |> set_defaults
     |> validate_request
     |> issue_access_token(config.use_refresh_token?)
-    |> Response.response
+    |> Response.response(config)
   end
 
   defp get_password_auth_method(params, {module, method}) do
