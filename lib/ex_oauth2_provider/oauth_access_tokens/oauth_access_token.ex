@@ -13,10 +13,7 @@ defmodule ExOauth2Provider.OauthAccessTokens.OauthAccessToken do
     field :expires_in,    :integer
     field :revoked_at,    :naive_datetime, usec: true
     field :scopes,        :string
-
-    if ExOauth2Provider.Config.refresh_token_revoked_on_use? do
-      field :previous_refresh_token, :string, null: false, default: ""
-    end
+    field :previous_refresh_token, :string, null: false, default: ""
 
     timestamps()
   end
