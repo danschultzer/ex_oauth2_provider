@@ -6,6 +6,7 @@ defmodule ExOauth2Provider.OauthAccessTokens do
   import Ecto.{Query, Changeset}, warn: false
   use ExOauth2Provider.Mixin.Expirable
   use ExOauth2Provider.Mixin.Revocable
+  use ExOauth2Provider.Mixin.Scopes
   alias ExOauth2Provider.OauthAccessTokens.OauthAccessToken
   alias ExOauth2Provider.OauthApplications.OauthApplication
 
@@ -321,11 +322,14 @@ defmodule ExOauth2Provider.OauthAccessTokens do
   end
 
   defp new_token_changeset(changeset, params, config) do
+    application = get_field(changeset, :application) || %{scopes: nil}
+
     changeset
     |> cast(params, [:expires_in, :scopes])
     |> put_previous_refresh_token(params[:previous_refresh_token])
     |> put_refresh_token(params[:use_refresh_token])
-    |> put_scopes
+    |> put_scopes(application.scopes)
+    |> validate_scopes(application.scopes)
     |> put_token(config)
   end
 
@@ -362,13 +366,4 @@ defmodule ExOauth2Provider.OauthAccessTokens do
     |> validate_required([:refresh_token])
   end
   defp put_refresh_token(%{} = changeset, _), do: changeset
-
-  defp put_scopes(%{scopes: nil} = changeset),
-    do: change(changeset, %{scopes: default_scopes_string()})
-  defp put_scopes(changeset), do: changeset
-
-  defp default_scopes_string do
-    ExOauth2Provider.Config.default_scopes
-    |> ExOauth2Provider.Scopes.to_string
-  end
 end

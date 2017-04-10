@@ -6,7 +6,7 @@ defmodule ExOauth2Provider.OauthApplications do
   import Ecto.{Query, Changeset}, warn: false
   alias ExOauth2Provider.OauthApplications.OauthApplication
   alias ExOauth2Provider.OauthAccessTokens
-  alias ExOauth2Provider.Scopes
+  use ExOauth2Provider.Mixin.Scopes
 
   @doc """
   Gets a single application by uid.
@@ -193,25 +193,11 @@ defmodule ExOauth2Provider.OauthApplications do
     end
   end
 
-  @doc false
-  def scopes_is_subset?(%OauthApplication{} = application, scopes) do
-    application
-    |> all_scopes
-    |> Scopes.all?(scopes |> Scopes.to_list)
-  end
-
-  defp all_scopes(%OauthApplication{scopes: application_scopes}) do
-    case application_scopes do
-      nil -> Scopes.server_scopes
-      ""  -> Scopes.server_scopes
-      _   -> application_scopes |> Scopes.to_list
-    end
-  end
-
   defp application_changeset(%OauthApplication{} = application, params) do
     application
     |> cast(params, [:name, :secret, :redirect_uri, :scopes])
     |> validate_required([:name, :uid, :secret, :redirect_uri])
+    |> validate_scopes
     |> unique_constraint(:uid)
     |> validate_redirect_uri
   end
@@ -221,6 +207,7 @@ defmodule ExOauth2Provider.OauthApplications do
     |> cast(params, [:uid, :secret])
     |> put_uid
     |> put_secret
+    |> put_scopes
     |> put_assoc(:owner, owner)
     |> assoc_constraint(:owner)
     |> apply_changes

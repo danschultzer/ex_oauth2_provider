@@ -59,10 +59,22 @@ defmodule ExOauth2Provider.OauthApplicationsTest do
   test "create_application/2 with valid attributes", %{user: user} do
     assert {:ok, %OauthApplication{} = application} = OauthApplications.create_application(user, @valid_attrs)
     assert application.name == @valid_attrs.name
+    assert application.scopes == "public"
   end
 
   test "create_application/2 with invalid attributes", %{user: user} do
     assert {:error, %Ecto.Changeset{}} = OauthApplications.create_application(user, @invalid_attrs)
+  end
+
+  test "create_token/2 with invalid scopes", %{user: user} do
+    attrs = Map.merge(@valid_attrs, %{scopes: "invalid"})
+    assert {:error, %Ecto.Changeset{}} = OauthAccessTokens.create_token(user, attrs)
+  end
+
+  test "create_token/2 with limited scopes", %{user: user} do
+    attrs = Map.merge(@valid_attrs, %{scopes: "read write"})
+    assert {:ok, application} = OauthApplications.create_application(user, attrs)
+    assert application.scopes == "read write"
   end
 
   test "create_application/2 adds random secret", %{user: user} do

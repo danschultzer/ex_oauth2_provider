@@ -6,6 +6,7 @@ defmodule ExOauth2Provider.OauthAccessGrants do
   import Ecto.{Query, Changeset}, warn: false
   use ExOauth2Provider.Mixin.Expirable
   use ExOauth2Provider.Mixin.Revocable
+  use ExOauth2Provider.Mixin.Scopes
   alias ExOauth2Provider.OauthApplications.OauthApplication
   alias ExOauth2Provider.OauthAccessGrants.OauthAccessGrant
 
@@ -52,6 +53,8 @@ defmodule ExOauth2Provider.OauthAccessGrants do
     |> assoc_constraint(:application)
     |> assoc_constraint(:resource_owner)
     |> put_token
+    |> put_scopes(grant.application.scopes)
+    |> validate_scopes(grant.application.scopes)
     |> validate_required([:redirect_uri, :expires_in, :token, :resource_owner, :application])
     |> unique_constraint(:token)
   end

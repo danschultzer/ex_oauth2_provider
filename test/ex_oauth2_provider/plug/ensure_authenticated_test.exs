@@ -19,7 +19,7 @@ defmodule ExOauth2Provider.Plug.EnsureAuthenticatedTest do
   end
 
   setup do
-    application = fixture(:application, fixture(:user), %{})
+    application = fixture(:application, fixture(:user), %{scopes: "app:read app:write"})
     access_token = fixture(:access_token, fixture(:user), %{application: application, scopes: "app:read"})
     {
       :ok,

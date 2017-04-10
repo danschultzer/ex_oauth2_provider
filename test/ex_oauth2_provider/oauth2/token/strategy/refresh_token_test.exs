@@ -19,7 +19,7 @@ defmodule ExOauth2Provider.Token.Strategy.RefreshTokenTest do
   setup do
     user = fixture(:user)
     application = fixture(:application, user, %{uid: @client_id, secret: @client_secret, scopes: "app:read app:write"})
-    access_token = fixture(:access_token, user, %{application: application, use_refresh_token: true})
+    access_token = fixture(:access_token, user, %{application: application, use_refresh_token: true, scopes: "app:read"})
 
     valid_request = %{"client_id" => @client_id,
                       "client_secret" => @client_secret,

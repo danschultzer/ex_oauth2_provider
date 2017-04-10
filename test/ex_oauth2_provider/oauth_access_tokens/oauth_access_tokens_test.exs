@@ -53,18 +53,18 @@ defmodule ExOauth2Provider.OauthAccessTokensTest do
 
   test "get_matching_token_for/1", %{user: user, application: application} do
     {:ok, token1} = OauthAccessTokens.create_token(user, %{application: application})
-    assert %OauthAccessToken{id: id} = OauthAccessTokens.get_matching_token_for(user, application, nil)
+    assert %OauthAccessToken{id: id} = OauthAccessTokens.get_matching_token_for(user, application, "public")
     assert token1.id == id
 
     {:ok, token2} = OauthAccessTokens.create_token(user, %{application: application})
-    assert %OauthAccessToken{id: id} = OauthAccessTokens.get_matching_token_for(user, application, nil)
+    assert %OauthAccessToken{id: id} = OauthAccessTokens.get_matching_token_for(user, application, "public")
     assert token2.id == id
 
     inserted_at = NaiveDateTime.utc_now |> NaiveDateTime.add(1, :second)
     token1
     |> Ecto.Changeset.change(inserted_at: inserted_at)
     |> ExOauth2Provider.repo.update
-    assert %OauthAccessToken{id: id} = OauthAccessTokens.get_matching_token_for(user, application, nil)
+    assert %OauthAccessToken{id: id} = OauthAccessTokens.get_matching_token_for(user, application, "public")
     assert id == token1.id
 
     token1
@@ -135,6 +135,44 @@ defmodule ExOauth2Provider.OauthAccessTokensTest do
   test "create_token/2 doesn't add refresh token when disabled", %{user: user} do
     {:ok, token} = OauthAccessTokens.create_token(user, %{use_refresh_token: false})
     assert token.refresh_token == nil
+  end
+
+  test "create_token/2 with no scopes", %{user: user} do
+    assert {:ok, %OauthAccessToken{} = token} = OauthAccessTokens.create_token(user)
+    assert token.scopes == "public"
+  end
+
+  test "create_token/2 with custom scopes", %{user: user} do
+    assert {:ok, %OauthAccessToken{} = token} = OauthAccessTokens.create_token(user, %{scopes: "read"})
+    assert token.scopes == "read"
+  end
+
+  test "create_token/2 with invalid scopes", %{user: user} do
+    assert {:error, %Ecto.Changeset{}} = OauthAccessTokens.create_token(user, %{scopes: "invalid"})
+  end
+
+  describe "with application scopes" do
+    setup %{user: user, application: application} do
+       application = Map.merge(application, %{scopes: "public app:write app:read"})
+
+       %{user: user, application: application}
+    end
+
+    test "create_token/2 with no scopes", %{user: user, application: application} do
+      assert {:ok, %OauthAccessToken{} = token} = OauthAccessTokens.create_token(user, %{application: application})
+      assert token.scopes == "public"
+    end
+
+    test "create_token/2 with custom scopes", %{user: user, application: application} do
+      application = Map.merge(application, %{scopes: "app:read"})
+      assert {:ok, %OauthAccessToken{} = token} = OauthAccessTokens.create_token(user, %{scopes: "app:read", application: application})
+      assert token.scopes == "app:read"
+    end
+
+    test "create_token/2 with invalid scopes", %{user: user, application: application} do
+      application = Map.merge(application, %{scopes: "app:read"})
+      assert {:error, %Ecto.Changeset{}} = OauthAccessTokens.create_token(user, %{application: application, scopes: "app:write"})
+    end
   end
 
   test "get_or_create_token/2 gets existing token", %{user: user} do

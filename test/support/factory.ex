@@ -17,7 +17,7 @@ defmodule ExOauth2Provider.Factory do
       secret: "secret",
       name: "OAuth Application",
       redirect_uri: "urn:ietf:wg:oauth:2.0:oob",
-      scopes: "read write"
+      scopes: "public read write"
     }
   end
 

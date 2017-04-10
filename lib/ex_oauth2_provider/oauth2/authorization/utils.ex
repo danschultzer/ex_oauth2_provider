@@ -3,7 +3,6 @@ defmodule ExOauth2Provider.Authorization.Utils do
 
   alias ExOauth2Provider.OauthApplications
   alias ExOauth2Provider.Utils.Error
-  alias ExOauth2Provider.Scopes
 
   @doc false
   def prehandle_request(resource_owner, request) do
@@ -24,7 +23,7 @@ defmodule ExOauth2Provider.Authorization.Utils do
   defp set_defaults(%{request: request, client: client} = params) do
     redirect_uri = client.redirect_uri |> String.split |> Kernel.hd
 
-    request = %{"redirect_uri" => redirect_uri, "scope" => Scopes.default_server_scopes |> Scopes.to_string}
+    request = %{"redirect_uri" => redirect_uri, "scope" => nil}
     |> Map.merge(request)
 
     params

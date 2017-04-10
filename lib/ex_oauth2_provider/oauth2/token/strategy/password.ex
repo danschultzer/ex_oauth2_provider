@@ -5,7 +5,7 @@ defmodule ExOauth2Provider.Token.Password do
   alias ExOauth2Provider.Utils.Error
   alias ExOauth2Provider.Token.Utils
   alias ExOauth2Provider.Token.Utils.Response
-  alias ExOauth2Provider.OauthApplications
+  alias ExOauth2Provider.Scopes
 
   @doc """
   Will grant access token by password authentication.
@@ -78,7 +78,10 @@ defmodule ExOauth2Provider.Token.Password do
 
   defp validate_scopes(%{error: _} = params), do: params
   defp validate_scopes(%{request: %{"scope" => scopes}, client: client} = params) do
-    case OauthApplications.scopes_is_subset?(client, scopes) do
+    scopes        = scopes |> Scopes.to_list
+    server_scopes = client.scopes |> Scopes.to_list |> Scopes.default_to_server_scopes
+
+    case Scopes.all?(server_scopes, scopes) do
       true -> params
       false -> Error.add_error(params, Error.invalid_scopes())
     end

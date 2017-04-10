@@ -80,7 +80,7 @@ defmodule ExOauth2Provider.Authorization.CodeTest do
 
     test "#preauthorize/2 with limited server scope", %{resource_owner: resource_owner, application: application} do
       request = Map.merge(@valid_request, %{"scope" => "read"})
-      assert preauthorize(resource_owner, request) == {:ok, application, Scopes.to_list(request["scope"])}
+      assert {:ok, application, ["read"]} == preauthorize(resource_owner, request)
     end
 
     test "#preauthorize/2 error when invalid server scope", %{resource_owner: resource_owner} do

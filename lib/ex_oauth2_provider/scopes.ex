@@ -34,6 +34,22 @@ defmodule ExOauth2Provider.Scopes do
   end
 
   @doc """
+  Filter defaults scopes from scopes list
+  """
+  def filter_default_scopes(scopes) do
+    scopes
+    |> Enum.filter(fn(scope) ->
+         Enum.member?(default_server_scopes(), scope)
+       end)
+  end
+
+  @doc """
+  Will default to server scopes if no scopes supplied
+  """
+  def default_to_server_scopes([]), do: ExOauth2Provider.Config.server_scopes()
+  def default_to_server_scopes(server_scopes), do: server_scopes
+
+  @doc """
   Fetch scopes from an access token
   """
   @spec from_access_token(map) :: list
