@@ -6,6 +6,14 @@ defmodule ExOauth2Provider.Utils.Error do
   def add_error(params, {:error, error, http_status}) do
     Map.merge(params, %{error: error, error_http_status: http_status})
   end
+  def add_error(params, error) do
+    Map.merge(params, server_error())
+  end
+
+  def server_error do
+    msg = "The authorization server encountered an unexpected condition which prevented it from fulfilling the request."
+    {:error, %{error: :internal_server_error, error_description: msg}, :internal_server_error}
+  end
 
   @doc false
   def invalid_request do
