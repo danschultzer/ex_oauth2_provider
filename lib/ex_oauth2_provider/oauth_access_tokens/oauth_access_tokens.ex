@@ -116,8 +116,22 @@ defmodule ExOauth2Provider.OauthAccessTokens do
       {:error, %Ecto.Changeset{}}
 
   """
-  def create_token(%{id: _} = resource_owner, attrs \\ %{}, config \\ ExOauth2Provider.Config) do
+  def create_token(owner, attrs \\ %{}, config \\ ExOauth2Provider.Config)
+  def create_token(%OauthApplication{} = application, attrs, config) do
+    %OauthAccessToken{application: application}
+    |> application_token_changeset(attrs)
+    |> new_token_changeset(attrs, config)
+    |> ExOauth2Provider.repo.insert()
+  end
+  def create_token(%{id: _} = resource_owner, %{application: application} = attrs, config) do
+    %OauthAccessToken{application: application, resource_owner: resource_owner}
+    |> application_resource_owner_token_changeset(attrs)
+    |> new_token_changeset(attrs, config)
+    |> ExOauth2Provider.repo.insert()
+  end
+  def create_token(%{id: _} = resource_owner, attrs, config) do
     %OauthAccessToken{resource_owner: resource_owner}
+    |> resource_owner_token_changeset(attrs)
     |> new_token_changeset(attrs, config)
     |> ExOauth2Provider.repo.insert()
   end
@@ -127,37 +141,85 @@ defmodule ExOauth2Provider.OauthAccessTokens do
 
   ## Examples
 
+      iex> find_or_create_token(application)
+      {:ok, %OauthAccessToken{}}
+
       iex> find_or_create_token(user)
-      {:ok, %OauthAccessGrant{}}
+      {:ok, %OauthAccessToken{}}
 
       iex> find_or_create_token(user)
       {:error, %Ecto.Changeset{}}
 
   """
-  def find_or_create_token(%{id: _} = resource_owner, attrs \\ %{}) do
-    access_token = attrs
+  def find_or_create_token(owner, attrs \\ %{})
+  def find_or_create_token(%OauthApplication{id: _} = application, attrs) do
+    attrs
+    |> Map.merge(%{application: application})
+    |> find_accessible_token_by_attrs
+    |> create_or_return_token(application, attrs)
+  end
+  def find_or_create_token(%{id: _} = resource_owner, %{application: application} = attrs) do
+    attrs
+    |> Map.merge(%{resource_owner: resource_owner})
+    |> find_accessible_token_by_attrs
+    |> create_or_return_token(resource_owner, attrs)
+  end
+  def find_or_create_token(%{id: _} = resource_owner, attrs) do
+    attrs
+    |> Map.merge(%{resource_owner: resource_owner})
+    |> find_accessible_token_by_attrs
+    |> create_or_return_token(resource_owner, attrs)
+  end
+
+  defp find_accessible_token_by_attrs(attrs) do
+    attrs
+    |> tranform_assocations_in_attrs
     |> Map.delete(:use_refresh_token)
+    |> build_access_token_by_attrs_query
+    |> ExOauth2Provider.repo.one
+    |> filter_accessible
+  end
+
+  defp tranform_assocations_in_attrs(attrs) do
+    attrs
+    |> transform_resource_owner_assocation_in_attrs
+    |> transform_application_assocation_in_attrs
+  end
+
+  defp transform_resource_owner_assocation_in_attrs(%{resource_owner: resource_owner} = attrs) do
+    attrs
     |> Map.merge(%{resource_owner_id: resource_owner.id})
-    |> case do
-      %{application: application} = attrs -> attrs
-                                    |> Map.merge(%{application_id: application.id})
-                                    |> Map.delete(:application)
-      attrs -> attrs
-    end
+    |> Map.delete(:resource_owner)
+  end
+  defp transform_resource_owner_assocation_in_attrs(attrs), do: attrs
+
+  defp transform_application_assocation_in_attrs(%{application: application} = attrs) do
+    attrs
+    |> Map.merge(%{application_id: application.id})
+    |> Map.delete(:application)
+  end
+  defp transform_application_assocation_in_attrs(attrs), do: attrs
+
+  defp build_access_token_by_attrs_query(attrs) do
+    attrs
     |> Enum.reduce(OauthAccessToken, fn({k,v}, query) ->
-      case v do
-        nil -> where(query, [o], is_nil(field(o, ^k)))
-        _   -> where(query, [o], field(o, ^k) == ^v)
+      case Enum.member?([:application_id, :resource_owner_id, :scopes], k) and is_nil(v) do
+        true  -> where(query, [o], is_nil(field(o, ^k)))
+        false -> where(query, [o], field(o, ^k) == ^v)
       end
     end)
     |> limit(1)
-    |> ExOauth2Provider.repo.one
+  end
 
+  defp filter_accessible(access_token) do
     case is_accessible?(access_token) do
-      true -> {:ok, access_token}
-      false -> create_token(resource_owner, attrs)
+      true -> access_token
+      false -> nil
     end
   end
+
+  defp create_or_return_token(nil, owner, attrs), do: create_token(owner, attrs)
+  defp create_or_return_token(access_token, _, _), do: {:ok, access_token}
 
   @doc """
   Checks if an access token can be accessed.
@@ -233,56 +295,67 @@ defmodule ExOauth2Provider.OauthAccessTokens do
     end
   end
 
-  defp new_token_changeset(%OauthAccessToken{} = token, params, config) do
+  defp application_token_changeset(token, params) do
     token
+    |> cast(params, [])
+    |> validate_required([:application])
+    |> assoc_constraint(:application)
+  end
+
+  defp application_resource_owner_token_changeset(token, params) do
+    token
+    |> application_token_changeset(params)
+    |> resource_owner_token_changeset(params)
+  end
+
+  defp resource_owner_token_changeset(token, params) do
+    token
+    |> cast(params, [])
+    |> validate_required([:resource_owner])
+    |> assoc_constraint(:resource_owner)
+  end
+
+  defp new_token_changeset(changeset, params, config) do
+    changeset
     |> cast(params, [:expires_in, :scopes])
     |> put_previous_refresh_token(params[:previous_refresh_token])
     |> put_refresh_token(params[:use_refresh_token])
-    |> put_application(params)
-    |> validate_application
-    |> validate_required([:resource_owner])
-    |> assoc_constraint(:resource_owner)
     |> put_scopes
     |> put_token(config)
-    |> validate_required([:token])
-    |> unique_constraint(:token)
-    |> unique_constraint(:refresh_token)
   end
-
-  defp put_application(changeset, %{application: %OauthApplication{} = application}),
-    do: put_assoc(changeset, :application, application)
-  defp put_application(changeset, _), do: changeset
-
-  defp validate_application(%{application: _} = changeset) do
-    changeset
-    |> assoc_constraint(:application)
-  end
-  defp validate_application(changeset), do: changeset
 
   defp put_token(%{} = changeset, config) do
     {module, method} = config.access_token_generator || {ExOauth2Provider.Utils, :generate_token}
 
     {_, resource_owner} = fetch_field(changeset, :resource_owner)
+    resource_owner_id   = if is_nil(resource_owner), do: nil, else: resource_owner.id
     {_, scopes}         = fetch_field(changeset, :scopes)
     {_, application}    = fetch_field(changeset, :application)
     {_, expires_in}     = fetch_field(changeset, :expires_in)
     created_at          = NaiveDateTime.utc_now
 
     token = apply(module, method, [%{
-      resource_owner_id: resource_owner.id,
+      resource_owner_id: resource_owner_id,
       scopes: scopes,
       application: application,
       expires_in: expires_in,
       created_at: created_at}])
-    change(changeset, %{token: token})
+
+    changeset
+    |> change(%{token: token})
+    |> validate_required([:token])
+    |> unique_constraint(:token)
   end
 
   defp put_previous_refresh_token(%{} = changeset, %OauthAccessToken{} = refresh_token),
     do: change(changeset, %{previous_refresh_token: refresh_token.refresh_token})
   defp put_previous_refresh_token(%{} = changeset, _), do: changeset
 
-  defp put_refresh_token(%{} = changeset, true),
-    do: change(changeset, %{refresh_token: ExOauth2Provider.Utils.generate_token})
+  defp put_refresh_token(%{} = changeset, true) do
+    changeset
+    |> change(%{refresh_token: ExOauth2Provider.Utils.generate_token})
+    |> validate_required([:refresh_token])
+  end
   defp put_refresh_token(%{} = changeset, _), do: changeset
 
   defp put_scopes(%{scopes: nil} = changeset),

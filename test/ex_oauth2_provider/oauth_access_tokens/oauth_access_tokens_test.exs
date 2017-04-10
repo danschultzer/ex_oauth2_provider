@@ -88,12 +88,21 @@ defmodule ExOauth2Provider.OauthAccessTokensTest do
   end
 
   test "create_token/2 with valid attributes", %{user: user} do
-    assert {:ok, %OauthAccessToken{}} = OauthAccessTokens.create_token(user)
+    assert {:ok, %OauthAccessToken{} = token} = OauthAccessTokens.create_token(user)
+    assert token.resource_owner_id == user.id
+    assert is_nil(token.application_id)
   end
 
-  test "create_token/2 with valid attributes and application", %{user: user, application: application} do
-    assert {:ok, %OauthAccessToken{} = token} = OauthAccessTokens.create_token(user, %{application: application})
-    assert token.application == application
+  test "create_token/2 with resource owner and application", %{user: user, application: application} do
+    {:ok, token} = OauthAccessTokens.create_token(user, %{application: application})
+    assert token.resource_owner_id == user.id
+    assert token.application_id == application.id
+  end
+
+  test "create_token/2 with application", %{application: application} do
+    {:ok, token} = OauthAccessTokens.create_token(application)
+    assert is_nil(token.resource_owner_id)
+    assert token.application_id == application.id
   end
 
   test "create_token/2 adds random token", %{user: user} do
@@ -130,7 +139,28 @@ defmodule ExOauth2Provider.OauthAccessTokensTest do
 
   test "find_or_create_token/2 gets existing token", %{user: user} do
     {:ok, token} = OauthAccessTokens.find_or_create_token(user)
+    assert is_nil(token.application_id)
+    assert token.resource_owner_id == user.id
+
     {:ok, token2} = OauthAccessTokens.find_or_create_token(user)
+    assert token.id == token2.id
+  end
+
+  test "find_or_create_token/2 with resource owner and application", %{user: user, application: application} do
+    {:ok, token} = OauthAccessTokens.find_or_create_token(user, %{application: application})
+    assert token.application_id == application.id
+    assert token.resource_owner_id == user.id
+
+    {:ok, token2} = OauthAccessTokens.find_or_create_token(user, %{application: application})
+    assert token.id == token2.id
+  end
+
+  test "find_or_create_token/2 with application", %{application: application} do
+    {:ok, token} = OauthAccessTokens.find_or_create_token(application)
+    assert token.application_id == application.id
+    assert is_nil(token.resource_owner_id)
+
+    {:ok, token2} = OauthAccessTokens.find_or_create_token(application)
     assert token.id == token2.id
   end
 
@@ -156,9 +186,7 @@ defmodule ExOauth2Provider.OauthAccessTokensTest do
   test "find_or_create_token/2 creates token when params are different", %{user: user} do
     {:ok, token} = OauthAccessTokens.find_or_create_token(user)
 
-    {:ok, token2} = :user
-    |> fixture
-    |> OauthAccessTokens.find_or_create_token
+    {:ok, token2} = OauthAccessTokens.find_or_create_token(fixture(:user))
     assert token.id != token2.id
 
     Enum.each(%{application_id: 0,

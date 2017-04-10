@@ -32,7 +32,7 @@ defmodule <%= inspect mod %> do
 
     create table(:oauth_access_tokens) do
       add :application_id,         references(:oauth_applications)
-      add :resource_owner_id,      :integer, null: false
+      add :resource_owner_id,      :integer
 
       # If you use a custom token generator you may need to change this column
       # from string to text, so that it accepts tokens larger than 255
