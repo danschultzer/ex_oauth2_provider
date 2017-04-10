@@ -42,12 +42,12 @@ defmodule ExOauth2Provider.OauthAccessTokens do
   end
 
   @doc """
-  Gets an access token by the refresh token.
+  Gets an access token by the refresh token belonging to an application.
 
   ## Examples
 
       iex> get_by_refresh_token_for(application, "c341a5c7b331ef076eb4954668d54f590e0009e06b81b100191aa22c93044f3d")
-      %OauthAccessGrant{}
+      %OauthAccessToken{}
 
       iex> get_by_refresh_token_for(application, "75d72f326a69444a9287ea264617058dbbfe754d7071b8eef8294cbf4e7e0fdc")
       nil
@@ -57,14 +57,14 @@ defmodule ExOauth2Provider.OauthAccessTokens do
   end
 
   @doc """
-  Gets the most recent access token.
+  Gets the most recent matching access token for a resource owner.
 
   ## Examples
 
-      iex> get_matching_token_for(user, app})
+      iex> get_matching_token_for(user, application, "read write")
       %OauthAccessToken{}
 
-      iex> get_matching_token_for(user, another_app})
+      iex> get_matching_token_for(user, application, "read invalid")
       nil
 
   """
@@ -91,11 +91,11 @@ defmodule ExOauth2Provider.OauthAccessTokens do
   end
 
   @doc """
-  Gets active tokens for resource owner.
+  Gets all active tokens for resource owner.
 
   ## Examples
 
-      iex> get_active_tokens_for(user)
+      iex> get_active_tokens_for(resource_owner)
       [%OauthAccessToken{}, ...]
   """
   def get_active_tokens_for(%{id: resource_owner_id}) do
@@ -109,12 +109,17 @@ defmodule ExOauth2Provider.OauthAccessTokens do
 
   ## Examples
 
-      iex> create_token(user)
-      {:ok, %OauthAccessGrant{}}
+      iex> create_token(application, %{scopes: "read write"})
+      {:ok, %OauthAccessToken{}}
 
-      iex> create_token(user)
+      iex> create_token(resource_owner, %{application: application, scopes: "read write"})
+      {:ok, %OauthAccessToken{}}
+
+      iex> create_token(resource_owner, %{scopes: "read write"})
+      {:ok, %OauthAccessToken{}}
+
+      iex> create_token(resource_owner, %{expires_in: "invalid"})
       {:error, %Ecto.Changeset{}}
-
   """
   def create_token(owner, attrs \\ %{}, config \\ ExOauth2Provider.Config)
   def create_token(%OauthApplication{} = application, attrs, config) do
@@ -137,34 +142,34 @@ defmodule ExOauth2Provider.OauthAccessTokens do
   end
 
   @doc """
-  Finds existing access token or creates a new one.
+  Gets existing access token or creates a new one with supplied attributes.
 
   ## Examples
 
-      iex> find_or_create_token(application)
+      iex> get_or_create_token(application, attrs)
       {:ok, %OauthAccessToken{}}
 
-      iex> find_or_create_token(user)
+      iex> get_or_create_token(user attrs)
       {:ok, %OauthAccessToken{}}
 
-      iex> find_or_create_token(user)
+      iex> get_or_create_token(user attrs)
       {:error, %Ecto.Changeset{}}
 
   """
-  def find_or_create_token(owner, attrs \\ %{})
-  def find_or_create_token(%OauthApplication{id: _} = application, attrs) do
+  def get_or_create_token(owner, attrs \\ %{})
+  def get_or_create_token(%OauthApplication{id: _} = application, attrs) do
     attrs
     |> Map.merge(%{application: application})
     |> find_accessible_token_by_attrs
     |> create_or_return_token(application, attrs)
   end
-  def find_or_create_token(%{id: _} = resource_owner, %{application: _} = attrs) do
+  def get_or_create_token(%{id: _} = resource_owner, %{application: _} = attrs) do
     attrs
     |> Map.merge(%{resource_owner: resource_owner})
     |> find_accessible_token_by_attrs
     |> create_or_return_token(resource_owner, attrs)
   end
-  def find_or_create_token(%{id: _} = resource_owner, attrs) do
+  def get_or_create_token(%{id: _} = resource_owner, attrs) do
     attrs
     |> Map.merge(%{resource_owner: resource_owner})
     |> find_accessible_token_by_attrs
@@ -245,7 +250,7 @@ defmodule ExOauth2Provider.OauthAccessTokens do
     ## Examples
 
         iex> get_by_previous_refresh_token_for(new_access_token)
-        %OauthAccessGrant{}
+        %OauthAccessToken{}
 
         iex> get_by_previous_refresh_token_for(new_access_token)
         nil
@@ -273,7 +278,7 @@ defmodule ExOauth2Provider.OauthAccessTokens do
     ## Examples
 
         iex> revoke_previous_refresh_token(data)
-        {:ok, %OauthAccessGrant{}}
+        {:ok, %OauthAccessToken{}}
 
         iex> revoke_previous_refresh_token(invalid_data)
         {:error, %Ecto.Changeset{}}

@@ -5,7 +5,7 @@ defmodule ExOauth2Provider.RedirectURI do
   import ExOauth2Provider.Utils
 
   @doc """
-  Validates whether a url can be used as a redirect_uri
+  Validates if a url can be used as a redirect_uri
   """
   def validate(nil), do: validate("")
   def validate(url) do
@@ -41,7 +41,7 @@ defmodule ExOauth2Provider.RedirectURI do
   end
 
   @doc """
-  Check if an url matches a client redirect_uri
+  Check if a url matches a client redirect_uri
   """
   def valid_for_authorization?(url, client_url) do
     case validate(url) do
@@ -54,14 +54,14 @@ defmodule ExOauth2Provider.RedirectURI do
   end
 
   @doc """
-  Check if an url is native
+  Check if a url is native
   """
   def native_redirect_uri?(url) do
     ExOauth2Provider.Config.native_redirect_uri == url
   end
 
   @doc """
-  Adds query parameters to URI
+  Adds query parameters to uri
   """
   def uri_with_query(uri, query) when is_binary(uri),
     do: uri_with_query(URI.parse(uri), query)

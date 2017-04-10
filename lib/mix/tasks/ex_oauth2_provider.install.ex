@@ -26,6 +26,7 @@ defmodule Mix.Tasks.ExOauth2Provider.Install do
     * `--config-file` - the configuration file to update
     * `--resource-owner` - defines the resource owner, default is MyApp.User
     * `--no-config` -- Don't append to your `config/config.exs` file.
+    * `--no-migrations` -- Don't add migrations.
   """
 
   @doc false
@@ -93,7 +94,7 @@ defmodule Mix.Tasks.ExOauth2Provider.Install do
   defp pad(i) when i < 10, do: << ?0, ?0 + i >>
   defp pad(i), do: to_string(i)
 
-  def migrations do
+  defp migrations do
     templates_path = :ex_oauth2_provider
                      |> Application.app_dir
                      |> Path.join("priv/templates/migrations")

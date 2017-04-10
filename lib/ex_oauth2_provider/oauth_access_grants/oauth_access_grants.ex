@@ -10,18 +10,18 @@ defmodule ExOauth2Provider.OauthAccessGrants do
   alias ExOauth2Provider.OauthAccessGrants.OauthAccessGrant
 
   @doc """
-  Gets a single access grant.
+  Gets a single access grant registered with an application.
 
   ## Examples
 
-      iex> get_grant("c341a5c7b331ef076eb4954668d54f590e0009e06b81b100191aa22c93044f3d", "jE9dk")
+      iex> get_grant_for("c341a5c7b331ef076eb4954668d54f590e0009e06b81b100191aa22c93044f3d", "jE9dk")
       %OauthAccessGrant{}
 
-      iex> get_grant("75d72f326a69444a9287ea264617058dbbfe754d7071b8eef8294cbf4e7e0fdc", "jE9dk")
+      iex> get_grant_for("75d72f326a69444a9287ea264617058dbbfe754d7071b8eef8294cbf4e7e0fdc", "jE9dk")
       ** nil
 
   """
-  def get_grant(%OauthApplication{id: _} = application, token) do
+  def get_grant_for(%OauthApplication{id: _} = application, token) do
     OauthAccessGrant
     |> ExOauth2Provider.repo.get_by(application_id: application.id, token: token)
     |> filter_expired
@@ -33,10 +33,10 @@ defmodule ExOauth2Provider.OauthAccessGrants do
 
   ## Examples
 
-      iex> create_application(user, app)
+      iex> create_grant(resource_owner, application, attrs)
       {:ok, %OauthAccessGrant{}}
 
-      iex> create_application(user, invalid_app)
+      iex> create_grant(resource_owner, application, attrs)
       {:error, %Ecto.Changeset{}}
 
   """

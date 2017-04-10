@@ -9,18 +9,22 @@ defmodule ExOauth2Provider.Plug.ErrorHandler do
 
   import Plug.Conn
 
+  @doc false
   def unauthenticated(conn, _params) do
     respond(conn, response_type(conn), 401, "Unauthenticated")
   end
 
+  @doc false
   def unauthorized(conn, _params) do
     respond(conn, response_type(conn), 403, "Unauthorized")
   end
 
+  @doc false
   def no_resource(conn, _params) do
     respond(conn, response_type(conn), 403, "Unauthorized")
   end
 
+  @doc false
   def already_authenticated(conn, _params) do
     conn |> halt
   end

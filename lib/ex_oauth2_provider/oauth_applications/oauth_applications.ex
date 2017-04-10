@@ -9,22 +9,7 @@ defmodule ExOauth2Provider.OauthApplications do
   alias ExOauth2Provider.Scopes
 
   @doc """
-  Returns the list of applications.
-
-  ## Examples
-
-      iex> list_applications_for(owner)
-      [%OauthApplications{}, ...]
-
-  """
-  def list_applications_for(%{id: owner_id}) do
-    OauthApplication
-    |> where([x], x.owner_id == ^owner_id)
-    |> ExOauth2Provider.repo.all
-  end
-
-  @doc """
-  Gets a single application.
+  Gets a single application by uid.
 
   Raises `Ecto.NoResultsError` if the OauthApplication does not exist.
 
@@ -61,7 +46,7 @@ defmodule ExOauth2Provider.OauthApplications do
   end
 
   @doc """
-  Gets a single application.
+  Gets a single application by uid.
 
   ## Examples
 
@@ -75,8 +60,36 @@ defmodule ExOauth2Provider.OauthApplications do
   def get_application(uid) do
     ExOauth2Provider.repo.get_by(OauthApplication, uid: uid)
   end
+
+  @doc """
+  Gets a single application by uid and secret.
+
+  ## Examples
+
+      iex> get_application("c341a5c7b331ef076eb4954668d54f590e0009e06b81b100191aa22c93044f3d", "SECRET")
+      %OauthApplication{}
+
+      iex> get_application("75d72f326a69444a9287ea264617058dbbfe754d7071b8eef8294cbf4e7e0fdc", "SECRET")
+      nil
+
+  """
   def get_application(uid, secret) do
     ExOauth2Provider.repo.get_by(OauthApplication, uid: uid, secret: secret)
+  end
+
+  @doc """
+  Returns all applications for a owner.
+
+  ## Examples
+
+      iex> get_applications_for(resource_owner)
+      [%OauthApplications{}, ...]
+
+  """
+  def get_applications_for(%{id: owner_id}) do
+    OauthApplication
+    |> where([x], x.owner_id == ^owner_id)
+    |> ExOauth2Provider.repo.all
   end
 
   @doc """
@@ -87,8 +100,8 @@ defmodule ExOauth2Provider.OauthApplications do
       iex> get_authorized_applications_for(owner)
       [%OauthApplication{},...]
   """
-  def get_authorized_applications_for(%{id: _} = owner) do
-    application_ids = owner
+  def get_authorized_applications_for(%{id: _} = resource_owner) do
+    application_ids = resource_owner
                       |> OauthAccessTokens.get_active_tokens_for
                       |> Enum.map(fn(o) -> o.application_id end)
 
@@ -98,7 +111,7 @@ defmodule ExOauth2Provider.OauthApplications do
   end
 
   @doc """
-  Creates a application.
+  Creates an application.
 
   ## Examples
 
@@ -116,7 +129,7 @@ defmodule ExOauth2Provider.OauthApplications do
   end
 
   @doc """
-  Updates a application.
+  Updates an application.
 
   ## Examples
 
@@ -134,7 +147,7 @@ defmodule ExOauth2Provider.OauthApplications do
   end
 
   @doc """
-  Deletes a Application.
+  Deletes an application.
 
   ## Examples
 
@@ -161,11 +174,11 @@ defmodule ExOauth2Provider.OauthApplications do
     do: application_changeset(application, %{})
 
   @doc """
-  Revokes all access tokens for .
+  Revokes all access tokens for an application and resource owner.
 
   ## Examples
 
-      iex> revoke_all_access_tokens_for(application, owner)
+      iex> revoke_all_access_tokens_for(application, resource_owner)
       {:ok, nil}
 
   """

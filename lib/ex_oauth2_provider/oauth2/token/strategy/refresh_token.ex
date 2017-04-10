@@ -10,6 +10,7 @@ defmodule ExOauth2Provider.Token.RefreshToken do
   alias ExOauth2Provider.OauthAccessTokens.OauthAccessToken
 
   @doc """
+  Will grant access token by refresh token.
 
   ## Example
       ExOauth2Provider.Token.authorize(%{
@@ -21,7 +22,7 @@ defmodule ExOauth2Provider.Token.RefreshToken do
 
   ## Response
       {:ok, access_token}
-      {:error, %{error: error, error_description: _}, http_status}
+      {:error, %{error: error, error_description: description}, http_status}
   """
   def grant(%{"grant_type" => "refresh_token"} = request, config \\ ExOauth2Provider.Config) do
     %{request: request}

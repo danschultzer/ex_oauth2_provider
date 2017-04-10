@@ -8,10 +8,10 @@ defmodule ExOauth2Provider.Mixin.Expirable do
 
       ## Examples
 
-          iex> filter_expired(data)
-          data
+          iex> filter_expired(%Data{expires_in: 7200, inserted_at: ~N[2017-04-04 19:21:22.292762], ...}}
+          %Data{}
 
-          iex> filter_expired(expired_data)
+          iex> filter_expired(%Data{expires_in: 10, inserted_at: ~N[2017-04-04 19:21:22.292762], ...}}
           nil
       """
       def filter_expired(data) do
@@ -22,14 +22,14 @@ defmodule ExOauth2Provider.Mixin.Expirable do
       end
 
       @doc """
-      Checks if ectod ata has expired.
+      Checks if data has expired.
 
       ## Examples
 
-          iex> is_expired?(data)
+          iex> is_expired?(%Data{expires_in: 7200, inserted_at: ~N[2017-04-04 19:21:22.292762], ...}}
           false
 
-          iex> is_expired?(expired_data)
+          iex> is_expired?(%Data{expires_in: 10, inserted_at: ~N[2017-04-04 19:21:22.292762], ...}}
           true
       """
       def is_expired?(nil), do: true

@@ -21,7 +21,7 @@ defmodule ExOauth2Provider.Token.AuthorizationCode do
 
   ## Response
       {:ok, access_token}
-      {:error, %{error: error, error_description: _}, http_status}
+      {:error, %{error: error, error_description: description}, http_status}
   """
   def grant(%{"grant_type" => "authorization_code"} = request, config \\ ExOauth2Provider.Config) do
     %{request: request}
@@ -60,7 +60,7 @@ defmodule ExOauth2Provider.Token.AuthorizationCode do
 
   defp load_access_grant(%{client: client, request: %{"code" => code}} = params) do
     access_grant = client
-      |> OauthAccessGrants.get_grant(code)
+      |> OauthAccessGrants.get_grant_for(code)
       |> ExOauth2Provider.repo.preload(:resource_owner)
       |> ExOauth2Provider.repo.preload(:application)
 

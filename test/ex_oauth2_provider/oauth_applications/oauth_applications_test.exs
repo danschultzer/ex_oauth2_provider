@@ -14,10 +14,10 @@ defmodule ExOauth2Provider.OauthApplicationsTest do
     {:ok, %{user: fixture(:user)}}
   end
 
-  test "list_applications_for/1", %{user: user} do
+  test "get_applications_for/1", %{user: user} do
     {:ok, application} = OauthApplications.create_application(user, @valid_attrs)
     {:ok, _} = OauthApplications.create_application(fixture(:user), @valid_attrs)
-    assert [app] = OauthApplications.list_applications_for(user)
+    assert [app] = OauthApplications.get_applications_for(user)
     assert app.id == application.id
   end
 

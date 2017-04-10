@@ -4,7 +4,7 @@ defmodule ExOauth2Provider.Mixin.Revocable do
   defmacro __using__(_) do
     quote location: :keep do
       @doc """
-      Updates revoke_at on ecto data.
+      Revoke data.
 
       ## Examples
 
@@ -25,10 +25,10 @@ defmodule ExOauth2Provider.Mixin.Revocable do
 
       ## Examples
 
-          iex> filter_revoked(data)
-          data
+          iex> filter_revoked(%Data{revoked_at: nil, ...}}
+          %Data{}
 
-          iex> filter_revoked(revoked_data)
+          iex> filter_revoked(%Data{revoked_at: ~N[2017-04-04 19:21:22.292762], ...}}
           nil
       """
       def filter_revoked(data) do
@@ -39,14 +39,14 @@ defmodule ExOauth2Provider.Mixin.Revocable do
       end
 
       @doc """
-      Checks if ecto data has been revoked.
+      Checks if data has been revoked.
 
       ## Examples
 
-          iex> is_revoked?(data)
+          iex> is_revoked?(%Data{revoked_at: nil, ...}}
           false
 
-          iex> is_revoked?(revoked_data)
+          iex> is_revoked?(%Data{revoked_at: ~N[2017-04-04 19:21:22.292762], ...}}
           true
       """
       def is_revoked?(%{revoked_at: nil}), do: false

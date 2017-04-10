@@ -18,7 +18,7 @@ defmodule ExOauth2Provider.Token.ClientCredentials do
 
   ## Response
       {:ok, access_token}
-      {:error, %{error: error, error_description: _}, http_status}
+      {:error, %{error: error, error_description: description}, http_status}
   """
   def grant(%{"grant_type" => "client_credentials"} = request) do
     %{request: request}

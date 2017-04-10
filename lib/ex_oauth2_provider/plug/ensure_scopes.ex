@@ -26,6 +26,7 @@ defmodule ExOauth2Provider.Plug.EnsureScopes do
   require Logger
   import Plug.Conn
 
+  @doc false
   def init(opts) do
     opts = Enum.into(opts, %{})
     key = Map.get(opts, :key, :default)

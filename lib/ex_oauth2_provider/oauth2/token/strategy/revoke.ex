@@ -8,12 +8,14 @@ defmodule ExOauth2Provider.Token.Revoke do
   alias ExOauth2Provider.OauthAccessTokens
 
   @doc """
+  Revokes access token.
+
   The authorization server, if applicable, first authenticates the client
   and checks its ownership of the provided token.
 
   ExOauth2Provider does not use the token_type_hint logic described in the
   RFC 7009 due to the refresh token implementation that is a field in
-  the access token model.
+  the access token schema.
 
   ## Example confidential client
       ExOauth2Provider.Token.revoke(%{

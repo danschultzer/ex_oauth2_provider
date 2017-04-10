@@ -1,6 +1,59 @@
 defmodule ExOauth2Provider.Authorization.Code do
   @moduledoc """
-  Functions for dealing with authorization code flow.
+  Methods for authorization code flow.
+
+  The flow consists of three method calls:
+
+  1. `preauthorize(resource_owner, request)`
+
+  This validates the request. If a resource owner already have been
+  authenticated previously it'll respond with a redirect tuple.
+
+  2. `authorize(resource_owner, request)`
+
+  This confirms a resource owner authorization, and will generate an access
+  token.
+
+  3. `deny(resource_owner, request)`
+
+  This rejects a resource owner authorization.
+
+  ---
+
+  In a controller it could look like this:
+
+  ```elixir
+  alias ExOauth2Provider.Authorization
+
+  def new(conn, params) do
+    case Authorization.preauthorize(current_resource_owner(conn), params) do
+      {:ok, client, scopes} ->
+        render(conn, "new.html", params: params, client: client, scopes: scopes)
+      {:native_redirect, %{code: code}} ->
+        redirect(conn, to: oauth_authorization_path(conn, :show, code))
+      {:redirect, redirect_uri} ->
+        redirect(conn, external: redirect_uri)
+      {:error, error, status} ->
+        conn
+        |> put_status(status)
+        |> render("error.html", error: error)
+    end
+  end
+
+  def create(conn, params) do
+    conn
+    |> current_resource_owner
+    |> Authorization.authorize(params)
+    |> redirect_or_render(conn)
+  end
+
+  def delete(conn, params) do
+    conn
+    |> current_resource_owner
+    |> Authorization.deny(params)
+    |> redirect_or_render(conn)
+  end
+  ```
   """
   alias ExOauth2Provider.OauthApplications
   alias ExOauth2Provider.OauthAccessTokens
@@ -12,6 +65,8 @@ defmodule ExOauth2Provider.Authorization.Code do
   alias ExOauth2Provider.Authorization.Utils.Response
 
   @doc """
+  Validates an authorization code flow request.
+
   Will check if there's already an existing access token with same scope and client
   for the resource owner.
 
@@ -52,6 +107,8 @@ defmodule ExOauth2Provider.Authorization.Code do
   defp reissue_grant(params), do: params
 
   @doc """
+  Authorizes an authorization code flow request.
+
   This is used when a resource owner has authorized access. If successful,
   this will generate an access token grant.
 
@@ -98,6 +155,8 @@ defmodule ExOauth2Provider.Authorization.Code do
 
 
   @doc """
+  Rejects an authorization code flow request.
+
   This is used when a resource owner has rejected access.
 
   ## Example

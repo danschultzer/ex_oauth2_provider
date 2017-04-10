@@ -137,63 +137,63 @@ defmodule ExOauth2Provider.OauthAccessTokensTest do
     assert token.refresh_token == nil
   end
 
-  test "find_or_create_token/2 gets existing token", %{user: user} do
-    {:ok, token} = OauthAccessTokens.find_or_create_token(user)
+  test "get_or_create_token/2 gets existing token", %{user: user} do
+    {:ok, token} = OauthAccessTokens.get_or_create_token(user)
     assert is_nil(token.application_id)
     assert token.resource_owner_id == user.id
 
-    {:ok, token2} = OauthAccessTokens.find_or_create_token(user)
+    {:ok, token2} = OauthAccessTokens.get_or_create_token(user)
     assert token.id == token2.id
   end
 
-  test "find_or_create_token/2 with resource owner and application", %{user: user, application: application} do
-    {:ok, token} = OauthAccessTokens.find_or_create_token(user, %{application: application})
+  test "get_or_create_token/2 with resource owner and application", %{user: user, application: application} do
+    {:ok, token} = OauthAccessTokens.get_or_create_token(user, %{application: application})
     assert token.application_id == application.id
     assert token.resource_owner_id == user.id
 
-    {:ok, token2} = OauthAccessTokens.find_or_create_token(user, %{application: application})
+    {:ok, token2} = OauthAccessTokens.get_or_create_token(user, %{application: application})
     assert token.id == token2.id
   end
 
-  test "find_or_create_token/2 with application", %{application: application} do
-    {:ok, token} = OauthAccessTokens.find_or_create_token(application)
+  test "get_or_create_token/2 with application", %{application: application} do
+    {:ok, token} = OauthAccessTokens.get_or_create_token(application)
     assert token.application_id == application.id
     assert is_nil(token.resource_owner_id)
 
-    {:ok, token2} = OauthAccessTokens.find_or_create_token(application)
+    {:ok, token2} = OauthAccessTokens.get_or_create_token(application)
     assert token.id == token2.id
   end
 
-  test "find_or_create_token/2 creates token when matching is revoked", %{user: user} do
-    {:ok, token} = OauthAccessTokens.find_or_create_token(user)
+  test "get_or_create_token/2 creates token when matching is revoked", %{user: user} do
+    {:ok, token} = OauthAccessTokens.get_or_create_token(user)
     OauthAccessTokens.revoke(token)
-    {:ok, token2} = OauthAccessTokens.find_or_create_token(user)
+    {:ok, token2} = OauthAccessTokens.get_or_create_token(user)
     assert token.id != token2.id
   end
 
-  test "find_or_create_token/2 creates token when matching has expired", %{user: user} do
-    {:ok, token} = OauthAccessTokens.find_or_create_token(user, %{expires_in: 1})
+  test "get_or_create_token/2 creates token when matching has expired", %{user: user} do
+    {:ok, token} = OauthAccessTokens.get_or_create_token(user, %{expires_in: 1})
 
     inserted_at = NaiveDateTime.utc_now |> NaiveDateTime.add(-token.expires_in, :second)
     token
     |> Ecto.Changeset.change(%{inserted_at: inserted_at})
     |> ExOauth2Provider.repo.update()
 
-    {:ok, token2} = OauthAccessTokens.find_or_create_token(user)
+    {:ok, token2} = OauthAccessTokens.get_or_create_token(user)
     assert token.id != token2.id
   end
 
-  test "find_or_create_token/2 creates token when params are different", %{user: user} do
-    {:ok, token} = OauthAccessTokens.find_or_create_token(user)
+  test "get_or_create_token/2 creates token when params are different", %{user: user} do
+    {:ok, token} = OauthAccessTokens.get_or_create_token(user)
 
-    {:ok, token2} = OauthAccessTokens.find_or_create_token(fixture(:user))
+    {:ok, token2} = OauthAccessTokens.get_or_create_token(fixture(:user))
     assert token.id != token2.id
 
     Enum.each(%{application_id: 0,
                 expires_in: 0,
                 scopes: "public",
                 scopes: nil}, fn({k, v}) ->
-      {:ok, token2} = OauthAccessTokens.find_or_create_token(user, %{"#{k}": v})
+      {:ok, token2} = OauthAccessTokens.get_or_create_token(user, %{"#{k}": v})
       assert token.id != token2.id
     end)
   end

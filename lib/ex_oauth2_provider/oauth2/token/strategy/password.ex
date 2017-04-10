@@ -20,7 +20,7 @@ defmodule ExOauth2Provider.Token.Password do
       })
   ## Response
       {:ok, access_token}
-      {:error, %{error: error, error_description: _}, http_status}
+      {:error, %{error: error, error_description: description}, http_status}
   """
   def grant(%{"grant_type" => "password"} = request, config \\ ExOauth2Provider.Config) do
     %{request: request}

@@ -1,12 +1,14 @@
 defmodule ExOauth2Provider.Authorization do
   @moduledoc """
-  Handler for dealing with authorization flow.
+  Handler for dealing with generating access grants.
   """
   alias ExOauth2Provider.Utils.Error
   alias ExOauth2Provider.Authorization.Utils
   alias ExOauth2Provider.Authorization.Utils.Response
 
-  @doc false
+  @doc """
+  Check ExOauth2Provider.Authorization.Code for usage.
+  """
   def preauthorize(resource_owner, request, config \\ ExOauth2Provider.Config) do
     case validate_response_type(request, config) do
       {:error, :invalid_response_type} -> unsupported_response_type(resource_owner, request)
@@ -15,7 +17,9 @@ defmodule ExOauth2Provider.Authorization do
     end
   end
 
-  @doc false
+  @doc """
+  Check ExOauth2Provider.Authorization.Code for usage.
+  """
   def authorize(resource_owner, request, config \\ ExOauth2Provider.Config) do
     case validate_response_type(request, config) do
       {:error, :invalid_response_type} -> unsupported_response_type(resource_owner, request)
@@ -24,7 +28,9 @@ defmodule ExOauth2Provider.Authorization do
     end
   end
 
-  @doc false
+  @doc """
+  Check ExOauth2Provider.Authorization.Code for usage.
+  """
   def deny(resource_owner, request, config \\ ExOauth2Provider.Config) do
     case validate_response_type(request, config) do
       {:error, :invalid_response_type} -> unsupported_response_type(resource_owner, request)

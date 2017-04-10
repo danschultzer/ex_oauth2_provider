@@ -33,21 +33,27 @@ defmodule ExOauth2Provider.Scopes do
     ExOauth2Provider.Config.server_scopes
   end
 
-  # Fetch scopes from access token
+  @doc """
+  Fetch scopes from an access token
+  """
   @spec from_access_token(map) :: list
   def from_access_token(access_token) do
     access_token.scopes
     |> to_list
   end
 
-  # Convert scopes string to list
+  @doc """
+  Convert scopes string to list
+  """
   @spec to_list(String.t()) :: list
   def to_list(nil), do: []
   def to_list(str) do
     String.split(str)
   end
 
-  # Convert scopes list to string
+  @doc """
+  Convert scopes list to string
+  """
   @spec to_string(list) :: String.t()
   def to_string(scopes) do
     Enum.join(scopes, " ")
