@@ -6,7 +6,7 @@ defmodule ExOauth2Provider.Test.Fixture do
   end
 
   def fixture(:application, user, %{} = attrs) do
-    insert(:application, Map.merge(attrs, %{resource_owner_id: user.id}))
+    insert(:application, Map.merge(attrs, %{owner_id: user.id}))
   end
 
   def fixture(:access_token, resource_owner, %{} = params) do
