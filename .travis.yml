@@ -1,10 +1,8 @@
 language: elixir
-matrix:
-  include:
-    - otp_release: 18.3
-      elixir: 1.4
-    - otp_release: 19.0
-      elixir: 1.4
+elixir:
+  - 1.4
+otp_release:
+  - 19.0
 sudo: false
 script:
   - mix test
