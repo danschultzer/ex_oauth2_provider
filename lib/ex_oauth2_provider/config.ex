@@ -11,8 +11,8 @@ defmodule ExOauth2Provider.Config do
   end
 
   @doc false
-  def application_resource_owner_struct do
-    Keyword.get(config(), :application_resource_owner, resource_owner_struct())
+  def application_owner_struct do
+    Keyword.get(config(), :application_owner, resource_owner_struct())
   end
 
   # Define default access token scopes for your provider

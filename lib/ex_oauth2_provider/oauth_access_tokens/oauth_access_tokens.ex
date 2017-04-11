@@ -131,7 +131,7 @@ defmodule ExOauth2Provider.OauthAccessTokens do
   end
   def create_token(%{id: _} = resource_owner, %{application: application} = attrs) do
     %OauthAccessToken{application: application, resource_owner: resource_owner}
-    |> application_resource_owner_token_changeset(attrs)
+    |> application_owner_token_changeset(attrs)
     |> new_token_changeset(attrs)
     |> ExOauth2Provider.repo.insert()
   end
@@ -306,7 +306,7 @@ defmodule ExOauth2Provider.OauthAccessTokens do
     |> assoc_constraint(:application)
   end
 
-  defp application_resource_owner_token_changeset(token, params) do
+  defp application_owner_token_changeset(token, params) do
     token
     |> application_token_changeset(params)
     |> resource_owner_token_changeset(params)
