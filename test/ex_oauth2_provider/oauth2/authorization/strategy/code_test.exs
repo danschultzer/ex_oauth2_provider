@@ -71,19 +71,19 @@ defmodule ExOauth2Provider.Authorization.CodeTest do
     assert error == @invalid_scope
   end
 
-  describe "when application has no scope" do
+  describe "#preauthorize/2 when application has no scope" do
     setup %{resource_owner: resource_owner, application: application} do
       application = set_application_scopes(application, "")
 
       %{resource_owner: resource_owner, application: application}
     end
 
-    test "#preauthorize/2 with limited server scope", %{resource_owner: resource_owner, application: application} do
+    test "with limited server scope", %{resource_owner: resource_owner, application: application} do
       request = Map.merge(@valid_request, %{"scope" => "read"})
       assert {:ok, application, ["read"]} == preauthorize(resource_owner, request)
     end
 
-    test "#preauthorize/2 error when invalid server scope", %{resource_owner: resource_owner} do
+    test "error when invalid server scope", %{resource_owner: resource_owner} do
       assert {:error, error, :unprocessable_entity} = preauthorize(resource_owner,  Map.merge(@valid_request, %{"scope" => "invalid"}))
       assert error == @invalid_scope
     end
@@ -115,20 +115,20 @@ defmodule ExOauth2Provider.Authorization.CodeTest do
     assert error == @invalid_scope
   end
 
-  describe "when application has no scope" do
+  describe "#authorize/2 when application has no scope" do
     setup %{resource_owner: resource_owner, application: application} do
       application = set_application_scopes(application, "")
 
       %{resource_owner: resource_owner, application: application}
     end
 
-    test "#authorize/2 error when invalid server scope", %{resource_owner: resource_owner} do
+    test "error when invalid server scope", %{resource_owner: resource_owner} do
       request =  Map.merge(@valid_request, %{"scope" => "public profile"})
       assert {:error, error, :unprocessable_entity} = authorize(resource_owner, request)
       assert error == @invalid_scope
     end
 
-    test "#authorize/2 generates grant", %{resource_owner: resource_owner} do
+    test "generates grant", %{resource_owner: resource_owner} do
       request =  Map.merge(@valid_request, %{"scope" => "public"})
       assert {:native_redirect, %{code: code}} = authorize(resource_owner, request)
       assert get_access_grant_by_code(code).resource_owner_id == resource_owner.id

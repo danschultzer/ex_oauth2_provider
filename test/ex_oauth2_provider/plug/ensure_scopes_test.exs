@@ -3,7 +3,6 @@ defmodule ExOauth2Provider.Plug.EnsureScopeTest do
   use ExOauth2Provider.TestCase
   use Plug.Test
 
-  import ExOauth2Provider.Factory
   import ExOauth2Provider.PlugHelpers
 
   alias ExOauth2Provider.Plug.EnsureScopes
@@ -18,8 +17,14 @@ defmodule ExOauth2Provider.Plug.EnsureScopeTest do
     end
   end
 
+  defp build_access_token(attrs) do
+    %ExOauth2Provider.OauthAccessTokens.OauthAccessToken{token: "secret",
+                                                         scopes: "read write"}
+    |> Map.merge(attrs)
+  end
+
   setup do
-    access_token = build(:access_token, %{scopes: "read write"})
+    access_token = build_access_token(%{scopes: "read write"})
 
     conn = conn(:get, "/foo")
     {:ok, %{conn: conn, access_token: access_token}}
@@ -68,7 +73,7 @@ defmodule ExOauth2Provider.Plug.EnsureScopeTest do
   end
 
   test "is invalid when all scopes are not present", %{conn: conn} do
-    access_token = build(:access_token, %{scopes: "read"})
+    access_token = build_access_token(%{scopes: "read"})
 
     expected_conn = conn
                     |> ExOauth2Provider.Plug.set_current_access_token({:ok, access_token})
@@ -80,7 +85,7 @@ defmodule ExOauth2Provider.Plug.EnsureScopeTest do
   end
 
   test "is invalid when access token doesn't have any required scopes", %{conn: conn} do
-    access_token = build(:access_token, %{scopes: "other_read"})
+    access_token = build_access_token(%{scopes: "other_read"})
 
     expected_conn = conn
                     |> ExOauth2Provider.Plug.set_current_access_token({:ok, access_token})
@@ -92,7 +97,7 @@ defmodule ExOauth2Provider.Plug.EnsureScopeTest do
   end
 
   test "is invalid when none of the one_of scopes is present", %{conn: conn} do
-    access_token = build(:access_token, %{scopes: "other_read"})
+    access_token = build_access_token(%{scopes: "other_read"})
 
     expected_conn = conn
                     |> ExOauth2Provider.Plug.set_current_access_token({:ok, access_token})
@@ -104,7 +109,7 @@ defmodule ExOauth2Provider.Plug.EnsureScopeTest do
   end
 
   test "is valid when at least one_of the scopes is present", %{conn: conn} do
-    access_token = build(:access_token, %{scopes: "other_read"})
+    access_token = build_access_token(%{scopes: "other_read"})
 
     expected_conn = conn
                     |> ExOauth2Provider.Plug.set_current_access_token({:ok, access_token})
