@@ -208,7 +208,7 @@ defmodule ExOauth2Provider.OauthAccessTokens do
 
   defp build_access_token_by_attrs_query(attrs) do
     attrs
-    |> Enum.reduce(OauthAccessToken, fn({k,v}, query) ->
+    |> Enum.reduce(OauthAccessToken, fn({k, v}, query) ->
          case Enum.member?([:application_id, :resource_owner_id, :scopes], k) and is_nil(v) do
            true  -> where(query, [o], is_nil(field(o, ^k)))
            false -> where(query, [o], field(o, ^k) == ^v)

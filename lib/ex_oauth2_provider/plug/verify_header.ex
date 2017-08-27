@@ -63,7 +63,7 @@ defmodule ExOauth2Provider.Plug.VerifyHeader do
 
   @doc false
   defp fetch_token(_, _, []), do: nil
-  defp fetch_token(conn, opts = %{realm_regex: realm_regex}, [token|tail]) do
+  defp fetch_token(conn, %{realm_regex: realm_regex} = opts, [token|tail]) do
     trimmed_token = String.strip(token)
     case Regex.run(realm_regex, trimmed_token) do
       [_, match] -> String.strip(match)

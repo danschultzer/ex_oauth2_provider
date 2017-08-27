@@ -94,8 +94,8 @@ defmodule ExOauth2Provider.Config do
   @doc false
   def calculate_authorization_response_types do
     %{"authorization_code" => {:code, ExOauth2Provider.Authorization.Code}}
-    |> Enum.filter(fn({k,_}) -> Enum.member?(grant_flows(), k) end)
-    |> Enum.map(fn({_,v}) -> v end)
+    |> Enum.filter(fn({k, _}) -> Enum.member?(grant_flows(), k) end)
+    |> Enum.map(fn({_, v}) -> v end)
   end
 
   @doc false
@@ -104,7 +104,7 @@ defmodule ExOauth2Provider.Config do
      client_credentials: ExOauth2Provider.Token.ClientCredentials,
      password: ExOauth2Provider.Token.Password,
      refresh_token: ExOauth2Provider.Token.RefreshToken]
-    |> Enum.filter(fn({k,_}) -> grant_type_can_be_used?(grant_flows(), to_string(k)) end)
+    |> Enum.filter(fn({k, _}) -> grant_type_can_be_used?(grant_flows(), to_string(k)) end)
   end
 
   defp grant_type_can_be_used?(_, "refresh_token"),
