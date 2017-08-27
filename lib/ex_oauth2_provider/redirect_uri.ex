@@ -9,7 +9,7 @@ defmodule ExOauth2Provider.RedirectURI do
   """
   def validate(nil), do: validate("")
   def validate(url) do
-    case String.strip(url) do
+    case String.trim(url) do
       "" -> {:error, "Redirect URI cannot be blank"}
       url ->
         uri = URI.parse(url)

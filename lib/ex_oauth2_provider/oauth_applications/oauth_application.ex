@@ -22,7 +22,7 @@ defmodule ExOauth2Provider.OauthApplications.OauthApplication do
     field :redirect_uri, :string,     null: false
     field :scopes,       :string,     null: false, default: ""
 
-    has_many :access_tokens, ExOauth2Provider.OauthAccessTokens.OauthAccessToken
+    has_many :access_tokens, ExOauth2Provider.OauthAccessTokens.OauthAccessToken, foreign_key: :application_id
 
     timestamps()
   end
