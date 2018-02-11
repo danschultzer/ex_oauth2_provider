@@ -43,6 +43,9 @@ defmodule ExOauth2Provider.Token.Strategy.PasswordTest do
     request_invalid_client = Map.merge(@valid_request, %{"client_secret" => "invalid"})
     assert {:error, error, :unprocessable_entity} = grant(request_invalid_client)
     assert error == @invalid_client_error
+
+    assert {:error, error, :unprocessable_entity} = grant(Map.delete(@valid_request, "client_secret"))
+    assert error == @invalid_client_error
   end
 
   test "#grant/1 error when missing required values" do
@@ -77,6 +80,17 @@ defmodule ExOauth2Provider.Token.Strategy.PasswordTest do
     assert get_last_access_token().scopes == application.scopes
     assert get_last_access_token().expires_in == ExOauth2Provider.Config.access_token_expires_in
     refute is_nil(get_last_access_token().refresh_token)
+  end
+
+  test "#grant/1 returns access token when only client_id required", %{user: user, application: application} do
+    changeset = Ecto.Changeset.change application, secret: ""
+    ExOauth2Provider.repo.update! changeset
+
+    assert {:ok, access_token} = grant(Map.delete(@valid_request, "client_secret"))
+
+    assert access_token.access_token == get_last_access_token().token
+    assert get_last_access_token().resource_owner_id == user.id
+    assert get_last_access_token().application_id == application.id
   end
 
   def access_token_response_body_handler(body, access_token) do
