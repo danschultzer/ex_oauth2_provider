@@ -60,7 +60,7 @@ defmodule ExOauth2Provider.Token.RefreshToken do
     end)
 
     case result do
-      {:ok, {:error} = error}    -> Error.add_error(params, error)
+      {:ok, {:error, error}}     -> Error.add_error(params, error)
       {:ok, {:ok, access_token}} -> Map.merge(params, %{access_token: access_token})
       {:error, error}            -> Error.add_error(params, error)
     end
