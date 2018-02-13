@@ -60,6 +60,14 @@ defmodule ExOauth2Provider.Token.Strategy.RefreshTokenTest do
     assert error == @invalid_request_error
   end
 
+  test "#grant/1 error when access token has been revoked", %{valid_request: valid_request, access_token: access_token} do
+    changeset = Ecto.Changeset.change access_token, revoked_at: DateTime.utc_now
+    ExOauth2Provider.repo.update! changeset
+
+    assert {:error, error, :bad_request} = grant(valid_request)
+    assert error == @invalid_request_error
+  end
+
   test "#grant/1 returns access token", %{valid_request: valid_request, access_token: access_token} do
     assert {:ok, new_access_token} = grant(valid_request)
 
