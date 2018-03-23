@@ -265,6 +265,17 @@ end
 
 Remember to change the field type for the `token` column in the `oauth_access_tokens` table to accepts tokens larger than 255 characters.
 
+## UUID and custom primary key type
+
+You can set up `ExOauth2Provider` to use you custom schema attributes in case you're not using autoincrementing integer as primary keys in your database.
+
+```elixir
+config :ex_oauth2_provider, ExOauth2Provider,
+  app_schema: MyApp.Schema
+```
+
+Remember to update the migration file, by default `ex_oauth_provider` will use integer fields for primary id's.
+
 ## Acknowledgement
 
 This library was made thanks to [doorkeeper](https://github.com/doorkeeper-gem/doorkeeper), [guardian](https://github.com/ueberauth/guardian) and [authable](https://github.com/mustafaturan/authable), that gave the conceptual building blocks.

@@ -1,7 +1,7 @@
 defmodule ExOauth2Provider.OauthAccessTokens.OauthAccessToken do
   @moduledoc false
 
-  use Ecto.Schema
+  use ExOauth2Provider.Schema
   alias ExOauth2Provider.OauthApplications.OauthApplication
 
   schema "oauth_access_tokens" do

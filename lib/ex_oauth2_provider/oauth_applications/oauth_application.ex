@@ -1,7 +1,7 @@
 defmodule ExOauth2Provider.OauthApplications.OauthApplication do
   @moduledoc false
 
-  use Ecto.Schema
+  use ExOauth2Provider.Schema
   require Logger
 
   # For Phoenix integrations
