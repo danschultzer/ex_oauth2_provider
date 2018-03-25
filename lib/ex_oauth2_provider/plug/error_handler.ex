@@ -10,24 +10,26 @@ defmodule ExOauth2Provider.Plug.ErrorHandler do
   import Plug.Conn
 
   @doc false
+  @spec unauthenticated(Plug.Conn.t, map) :: Plug.Conn.t
   def unauthenticated(conn, _params) do
     respond(conn, response_type(conn), 401, "Unauthenticated")
   end
 
   @doc false
+  @spec unauthorized(Plug.Conn.t, map) :: Plug.Conn.t
   def unauthorized(conn, _params) do
     respond(conn, response_type(conn), 403, "Unauthorized")
   end
 
   @doc false
+  @spec no_resource(Plug.Conn.t, map) :: Plug.Conn.t
   def no_resource(conn, _params) do
     respond(conn, response_type(conn), 403, "Unauthorized")
   end
 
   @doc false
-  def already_authenticated(conn, _params) do
-    conn |> halt
-  end
+  @spec already_authenticated(Plug.Conn.t, map) :: Plug.Conn.t
+  def already_authenticated(conn, _params), do: halt(conn)
 
   defp respond(conn, :json, status, msg) do
     try do
@@ -57,17 +59,17 @@ defmodule ExOauth2Provider.Plug.ErrorHandler do
 
   defp response_type(conn) do
     accept = accept_header(conn)
-    if Regex.match?(~r/json/, accept) do
-      :json
-    else
-      :html
+
+    case Regex.match?(~r/json/, accept) do
+      true -> :json
+      false -> :html
     end
   end
 
   defp accept_header(conn)  do
     value = conn
       |> get_req_header("accept")
-      |> List.first
+      |> List.first()
 
     value || ""
   end

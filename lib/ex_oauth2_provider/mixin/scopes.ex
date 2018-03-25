@@ -4,6 +4,7 @@ defmodule ExOauth2Provider.Mixin.Scopes do
 
   defmacro __using__(_) do
     quote location: :keep do
+      @spec put_scopes(Ecto.Changeset.t) :: Ecto.Changeset.t
       def put_scopes(%{} = changeset), do: put_scopes(changeset, nil)
       def put_scopes(%{} = changeset, ""), do: put_scopes(changeset, nil)
       def put_scopes(%{} = changeset, server_scopes) do
@@ -13,6 +14,7 @@ defmodule ExOauth2Provider.Mixin.Scopes do
         end
       end
 
+      @spec validate_scopes(Ecto.Changeset.t) :: Ecto.Changeset.t
       def validate_scopes(%{} = changeset), do: validate_scopes(changeset, nil)
       def validate_scopes(%{} = changeset, ""), do: validate_scopes(changeset, nil)
       def validate_scopes(%{} = changeset, server_scopes) do
@@ -33,14 +35,14 @@ defmodule ExOauth2Provider.Mixin.Scopes do
         do: server_scopes |> Scopes.to_list |> default_scopes_string
       defp default_scopes_string(server_scopes) do
         server_scopes
-        |> Scopes.default_to_server_scopes
-        |> Scopes.filter_default_scopes
-        |> Scopes.to_string
+        |> Scopes.default_to_server_scopes()
+        |> Scopes.filter_default_scopes()
+        |> Scopes.to_string()
       end
 
       defp can_use_scopes?(scopes, server_scopes) when is_binary(scopes) do
         scopes
-        |> Scopes.to_list
+        |> Scopes.to_list()
         |> can_use_scopes?(server_scopes)
       end
       defp can_use_scopes?(scopes, server_scopes) when is_binary(server_scopes) do
@@ -48,12 +50,12 @@ defmodule ExOauth2Provider.Mixin.Scopes do
       end
       defp can_use_scopes?(scopes, server_scopes) do
         server_scopes
-        |> Scopes.default_to_server_scopes
+        |> Scopes.default_to_server_scopes()
         |> Scopes.all?(scopes)
       end
 
       defp permitted_scopes(nil),
-        do: ExOauth2Provider.Config.server_scopes
+        do: ExOauth2Provider.Config.server_scopes()
       defp permitted_scopes(server_scopes),
         do: server_scopes
     end

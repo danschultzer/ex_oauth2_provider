@@ -51,10 +51,10 @@ defmodule ExOauth2Provider do
   def authenticate_token(nil), do: {:error, :token_inaccessible}
   def authenticate_token(token) do
     token
-    |> load_access_token
+    |> load_access_token()
     |> revoke_previous_refresh_token(ExOauth2Provider.Config.refresh_token_revoked_on_use?())
-    |> validate_access_token
-    |> load_resource
+    |> validate_access_token()
+    |> load_resource()
   end
 
   defp load_access_token(token) do
@@ -67,8 +67,8 @@ defmodule ExOauth2Provider do
   defp validate_access_token({:error, _} = error), do: error
   defp validate_access_token({:ok, access_token}) do
     case OauthAccessTokens.is_accessible?(access_token) do
-      true -> {:ok, access_token}
-      _    -> {:error, :token_inaccessible}
+      true  -> {:ok, access_token}
+      false -> {:error, :token_inaccessible}
     end
   end
 
@@ -92,12 +92,12 @@ defmodule ExOauth2Provider do
   end
 
   @doc false
+  @spec config() :: Keyword.t
   def config do
-    Application.get_env(:ex_oauth2_provider, ExOauth2Provider) ||
-    Application.get_env(:phoenix_oauth2_provider, PhoenixOauth2Provider, [])
+    Application.get_env(:ex_oauth2_provider, ExOauth2Provider, Application.get_env(:phoenix_oauth2_provider, PhoenixOauth2Provider, []))
   end
+
   @doc false
-  def repo do
-    Keyword.get(config(), :repo)
-  end
+  @spec repo() :: Ecto.Repo.t
+  def repo, do: Keyword.get(config(), :repo)
 end

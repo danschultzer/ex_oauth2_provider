@@ -150,7 +150,7 @@ defmodule ExOauth2Provider.Authorization.CodeTest do
   test "#authorize/2 generates grant with redirect uri", %{resource_owner: resource_owner, application: application} do
     set_application_redirect_uri(application, "#{application.redirect_uri}\nhttps://example.com/path")
 
-    params = Map.merge(@valid_request, %{"redirect_uri" => "https://example.com/path?param=1", "state" => 40612})
+    params = Map.merge(@valid_request, %{"redirect_uri" => "https://example.com/path?param=1", "state" => 40_612})
 
     assert {:redirect, redirect_uri} = authorize(resource_owner, params)
     assert redirect_uri == "https://example.com/path?code=#{get_last_access_grant().token}&param=1&state=40612"
@@ -177,7 +177,7 @@ defmodule ExOauth2Provider.Authorization.CodeTest do
 
   test "#deny/2 with redirection uri", %{application: application, resource_owner: resource_owner} do
     set_application_redirect_uri(application, "#{application.redirect_uri}\nhttps://example.com/path")
-    params = Map.merge(@valid_request, %{"redirect_uri" => "https://example.com/path?param=1", "state" => 40612})
+    params = Map.merge(@valid_request, %{"redirect_uri" => "https://example.com/path?param=1", "state" => 40_612})
 
     assert {:redirect, "https://example.com/path?error=access_denied&error_description=The+resource+owner+or+authorization+server+denied+the+request.&param=1&state=40612"} = deny(resource_owner, params)
   end

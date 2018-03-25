@@ -9,6 +9,7 @@ defmodule ExOauth2Provider.OauthAccessTokens do
   use ExOauth2Provider.Mixin.Scopes
   alias ExOauth2Provider.OauthAccessTokens.OauthAccessToken
   alias ExOauth2Provider.OauthApplications.OauthApplication
+  alias ExOauth2Provider.Scopes
 
   @doc """
   Gets a single access token.
@@ -22,10 +23,10 @@ defmodule ExOauth2Provider.OauthAccessTokens do
       nil
 
   """
+  @spec get_by_token(String.t) :: %OauthAccessToken{} | nil
   def get_by_token(token) do
     ExOauth2Provider.repo.get_by(OauthAccessToken, token: token)
   end
-
 
   @doc """
   Gets an access token by the refresh token.
@@ -38,6 +39,7 @@ defmodule ExOauth2Provider.OauthAccessTokens do
       iex> get_by_refresh_token("75d72f326a69444a9287ea264617058dbbfe754d7071b8eef8294cbf4e7e0fdc")
       nil
   """
+  @spec get_by_refresh_token(String.t) :: %OauthAccessToken{} | nil
   def get_by_refresh_token(refresh_token) do
     ExOauth2Provider.repo.get_by(OauthAccessToken, refresh_token: refresh_token)
   end
@@ -53,8 +55,13 @@ defmodule ExOauth2Provider.OauthAccessTokens do
       iex> get_by_refresh_token_for(application, "75d72f326a69444a9287ea264617058dbbfe754d7071b8eef8294cbf4e7e0fdc")
       nil
   """
-  def get_by_refresh_token_for(%OauthApplication{} = application, refresh_token) do
-    ExOauth2Provider.repo.get_by(OauthAccessToken, application_id: application.id, refresh_token: refresh_token)
+  @spec get_by_refresh_token_for(%OauthApplication{}, String.t) :: %OauthAccessToken{} | nil
+  def get_by_refresh_token_for(application, refresh_token) do
+    clauses = OauthAccessToken
+    |> ExOauth2Provider.Utils.belongs_to_clause(:application, application)
+    |> Keyword.put(:refresh_token, refresh_token)
+
+    ExOauth2Provider.repo.get_by(OauthAccessToken, clauses)
   end
 
   @doc """
@@ -69,23 +76,27 @@ defmodule ExOauth2Provider.OauthAccessTokens do
       nil
 
   """
-  def get_matching_token_for(%{id: resource_owner_id}, %OauthApplication{id: application_id}, scopes) do
+  @spec get_matching_token_for(Ecto.Schema.t, %OauthApplication{}, String.t) :: %OauthAccessToken{} | nil
+  def get_matching_token_for(resource_owner, application, scopes) do
+    application_clause = ExOauth2Provider.Utils.belongs_to_clause(OauthAccessToken, :application, application)
+    resource_owner_clause = ExOauth2Provider.Utils.belongs_to_clause(OauthAccessToken, :resource_owner, resource_owner)
+
     OauthAccessToken
-    |> where([x], x.application_id == ^application_id)
-    |> where([x], x.resource_owner_id == ^resource_owner_id)
+    |> where(^application_clause)
+    |> where(^resource_owner_clause)
     |> where([x], is_nil(x.revoked_at))
     |> order_by([x], desc: x.inserted_at)
     |> limit(1)
-    |> ExOauth2Provider.repo.one
+    |> ExOauth2Provider.repo.one()
     |> check_matching_scopes(scopes)
   end
 
   defp check_matching_scopes(nil, _), do: nil
   defp check_matching_scopes(token, scopes) do
-    token_scopes   = token.scopes |> ExOauth2Provider.Scopes.to_list
-    request_scopes = scopes |> ExOauth2Provider.Scopes.to_list
+    token_scopes   = Scopes.to_list(token.scopes)
+    request_scopes = Scopes.to_list(scopes)
 
-    case ExOauth2Provider.Scopes.equal?(token_scopes, request_scopes) do
+    case Scopes.equal?(token_scopes, request_scopes) do
       true -> token
       _    -> nil
     end
@@ -99,10 +110,14 @@ defmodule ExOauth2Provider.OauthAccessTokens do
       iex> get_active_tokens_for(resource_owner)
       [%OauthAccessToken{}, ...]
   """
-  def get_active_tokens_for(%{id: resource_owner_id}) do
-    ExOauth2Provider.repo.all(from o in OauthAccessToken,
-                              where: o.resource_owner_id == ^resource_owner_id and
-                                     is_nil(o.revoked_at))
+  @spec get_active_tokens_for(Ecto.Schema.t) :: [%OauthAccessToken{}]
+  def get_active_tokens_for(resource_owner) do
+    resource_owner_clause = ExOauth2Provider.Utils.belongs_to_clause(OauthAccessToken, :resource_owner, resource_owner)
+
+    OauthAccessToken
+    |> where(^resource_owner_clause)
+    |> where([o], is_nil(o.revoked_at))
+    |> ExOauth2Provider.repo.all()
   end
 
   @doc """
@@ -122,6 +137,7 @@ defmodule ExOauth2Provider.OauthAccessTokens do
       iex> create_token(resource_owner, %{expires_in: "invalid"})
       {:error, %Ecto.Changeset{}}
   """
+  @spec create_token(Ecto.Schema.t, Map.t) :: {:ok, %OauthAccessToken{}} | {:error, Ecto.Changeset.t}
   def create_token(owner, attrs \\ %{})
   def create_token(%OauthApplication{} = application, attrs) do
     %OauthAccessToken{application: application}
@@ -129,13 +145,13 @@ defmodule ExOauth2Provider.OauthAccessTokens do
     |> new_token_changeset(attrs)
     |> ExOauth2Provider.repo.insert()
   end
-  def create_token(%{id: _} = resource_owner, %{application: application} = attrs) do
+  def create_token(resource_owner, %{application: %OauthApplication{} = application} = attrs) do
     %OauthAccessToken{application: application, resource_owner: resource_owner}
     |> application_owner_token_changeset(attrs)
     |> new_token_changeset(attrs)
     |> ExOauth2Provider.repo.insert()
   end
-  def create_token(%{id: _} = resource_owner, attrs) do
+  def create_token(resource_owner, attrs) do
     %OauthAccessToken{resource_owner: resource_owner}
     |> resource_owner_token_changeset(attrs)
     |> new_token_changeset(attrs)
@@ -157,59 +173,71 @@ defmodule ExOauth2Provider.OauthAccessTokens do
       {:error, %Ecto.Changeset{}}
 
   """
+  @spec get_or_create_token(Ecto.Schema.t, Map.t) :: {:ok, %OauthAccessToken{}} | {:error, Ecto.Changeset.t}
   def get_or_create_token(owner, attrs \\ %{})
-  def get_or_create_token(%OauthApplication{id: _} = application, attrs) do
+  def get_or_create_token(%OauthApplication{} = application, attrs) do
     attrs
-    |> Map.merge(%{application: application})
-    |> find_accessible_token_by_attrs
+    |> Map.put(:application, application)
+    |> find_accessible_token_by_attrs()
     |> create_or_return_token(application, attrs)
   end
-  def get_or_create_token(%{id: _} = resource_owner, %{application: _} = attrs) do
+  def get_or_create_token(resource_owner, %{application: _} = attrs) do
     attrs
-    |> Map.merge(%{resource_owner: resource_owner})
-    |> find_accessible_token_by_attrs
+    |> Map.put(:resource_owner, resource_owner)
+    |> find_accessible_token_by_attrs()
     |> create_or_return_token(resource_owner, attrs)
   end
-  def get_or_create_token(%{id: _} = resource_owner, attrs) do
+  def get_or_create_token(resource_owner, attrs) do
     attrs
-    |> Map.merge(%{resource_owner: resource_owner})
-    |> find_accessible_token_by_attrs
+    |> Map.put(:resource_owner, resource_owner)
+    |> find_accessible_token_by_attrs()
     |> create_or_return_token(resource_owner, attrs)
   end
 
   defp find_accessible_token_by_attrs(attrs) do
     attrs
-    |> tranform_assocations_in_attrs
+    |> tranform_assocations_in_attrs()
     |> Map.delete(:use_refresh_token)
-    |> build_access_token_by_attrs_query
-    |> ExOauth2Provider.repo.one
-    |> filter_accessible
+    |> build_access_token_by_attrs_query()
+    |> ExOauth2Provider.repo.one()
+    |> filter_accessible()
   end
 
   defp tranform_assocations_in_attrs(attrs) do
     attrs
-    |> transform_resource_owner_assocation_in_attrs
-    |> transform_application_assocation_in_attrs
+    |> transform_resource_owner_assocation_in_attrs()
+    |> transform_application_assocation_in_attrs()
   end
 
   defp transform_resource_owner_assocation_in_attrs(%{resource_owner: resource_owner} = attrs) do
+    resource_owner_clause = OauthAccessToken
+    |> ExOauth2Provider.Utils.belongs_to_clause(:resource_owner, resource_owner)
+    |> Enum.into(%{})
+
     attrs
-    |> Map.merge(%{resource_owner_id: resource_owner.id})
+    |> Map.merge(resource_owner_clause)
     |> Map.delete(:resource_owner)
   end
   defp transform_resource_owner_assocation_in_attrs(attrs), do: attrs
 
   defp transform_application_assocation_in_attrs(%{application: application} = attrs) do
+    application_clause = OauthAccessToken
+    |> ExOauth2Provider.Utils.belongs_to_clause(:application, application)
+    |> Enum.into(%{})
+
     attrs
-    |> Map.merge(%{application_id: application.id})
+    |> Map.merge(application_clause)
     |> Map.delete(:application)
   end
   defp transform_application_assocation_in_attrs(attrs), do: attrs
 
   defp build_access_token_by_attrs_query(attrs) do
+    %{owner_key: application_key} = ExOauth2Provider.Utils.schema_association(OauthAccessToken, :application)
+    %{owner_key: resource_owner_key} = ExOauth2Provider.Utils.schema_association(OauthAccessToken, :resource_owner)
+
     attrs
     |> Enum.reduce(OauthAccessToken, fn({k, v}, query) ->
-         case Enum.member?([:application_id, :resource_owner_id, :scopes], k) and is_nil(v) do
+         case Enum.member?([application_key, resource_owner_key, :scopes], k) and is_nil(v) do
            true  -> where(query, [o], is_nil(field(o, ^k)))
            false -> where(query, [o], field(o, ^k) == ^v)
          end
@@ -239,6 +267,8 @@ defmodule ExOauth2Provider.OauthAccessTokens do
       false
 
   """
+  @spec is_accessible?(%OauthAccessToken{}) :: boolean
+  @spec is_accessible?(nil) :: false
   def is_accessible?(%OauthAccessToken{} = token) do
     !is_expired?(token) and !is_revoked?(token)
   end
@@ -255,19 +285,29 @@ defmodule ExOauth2Provider.OauthAccessTokens do
       iex> get_by_previous_refresh_token_for(new_access_token)
       nil
   """
+  @spec get_by_previous_refresh_token_for(%OauthAccessToken{}) :: %OauthAccessToken{} | nil
   def get_by_previous_refresh_token_for(%OauthAccessToken{previous_refresh_token: nil}), do: nil
   def get_by_previous_refresh_token_for(%OauthAccessToken{previous_refresh_token: ""}), do: nil
-  def get_by_previous_refresh_token_for(%OauthAccessToken{application_id: application_id, resource_owner_id: resource_owner_id, previous_refresh_token: previous_refresh_token}) do
-    application_id
-    |> is_nil
-    |> (case do
-          true  -> OauthAccessToken |> where([x], is_nil(x.application_id))
-          false -> OauthAccessToken |> where([x], x.application_id == ^application_id)
-        end)
-    |> where([x], x.resource_owner_id == ^resource_owner_id)
+  def get_by_previous_refresh_token_for(%OauthAccessToken{previous_refresh_token: previous_refresh_token} = access_token) do
+    %{owner_key: application_key} = ExOauth2Provider.Utils.schema_association(OauthAccessToken, :application)
+    application_id = Map.get(access_token, application_key)
+
+    %{owner_key: resource_owner_key} = ExOauth2Provider.Utils.schema_association(OauthAccessToken, :resource_owner)
+    resource_owner_id = Map.get(access_token, resource_owner_key)
+
+    OauthAccessToken
+    |> scope_application(application_key, application_id)
+    |> where([x], field(x, ^resource_owner_key) == ^resource_owner_id)
     |> where([x], x.refresh_token == ^previous_refresh_token)
     |> limit(1)
-    |> ExOauth2Provider.repo.one
+    |> ExOauth2Provider.repo.one()
+  end
+
+  defp scope_application(queryable, application_key, nil) do
+    where(queryable, [x], is_nil(field(x, ^application_key)))
+  end
+  defp scope_application(queryable, application_key, application_id) do
+    where(queryable, [x], field(x, ^application_key) == ^application_id)
   end
 
   @doc """
@@ -283,20 +323,19 @@ defmodule ExOauth2Provider.OauthAccessTokens do
       iex> revoke_previous_refresh_token(invalid_data)
       {:error, %Ecto.Changeset{}}
   """
+  @spec revoke_previous_refresh_token(%OauthAccessToken{}) :: {:ok, %OauthAccessToken{}} | {:error, Ecto.Changeset.t}
   def revoke_previous_refresh_token(%OauthAccessToken{previous_refresh_token: ""} = access_token), do: access_token
   def revoke_previous_refresh_token(%OauthAccessToken{previous_refresh_token: nil} = access_token), do: access_token
   def revoke_previous_refresh_token(%OauthAccessToken{} = access_token) do
-    access_token
-    |> get_by_previous_refresh_token_for
-    |> revoke
+    access_token |> get_by_previous_refresh_token_for() |> revoke()
 
-    access_token
-    |> reset_previous_refresh_token
+    reset_previous_refresh_token(access_token)
   end
 
   defp reset_previous_refresh_token(%OauthAccessToken{} = access_token) do
-    changeset = Ecto.Changeset.change access_token, previous_refresh_token: ""
-    ExOauth2Provider.repo.update(changeset)
+    access_token
+    |> Ecto.Changeset.change(previous_refresh_token: "")
+    |> ExOauth2Provider.repo.update()
   end
 
   defp application_token_changeset(token, params) do
@@ -320,7 +359,7 @@ defmodule ExOauth2Provider.OauthAccessTokens do
   end
 
   defp new_token_changeset(changeset, params) do
-    application = get_field(changeset, :application) || %{scopes: nil}
+    application = get_field(changeset, :application) || %OauthApplication{scopes: nil}
 
     changeset
     |> cast(params, [:expires_in, :scopes])
@@ -328,21 +367,21 @@ defmodule ExOauth2Provider.OauthAccessTokens do
     |> put_refresh_token(params[:use_refresh_token])
     |> put_scopes(application.scopes)
     |> validate_scopes(application.scopes)
-    |> put_token
+    |> put_token()
   end
 
   defp put_token(%{} = changeset) do
     {module, method} = ExOauth2Provider.Config.access_token_generator() || {ExOauth2Provider.Utils, :generate_token}
+    %{owner_key: resource_owner_key, related_key: related_key} = ExOauth2Provider.Utils.schema_association(OauthAccessToken, :resource_owner)
 
     {_, resource_owner} = fetch_field(changeset, :resource_owner)
-    resource_owner_id   = if is_nil(resource_owner), do: nil, else: resource_owner.id
     {_, scopes}         = fetch_field(changeset, :scopes)
     {_, application}    = fetch_field(changeset, :application)
     {_, expires_in}     = fetch_field(changeset, :expires_in)
     created_at          = NaiveDateTime.utc_now
 
     token = apply(module, method, [%{
-      resource_owner_id: resource_owner_id,
+      resource_owner_key => resource_owner_id(resource_owner, related_key),
       scopes: scopes,
       application: application,
       expires_in: expires_in,
@@ -353,6 +392,9 @@ defmodule ExOauth2Provider.OauthAccessTokens do
     |> validate_required([:token])
     |> unique_constraint(:token)
   end
+
+  defp resource_owner_id(nil, _key), do: nil
+  defp resource_owner_id(resource_owner, related_key), do: Map.get(resource_owner, related_key)
 
   defp put_previous_refresh_token(%{} = changeset, %OauthAccessToken{} = refresh_token),
     do: change(changeset, %{previous_refresh_token: refresh_token.refresh_token})

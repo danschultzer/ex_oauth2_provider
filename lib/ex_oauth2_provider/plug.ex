@@ -13,21 +13,22 @@ defmodule ExOauth2Provider.Plug do
   """
 
   import ExOauth2Provider.Keys
+  alias ExOauth2Provider.OauthAccessTokens.OauthAccessToken
 
   @doc """
   Check if a request is authenticated
   """
-  @spec authenticated?(Plug.Conn.t) :: atom # boolean
+  @spec authenticated?(Plug.Conn.t) :: boolean
   def authenticated?(conn), do: authenticated?(conn, :default)
 
   @doc """
   Check if a request is authenticated
   """
-  @spec authenticated?(Plug.Conn.t, atom) :: atom # boolean
+  @spec authenticated?(Plug.Conn.t, atom) :: boolean
   def authenticated?(conn, type) do
     case get_current_access_token(conn, type) do
-      {:error, _} -> false
-      {:ok, _}    -> true
+      {:error, _error}     -> false
+      {:ok, _access_token} -> true
     end
   end
 
@@ -35,9 +36,11 @@ defmodule ExOauth2Provider.Plug do
   Fetch the currently authenticated resource if loaded,
   optionally located at a key
   """
-  @spec current_resource_owner(Plug.Conn.t, atom) :: any | nil
+  @spec current_resource_owner(Plug.Conn.t, atom) :: Map.t | nil
   def current_resource_owner(conn, the_key \\ :default) do
-    case current_access_token(conn, the_key) do
+    conn
+    |> current_access_token(the_key)
+    |> case do
       nil          -> nil
       access_token -> access_token.resource_owner
     end
@@ -47,24 +50,26 @@ defmodule ExOauth2Provider.Plug do
   Fetch the currently verified token from the request.
   Optionally located at a key
   """
-  @spec current_access_token(Plug.Conn.t, atom) :: String.t | nil
+  @spec current_access_token(Plug.Conn.t, atom) :: %OauthAccessToken{} | nil
   def current_access_token(conn, the_key \\ :default) do
     case get_current_access_token(conn, the_key) do
+      {:error, _error}    -> nil
       {:ok, access_token} -> access_token
-      {:error, _}         -> nil
     end
   end
 
   @doc false
+  @spec get_current_access_token(Plug.Conn.t, atom) :: {:ok, %OauthAccessToken{}} | {:error, term}
   def get_current_access_token(conn, the_key \\ :default) do
     case conn.private[access_token_key(the_key)] do
-      {:ok, _} = token    -> token
-      {:error, _} = token -> token
+      {:ok, access_token} -> {:ok, access_token}
+      {:error, error}     -> {:error, error}
       _                   -> {:error, :no_session}
     end
   end
 
   @doc false
+  @spec set_current_access_token(Plug.Conn.t, %OauthAccessToken{}, atom) :: Plug.Conn.t
   def set_current_access_token(conn, access_token, the_key \\ :default) do
     Plug.Conn.put_private(conn, access_token_key(the_key), access_token)
   end

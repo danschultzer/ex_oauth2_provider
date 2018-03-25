@@ -24,10 +24,11 @@ defmodule ExOauth2Provider.Plug.VerifyHeader do
   """
 
   @doc false
-  def init(opts \\ %{}) do
+  @spec init(Keyword.t) :: Map.t
+  def init(opts \\ []) do
     opts
     |> Enum.into(%{})
-    |> set_realm_option
+    |> set_realm_option()
   end
 
   @doc false
@@ -40,6 +41,7 @@ defmodule ExOauth2Provider.Plug.VerifyHeader do
   defp set_realm_option(opts), do: opts
 
   @doc false
+  @spec call(Plug.Conn.t, Map.t) :: Plug.Conn.t
   def call(conn, opts) do
     key = Map.get(opts, :key, :default)
 

@@ -23,20 +23,21 @@ defmodule ExOauth2Provider.Token.AuthorizationCode do
       {:ok, access_token}
       {:error, %{error: error, error_description: description}, http_status}
   """
+  @spec grant(Map.t) :: {:ok, Map.t} | {:error, Map.t, atom}
   def grant(%{"grant_type" => "authorization_code"} = request) do
     %{request: request}
-    |> Utils.load_client
-    |> load_active_access_grant
-    |> validate_request
-    |> issue_access_token_by_grant
-    |> Response.response
+    |> Utils.load_client()
+    |> load_active_access_grant()
+    |> validate_request()
+    |> issue_access_token_by_grant()
+    |> Response.response()
   end
 
   defp issue_access_token_by_grant(%{error: _} = params), do: params
   defp issue_access_token_by_grant(%{access_grant: access_grant, request: _} = params) do
     token_params = %{scopes: access_grant.scopes,
                      application: access_grant.application,
-                     use_refresh_token: ExOauth2Provider.Config.use_refresh_token?}
+                     use_refresh_token: ExOauth2Provider.Config.use_refresh_token?()}
 
     result = ExOauth2Provider.repo.transaction(fn ->
       access_grant
@@ -45,8 +46,8 @@ defmodule ExOauth2Provider.Token.AuthorizationCode do
     end)
 
     case result do
-      {:ok, {:error, error}}    -> Error.add_error(params, error)
-      {:ok, {:ok, access_token}} -> Map.merge(params, %{access_token: access_token})
+      {:ok, {:error, error}}     -> Error.add_error(params, error)
+      {:ok, {:ok, access_token}} -> Map.put(params, :access_token, access_token)
       {:error, error}            -> Error.add_error(params, error)
     end
   end
@@ -55,14 +56,13 @@ defmodule ExOauth2Provider.Token.AuthorizationCode do
     do: OauthAccessGrants.revoke(access_grant)
 
   defp load_active_access_grant(%{client: client, request: %{"code" => code}} = params) do
-    access_grant = client
-      |> OauthAccessGrants.get_active_grant_for(code)
-      |> ExOauth2Provider.repo.preload(:resource_owner)
-      |> ExOauth2Provider.repo.preload(:application)
-
-    case access_grant do
+    client
+    |> OauthAccessGrants.get_active_grant_for(code)
+    |> ExOauth2Provider.repo.preload(:resource_owner)
+    |> ExOauth2Provider.repo.preload(:application)
+    |> case do
       nil          -> Error.add_error(params, Error.invalid_grant())
-      access_grant -> Map.merge(params, %{access_grant: access_grant})
+      access_grant -> Map.put(params, :access_grant, access_grant)
     end
   end
   defp load_active_access_grant(params), do: Error.add_error(params, Error.invalid_grant())

@@ -181,6 +181,7 @@ defmodule MyApp.MyController do
   plug ExOauth2Provider.Plug.EnsureAuthenticated, handler: MyApp.MyAuthErrorHandler
 end
 ```
+
 ### ExOauth2Provider.Plug.EnsureScopes
 
 Looks for a previously verified token. If one is found, confirms that all listed scopes are present in the token. If not, the `:unauthorized` function is called on your handler.

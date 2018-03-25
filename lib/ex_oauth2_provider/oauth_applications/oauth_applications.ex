@@ -22,6 +22,7 @@ defmodule ExOauth2Provider.OauthApplications do
       ** (Ecto.NoResultsError)
 
   """
+  @spec get_application!(String.t) :: %OauthApplication{} | no_return
   def get_application!(uid) do
     ExOauth2Provider.repo.get_by!(OauthApplication, uid: uid)
   end
@@ -41,8 +42,13 @@ defmodule ExOauth2Provider.OauthApplications do
       ** (Ecto.NoResultsError)
 
   """
-  def get_application_for!(%{id: owner_id}, uid) do
-    ExOauth2Provider.repo.get_by!(OauthApplication, uid: uid, owner_id: owner_id)
+  @spec get_application_for!(Ecto.Schema.t, String.t) :: %OauthApplication{} | no_return
+  def get_application_for!(resource_owner, uid) do
+    clauses = OauthApplication
+    |> ExOauth2Provider.Utils.belongs_to_clause(:owner, resource_owner)
+    |> Keyword.put(:uid, uid)
+
+    ExOauth2Provider.repo.get_by!(OauthApplication, clauses)
   end
 
   @doc """
@@ -57,6 +63,7 @@ defmodule ExOauth2Provider.OauthApplications do
       nil
 
   """
+  @spec get_application(String.t) :: %OauthApplication{} | nil
   def get_application(uid) do
     ExOauth2Provider.repo.get_by(OauthApplication, uid: uid)
   end
@@ -73,6 +80,7 @@ defmodule ExOauth2Provider.OauthApplications do
       nil
 
   """
+  @spec get_application(String.t, String.t) :: %OauthApplication{} | nil
   def get_application(uid, secret) do
     ExOauth2Provider.repo.get_by(OauthApplication, uid: uid, secret: secret)
   end
@@ -83,13 +91,16 @@ defmodule ExOauth2Provider.OauthApplications do
   ## Examples
 
       iex> get_applications_for(resource_owner)
-      [%OauthApplications{}, ...]
+      [%OauthApplication{}, ...]
 
   """
-  def get_applications_for(%{id: owner_id}) do
+  @spec get_applications_for(Ecto.Schema.t) :: [%OauthApplication{}]
+  def get_applications_for(resource_owner) do
+    clause = ExOauth2Provider.Utils.belongs_to_clause(OauthApplication, :owner, resource_owner)
+
     OauthApplication
-    |> where([x], x.owner_id == ^owner_id)
-    |> ExOauth2Provider.repo.all
+    |> where(^clause)
+    |> ExOauth2Provider.repo.all()
   end
 
   @doc """
@@ -100,14 +111,17 @@ defmodule ExOauth2Provider.OauthApplications do
       iex> get_authorized_applications_for(owner)
       [%OauthApplication{},...]
   """
-  def get_authorized_applications_for(%{id: _} = resource_owner) do
+  @spec get_authorized_applications_for(Ecto.Schema.t) :: [%OauthApplication{}]
+  def get_authorized_applications_for(resource_owner) do
+    %{owner_key: owner_key, related_key: related_key} = ExOauth2Provider.Utils.schema_association(OauthAccessTokens.OauthAccessToken, :application)
+
     application_ids = resource_owner
-                      |> OauthAccessTokens.get_active_tokens_for
-                      |> Enum.map(fn(o) -> o.application_id end)
+                      |> OauthAccessTokens.get_active_tokens_for()
+                      |> Enum.map(&Map.get(&1, owner_key))
 
     OauthApplication
-    |> where([o], o.id in ^application_ids)
-    |> ExOauth2Provider.repo.all
+    |> where([o], field(o, ^related_key) in ^application_ids)
+    |> ExOauth2Provider.repo.all()
   end
 
   @doc """
@@ -122,7 +136,8 @@ defmodule ExOauth2Provider.OauthApplications do
       {:error, %Ecto.Changeset{}}
 
   """
-  def create_application(%{id: _} = owner, attrs \\ %{}) do
+  @spec create_application(Ecto.Schema.t) :: {:ok, %OauthApplication{}} | {:error, Ecto.Changeset.t}
+  def create_application(owner, attrs \\ %{}) do
     %OauthApplication{}
     |> new_application_changeset(owner, attrs)
     |> ExOauth2Provider.repo.insert()
@@ -140,7 +155,8 @@ defmodule ExOauth2Provider.OauthApplications do
       {:error, %Ecto.Changeset{}}
 
   """
-  def update_application(%OauthApplication{} = application, attrs) do
+  @spec update_application(%OauthApplication{}, Map.t) :: {:ok, %OauthApplication{}} | {:error, Ecto.Changeset.t}
+  def update_application(application, attrs) do
     application
     |> application_changeset(attrs)
     |> ExOauth2Provider.repo.update()
@@ -158,7 +174,8 @@ defmodule ExOauth2Provider.OauthApplications do
       {:error, %Ecto.Changeset{}}
 
   """
-  def delete_application(%OauthApplication{} = application),
+  @spec delete_application(%OauthApplication{}) :: {:ok, %OauthApplication{}} | {:error, Ecto.Changeset.t}
+  def delete_application(application),
     do: ExOauth2Provider.repo.delete(application)
 
   @doc """
@@ -170,7 +187,8 @@ defmodule ExOauth2Provider.OauthApplications do
       %Ecto.Changeset{source: %OauthApplication{}}
 
   """
-  def change_application(%OauthApplication{} = application),
+  @spec change_application(%OauthApplication{}) :: Ecto.Changeset.t
+  def change_application(application),
     do: application_changeset(application, %{})
 
   @doc """
@@ -179,17 +197,21 @@ defmodule ExOauth2Provider.OauthApplications do
   ## Examples
 
       iex> revoke_all_access_tokens_for(application, resource_owner)
-      {:ok, nil}
+      {:ok, [%OauthAccessToken{}]}
 
   """
-  def revoke_all_access_tokens_for(%OauthApplication{id: application_id}, %{id: resource_owner_id}) do
+  @spec revoke_all_access_tokens_for(%OauthApplication{}, Ecto.Schema.t) :: [%OauthAccessTokens.OauthAccessToken{}]
+  def revoke_all_access_tokens_for(application, resource_owner) do
+    resource_owner_clause = ExOauth2Provider.Utils.belongs_to_clause(OauthAccessTokens.OauthAccessToken, :resource_owner, resource_owner)
+    application_clause = ExOauth2Provider.Utils.belongs_to_clause(OauthAccessTokens.OauthAccessToken, :application, application)
+
     ExOauth2Provider.repo.transaction fn ->
       OauthAccessTokens.OauthAccessToken
-      |> where([o], o.resource_owner_id == ^resource_owner_id)
-      |> where([o], o.application_id == ^application_id)
+      |> where(^resource_owner_clause)
+      |> where(^application_clause)
       |> where([o], is_nil(o.revoked_at))
-      |> ExOauth2Provider.repo.all
-      |> Enum.map(fn(o) -> OauthAccessTokens.revoke(o) end)
+      |> ExOauth2Provider.repo.all()
+      |> Enum.map(&OauthAccessTokens.revoke!/1)
     end
   end
 
@@ -197,20 +219,20 @@ defmodule ExOauth2Provider.OauthApplications do
     application
     |> cast(params, [:name, :secret, :redirect_uri, :scopes])
     |> validate_required([:name, :uid, :secret, :redirect_uri])
-    |> validate_scopes
-    |> validate_redirect_uri
+    |> validate_scopes()
+    |> validate_redirect_uri()
     |> unique_constraint(:uid)
   end
 
-  defp new_application_changeset(%OauthApplication{} = application, %{id: _} = owner, params) do
+  defp new_application_changeset(%OauthApplication{} = application, owner, params) do
     application
     |> cast(params, [:uid, :secret])
-    |> put_uid
-    |> put_secret
-    |> put_scopes
+    |> put_uid()
+    |> put_secret()
+    |> put_scopes()
     |> put_assoc(:owner, owner)
     |> assoc_constraint(:owner)
-    |> apply_changes
+    |> apply_changes()
     |> application_changeset(params)
   end
 
@@ -218,10 +240,8 @@ defmodule ExOauth2Provider.OauthApplications do
     url = get_field(changeset, :redirect_uri) || ""
 
     url
-    |> String.split
-    |> Enum.reduce(changeset, fn(url, changeset) ->
-                                validate_redirect_uri(changeset, url)
-                              end)
+    |> String.split()
+    |> Enum.reduce(changeset, &validate_redirect_uri(&2, &1))
   end
 
   defp validate_redirect_uri(changeset, url) do
