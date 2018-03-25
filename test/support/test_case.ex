@@ -1,8 +1,9 @@
-alias ExOauth2Provider.Test.Repo
-
 defmodule ExOauth2Provider.TestCase do
+  @moduledoc false
+
   use ExUnit.CaseTemplate
   import ExOauth2Provider.ConfigHelpers
+  alias ExOauth2Provider.Test.Repo
 
   setup do
     reset_config()

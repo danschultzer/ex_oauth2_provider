@@ -33,14 +33,15 @@ defmodule ExOauth2Provider.Token.Revoke do
   ## Response
       {:ok, %{}}
   """
+  @spec revoke(Map.t) :: {:ok, Map.t} | {:error, Map.t, atom}
   def revoke(request) do
     %{request: request}
-    |> load_client_if_presented
-    |> return_error
-    |> load_access_token
-    |> validate_request
-    |> revoke_token
-    |> Response.revocation_response
+    |> load_client_if_presented()
+    |> return_error()
+    |> load_access_token()
+    |> validate_request()
+    |> revoke_token()
+    |> Response.revocation_response()
   end
 
   defp load_client_if_presented(%{request: %{"client_id" => _}} = params),
@@ -50,9 +51,9 @@ defmodule ExOauth2Provider.Token.Revoke do
   defp load_access_token(%{error: _} = params), do: params
   defp load_access_token(%{request: %{"token" => _}} = params) do
     params
-    |> get_access_token
-    |> get_refresh_token
-    |> preload_token_associations
+    |> get_access_token()
+    |> get_refresh_token()
+    |> preload_token_associations()
   end
   defp load_access_token(params), do: Error.add_error(params, Error.invalid_request())
 
@@ -61,9 +62,9 @@ defmodule ExOauth2Provider.Token.Revoke do
     token
     |> OauthAccessTokens.get_by_token
     |> case do
-         nil          -> Error.add_error(params, Error.invalid_request())
-         access_token -> Map.merge(params, %{access_token: access_token})
-       end
+      nil          -> Error.add_error(params, Error.invalid_request())
+      access_token -> Map.put(params, :access_token, access_token)
+    end
   end
 
   defp get_refresh_token(%{access_token: _} = params), do: params
@@ -72,22 +73,20 @@ defmodule ExOauth2Provider.Token.Revoke do
     token
     |> OauthAccessTokens.get_by_refresh_token
     |> case do
-         nil          -> Error.add_error(params, Error.invalid_request())
-         access_token -> Map.merge(params, %{access_token: access_token})
-       end
+      nil          -> Error.add_error(params, Error.invalid_request())
+      access_token -> Map.put(params, :access_token, access_token)
+    end
   end
 
   defp preload_token_associations(%{error: _} = params), do: params
   defp preload_token_associations(%{access_token: access_token} = params) do
-    access_token = access_token |> ExOauth2Provider.repo.preload(:application)
-
-    Map.merge(params, %{acess_token: access_token})
+    Map.put(params, :acess_token, ExOauth2Provider.repo.preload(access_token, :application))
   end
 
   defp validate_request(params) do
     params
-    |> validate_permissions
-    |> validate_accessible
+    |> validate_permissions()
+    |> validate_accessible()
   end
 
   # This will verify permissions on the access token and client.
@@ -112,7 +111,7 @@ defmodule ExOauth2Provider.Token.Revoke do
   defp validate_permissions(%{access_token: access_token} = params) do
     case is_nil(access_token.application_id) do
       # Client is public, authentication unnecessary
-      true -> Map.merge(params, %{revoke: true})
+      true -> Map.put(params, :revoke, true)
 
       # Client is confidential, therefore client authentication & authorization is required
       false -> validate_ownership(params)
@@ -121,7 +120,7 @@ defmodule ExOauth2Provider.Token.Revoke do
 
   defp validate_ownership(%{access_token: access_token, client: client} = params) do
     case access_token.application_id == client.id do
-      true   -> Map.merge(params, %{revoke: true})
+      true   -> Map.put(params, :revoke, true)
       false  -> params
     end
   end
@@ -142,6 +141,6 @@ defmodule ExOauth2Provider.Token.Revoke do
     end
   end
 
-  defp return_error(%{error: _} = params), do: Map.merge(params, %{should_return_error: true})
+  defp return_error(%{error: _} = params), do: Map.put(params, :should_return_error, true)
   defp return_error(params), do: params
 end

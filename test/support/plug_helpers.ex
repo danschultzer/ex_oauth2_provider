@@ -1,4 +1,6 @@
 defmodule ExOauth2Provider.PlugHelpers do
+  @moduledoc false
+
   @doc """
   Helper for running a plug.
   Calls the plug module's `init/1` function with

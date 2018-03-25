@@ -6,29 +6,34 @@ defmodule ExOauth2Provider.Authorization.Utils.Response do
   import ExOauth2Provider.Utils
 
   @doc false
+  @spec error_response(Map.t) :: {:error, Map.t, integer} |
+                                 {:redirect, String.t} |
+                                 {:native_redirect, %{code: String.t}}
   def error_response(%{error: error} = params),
     do: build_response(params, error)
 
   @doc false
-  def preauthorize_response(%{} = params) do
-    case params do
-      %{grant: grant}                                  -> build_response(params, %{code: grant.token})
-      %{error: error}                                  -> build_response(params, error)
-      %{client: client, request: %{"scope" => scopes}} -> {:ok, client, Scopes.to_list(scopes)}
-    end
-  end
+  @spec preauthorize_response(Map.t) :: {:ok, Ecto.Schema.t, [String.t]} |
+                                        {:error, Map.t, integer} |
+                                        {:redirect, String.t} |
+                                        {:native_redirect, %{code: String.t}}
+  def preauthorize_response(%{grant: grant} = params), do: build_response(params, %{code: grant.token})
+  def preauthorize_response(%{error: error} = params), do: build_response(params, error)
+  def preauthorize_response(%{client: client, request: %{"scope" => scopes}}), do: {:ok, client, Scopes.to_list(scopes)}
 
   @doc false
-  def authorize_response(%{} = params) do
-    case params do
-      %{grant: grant} -> build_response(params, %{code: grant.token})
-      %{error: error} -> build_response(params, error)
-    end
-  end
+  @spec authorize_response(Map.t) :: {:ok, Ecto.Schema.t, [String.t]} |
+                                     {:error, Map.t, integer} |
+                                     {:redirect, String.t} |
+                                     {:native_redirect, %{code: String.t}}
+  def authorize_response(%{grant: grant} = params), do: build_response(params, %{code: grant.token})
+  def authorize_response(%{error: error} = params), do: build_response(params, error)
 
   @doc false
-  def deny_response(%{error: error} = params),
-    do: build_response(params, error)
+  @spec deny_response(Map.t) :: {:error, Map.t, integer} |
+                                {:redirect, String.t} |
+                                {:native_redirect, %{code: String.t}}
+  def deny_response(%{error: error} = params), do: build_response(params, error)
 
   defp build_response(%{request: request} = params, payload) do
     payload = add_state(payload, request)
@@ -41,11 +46,13 @@ defmodule ExOauth2Provider.Authorization.Utils.Response do
 
   defp add_state(payload, request) do
     case request["state"] do
-      nil   -> payload
+      nil ->
+        payload
+
       state ->
         %{"state" => state}
         |> Map.merge(payload)
-        |> remove_empty_values
+        |> remove_empty_values()
     end
   end
 
@@ -66,11 +73,9 @@ defmodule ExOauth2Provider.Authorization.Utils.Response do
     {:error, error, :bad_request}
   end
 
-  defp can_redirect?(%{error: %{error: error_name}, request: %{"redirect_uri" => redirect_uri}}) do
-    error_name != :invalid_redirect_uri &&
-    error_name != :invalid_client &&
-    !RedirectURI.native_redirect_uri?(redirect_uri)
-  end
+  defp can_redirect?(%{error: %{error: :invalid_redirect_uri}}), do: false
+  defp can_redirect?(%{error: %{error: :invalid_client}}), do: false
+  defp can_redirect?(%{error: %{error: _error}, request: %{"redirect_uri" => redirect_uri}}), do: !RedirectURI.native_redirect_uri?(redirect_uri)
   defp can_redirect?(%{error: _}), do: false
   defp can_redirect?(%{request: %{}}), do: true
 end

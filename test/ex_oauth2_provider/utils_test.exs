@@ -7,7 +7,10 @@ defmodule ExOauth2Provider.UtilTest do
   end
 
   test "generate_token/0 it generate random token" do
-    assert generate_token() != generate_token()
+    token_1 = generate_token()
+    token_2 = generate_token()
+
+    refute token_1 == token_2
   end
 
   test "generate_token/1 it generate the token with custom length" do

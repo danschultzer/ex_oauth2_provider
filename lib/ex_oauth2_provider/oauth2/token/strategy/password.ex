@@ -22,19 +22,20 @@ defmodule ExOauth2Provider.Token.Password do
       {:ok, access_token}
       {:error, %{error: error, error_description: description}, http_status}
   """
+  @spec grant(Map.t) :: {:ok, Map.t} | {:error, Map.t, atom}
   def grant(%{"grant_type" => "password"} = request) do
     %{request: request}
     |> get_password_auth_method(ExOauth2Provider.Config.password_auth)
-    |> load_resource_owner
-    |> Utils.load_client
-    |> set_defaults
-    |> validate_request
-    |> issue_access_token
-    |> Response.response
+    |> load_resource_owner()
+    |> Utils.load_client()
+    |> set_defaults()
+    |> validate_request()
+    |> issue_access_token()
+    |> Response.response()
   end
 
   defp get_password_auth_method(params, {module, method}) do
-    Map.merge(params, %{password_auth: {module, method}})
+    Map.put(params, :password_auth, {module, method})
   end
   defp get_password_auth_method(params, _) do
     Error.add_error(params, Error.unsupported_grant_type())
@@ -43,8 +44,11 @@ defmodule ExOauth2Provider.Token.Password do
   defp load_resource_owner(%{error: _} = params), do: params
   defp load_resource_owner(%{password_auth: {module, method}, request: %{"username" => username, "password" => password}} = params) do
     case apply(module, method, [username, password]) do
-      {:ok, resource_owner} -> Map.merge(params, %{resource_owner: resource_owner})
-      {:error, reason}      -> Map.merge(params, %{error: :unauthorized, error_description: reason, error_http_status: :unauthorized})
+      {:ok, resource_owner} ->
+        Map.put(params, :resource_owner, resource_owner)
+
+      {:error, reason} ->
+        Map.merge(params, %{error: :unauthorized, error_description: reason, error_http_status: :unauthorized})
     end
   end
   defp load_resource_owner(params), do: Error.add_error(params, Error.invalid_request())
@@ -52,8 +56,8 @@ defmodule ExOauth2Provider.Token.Password do
   defp issue_access_token(%{error: _} = params), do: params
   defp issue_access_token(%{client: client, resource_owner: resource_owner, request: request} = params) do
     token_params = %{application: client,
-                    scopes: request["scope"],
-                    use_refresh_token: ExOauth2Provider.Config.use_refresh_token?}
+                     scopes: request["scope"],
+                     use_refresh_token: ExOauth2Provider.Config.use_refresh_token?()}
 
     case Utils.find_or_create_access_token(resource_owner, token_params) do
       {:ok, access_token} -> Map.merge(params, %{access_token: access_token})
@@ -63,23 +67,18 @@ defmodule ExOauth2Provider.Token.Password do
 
   defp set_defaults(%{error: _} = params), do: params
   defp set_defaults(%{request: request, client: client} = params) do
-    scopes = params.request["scope"] || client.scopes
+    scopes = Map.get(params.request, "scope", client.scopes)
+    request = Map.put(request, "scope", scopes)
 
-    request = request |> Map.merge(%{"scope" => scopes})
-
-    params
-    |> Map.merge(%{request: request})
+    Map.put(params, :request, request)
   end
 
-  defp validate_request(params) do
-    params
-    |> validate_scopes
-  end
+  defp validate_request(params), do: validate_scopes(params)
 
   defp validate_scopes(%{error: _} = params), do: params
   defp validate_scopes(%{request: %{"scope" => scopes}, client: client} = params) do
-    scopes        = scopes |> Scopes.to_list
-    server_scopes = client.scopes |> Scopes.to_list |> Scopes.default_to_server_scopes
+    scopes = Scopes.to_list(scopes)
+    server_scopes = client.scopes |> Scopes.to_list() |> Scopes.default_to_server_scopes()
 
     case Scopes.all?(server_scopes, scopes) do
       true -> params

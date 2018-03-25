@@ -15,18 +15,23 @@ defmodule ExOauth2Provider.OauthAccessGrants do
 
   ## Examples
 
-      iex> get_active_grant_for("c341a5c7b331ef076eb4954668d54f590e0009e06b81b100191aa22c93044f3d", "jE9dk")
+      iex> get_active_grant_for(application, "jE9dk")
       %OauthAccessGrant{}
 
-      iex> get_active_grant_for("75d72f326a69444a9287ea264617058dbbfe754d7071b8eef8294cbf4e7e0fdc", "jE9dk")
+      iex> get_active_grant_for(application, "jE9dk")
       ** nil
 
   """
-  def get_active_grant_for(%OauthApplication{id: _} = application, token) do
+  @spec get_active_grant_for(%OauthApplication{}, String.t) :: %OauthAccessGrant{} | nil
+  def get_active_grant_for(application, token) do
+    clauses = OauthAccessGrant
+    |> ExOauth2Provider.Utils.belongs_to_clause(:application, application)
+    |> Keyword.put(:token, token)
+
     OauthAccessGrant
-    |> ExOauth2Provider.repo.get_by(application_id: application.id, token: token)
-    |> filter_expired
-    |> filter_revoked
+    |> ExOauth2Provider.repo.get_by(clauses)
+    |> filter_expired()
+    |> filter_revoked()
   end
 
   @doc """
@@ -41,7 +46,8 @@ defmodule ExOauth2Provider.OauthAccessGrants do
       {:error, %Ecto.Changeset{}}
 
   """
-  def create_grant(%{id: _} = resource_owner, %OauthApplication{id: _} = application, attrs) do
+  @spec create_grant(Ecto.Schema.t, %OauthApplication{}, Map.t) :: {:ok, %OauthAccessGrant{}} | {:error, term}
+  def create_grant(resource_owner, application, attrs) do
     %OauthAccessGrant{resource_owner: resource_owner, application: application}
     |> new_grant_changeset(attrs)
     |> ExOauth2Provider.repo.insert()
@@ -52,7 +58,7 @@ defmodule ExOauth2Provider.OauthAccessGrants do
     |> cast(params, [:redirect_uri, :expires_in, :scopes])
     |> assoc_constraint(:application)
     |> assoc_constraint(:resource_owner)
-    |> put_token
+    |> put_token()
     |> put_scopes(grant.application.scopes)
     |> validate_scopes(grant.application.scopes)
     |> validate_required([:redirect_uri, :expires_in, :token, :resource_owner, :application])
@@ -60,7 +66,6 @@ defmodule ExOauth2Provider.OauthAccessGrants do
   end
 
   defp put_token(changeset) do
-    changeset
-    |> put_change(:token, ExOauth2Provider.Utils.generate_token)
+    put_change(changeset, :token, ExOauth2Provider.Utils.generate_token)
   end
 end

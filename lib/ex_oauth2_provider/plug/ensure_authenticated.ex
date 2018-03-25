@@ -21,26 +21,27 @@ defmodule ExOauth2Provider.Plug.EnsureAuthenticated do
   import Plug.Conn
 
   @doc false
+  @spec init(Keyword.t) :: Map.t
   def init(opts) do
     opts = Enum.into(opts, %{})
     handler = build_handler_tuple(opts)
 
-    %{
-      handler: handler,
-      key: Map.get(opts, :key, :default)
-    }
+    %{handler: handler,
+      key: Map.get(opts, :key, :default)}
   end
 
   @doc false
+  @spec call(PlugConn.t, Map.t) :: Map.t
   def call(conn, opts) do
     key = Map.get(opts, :key, :default)
 
     conn
     |> get_authentication(key, opts)
-    |> handle_authentication
+    |> handle_authentication()
   end
 
   @doc false
+  @spec get_authentication(Plug.Conn.t, atom, Map.t) :: {Plug.Conn.t, {:ok, String.t} | {:error, term}}
   defp get_authentication(conn, key, opts),
     do: {conn, ExOauth2Provider.Plug.get_current_access_token(conn, key), opts}
 

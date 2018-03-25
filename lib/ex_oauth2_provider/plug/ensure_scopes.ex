@@ -26,17 +26,19 @@ defmodule ExOauth2Provider.Plug.EnsureScopes do
   require Logger
   import Plug.Conn
 
+  alias Plug.Conn
+  alias ExOauth2Provider.{Plug, Scopes}
+
   @doc false
+  @spec init(Keyword.t) :: Map.t
   def init(opts) do
     opts = Enum.into(opts, %{})
     key = Map.get(opts, :key, :default)
     handler = build_handler_tuple(opts)
 
-    %{
-      handler: handler,
+    %{handler: handler,
       key: key,
-      scopes_sets: scopes_sets(opts)
-    }
+      scopes_sets: scopes_sets(opts)}
   end
 
   @doc false
@@ -45,11 +47,12 @@ defmodule ExOauth2Provider.Plug.EnsureScopes do
   defp scopes_sets(_), do: nil
 
   @doc false
+  @spec call(Conn.t, Map.t) :: Map.t
   def call(conn, opts) do
     conn
-    |> ExOauth2Provider.Plug.current_access_token(Map.get(opts, :key))
+    |> Plug.current_access_token(Map.get(opts, :key))
     |> check_scopes(conn, opts)
-    |> handle_error
+    |> handle_error()
   end
 
   defp check_scopes(nil, conn, opts), do: {:error, conn, opts}
@@ -69,12 +72,12 @@ defmodule ExOauth2Provider.Plug.EnsureScopes do
 
   defp matches_scopes?(access_token, required_scopes) do
     access_token
-    |> ExOauth2Provider.Scopes.from_access_token
-    |> ExOauth2Provider.Scopes.all?(required_scopes)
+    |> Scopes.from_access_token()
+    |> Scopes.all?(required_scopes)
   end
 
   defp handle_error({:ok, conn, _}), do: conn
-  defp handle_error({:error, %Plug.Conn{params: params} = conn, opts}) do
+  defp handle_error({:error, %Conn{params: params} = conn, opts}) do
     conn = conn |> assign(:ex_oauth2_provider_failure, :unauthorized) |> halt
     params = Map.merge(params, %{reason: :unauthorized})
     {mod, meth} = Map.get(opts, :handler)
@@ -83,5 +86,5 @@ defmodule ExOauth2Provider.Plug.EnsureScopes do
   end
 
   defp build_handler_tuple(%{handler: mod}), do: {mod, :unauthorized}
-  defp build_handler_tuple(_), do: {ExOauth2Provider.Plug.ErrorHandler, :unauthorized}
+  defp build_handler_tuple(_), do: {Plug.ErrorHandler, :unauthorized}
 end

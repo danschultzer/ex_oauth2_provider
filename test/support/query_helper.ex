@@ -1,4 +1,6 @@
 defmodule ExOauth2Provider.Test.QueryHelper do
+  @moduledoc false
+
   import Ecto.Query
 
   alias ExOauth2Provider.OauthAccessGrants.OauthAccessGrant
@@ -34,7 +36,9 @@ defmodule ExOauth2Provider.Test.QueryHelper do
 
   def update_access_token_inserted_at(access_token, amount, units \\ :second) do
     inserted_at = access_token.inserted_at |> NaiveDateTime.add(amount, units)
-    Ecto.Changeset.change(access_token, inserted_at: inserted_at)
-    |> ExOauth2Provider.repo.update!
+
+    access_token
+    |> Ecto.Changeset.change(inserted_at: inserted_at)
+    |> ExOauth2Provider.repo.update!()
   end
 end

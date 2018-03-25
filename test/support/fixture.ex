@@ -1,4 +1,5 @@
 defmodule ExOauth2Provider.Test.Fixture do
+  @moduledoc false
 
   alias ExOauth2Provider.OauthApplications
   alias ExOauth2Provider.OauthAccessTokens

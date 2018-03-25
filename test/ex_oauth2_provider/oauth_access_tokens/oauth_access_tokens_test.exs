@@ -49,7 +49,7 @@ defmodule ExOauth2Provider.OauthAccessTokensTest do
 
     new_application = fixture(:application, user, %{uid: "new_app"})
     {:ok, new_token_different_app} = OauthAccessTokens.create_token(user, %{application: new_application, use_refresh_token: true, previous_refresh_token: old_token})
-    refute OauthAccessTokens.get_by_previous_refresh_token_for(new_token_different_app )
+    refute OauthAccessTokens.get_by_previous_refresh_token_for(new_token_different_app)
   end
 
   test "get_matching_token_for/1", %{user: user, application: application} do
@@ -246,7 +246,7 @@ defmodule ExOauth2Provider.OauthAccessTokensTest do
 
   test "revoke/1 doesn't revoke revoked tokens", %{user: user} do
     {:ok, token} = OauthAccessTokens.create_token(user)
-    token = Map.merge(token, %{revoked_at: NaiveDateTime.utc_now |> NaiveDateTime.add(-86400, :second)})
+    token = Map.merge(token, %{revoked_at: NaiveDateTime.utc_now |> NaiveDateTime.add(-86_400, :second)})
     {:ok, token2} = OauthAccessTokens.revoke(token)
     assert token2.revoked_at == token.revoked_at
   end

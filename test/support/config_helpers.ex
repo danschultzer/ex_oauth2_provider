@@ -1,4 +1,6 @@
 defmodule ExOauth2Provider.ConfigHelpers do
+  @moduledoc false
+
   @config Application.get_env(:ex_oauth2_provider, ExOauth2Provider)
 
   def reset_config() do

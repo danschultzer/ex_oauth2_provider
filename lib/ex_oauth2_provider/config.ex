@@ -6,50 +6,59 @@ defmodule ExOauth2Provider.Config do
   end
 
   @doc false
+  @spec resource_owner_struct() :: atom
   def resource_owner_struct do
     Keyword.get(config(), :resource_owner)
   end
 
   @doc false
+  @spec application_owner_struct() :: atom
   def application_owner_struct do
     Keyword.get(config(), :application_owner, resource_owner_struct())
   end
 
   # Define default access token scopes for your provider
   @doc false
+  @spec default_scopes() :: [String.t]
   def default_scopes do
     Keyword.get(config(), :default_scopes, [])
   end
 
   # Define optional access token scopes for your provider
   @doc false
+  @spec optional_scopes() :: [String.t]
   defp optional_scopes do
     Keyword.get(config(), :optional_scopes, [])
   end
 
   # Combined scopes list for your provider
   @doc false
+  @spec server_scopes() :: [String.t]
   def server_scopes do
     default_scopes() ++ optional_scopes()
   end
 
   @doc false
+  @spec native_redirect_uri() :: String.t
   def native_redirect_uri do
      Keyword.get(config(), :native_redirect_uri, "urn:ietf:wg:oauth:2.0:oob")
   end
 
   @doc false
+  @spec authorization_code_expires_in() :: integer
   def authorization_code_expires_in do
     Keyword.get(config(), :authorization_code_expires_in, 600)
   end
 
   @doc false
+  @spec access_token_expires_in() :: integer
   def access_token_expires_in do
     Keyword.get(config(), :access_token_expires_in, 7200)
   end
 
   # Issue access tokens with refresh token (disabled by default)
   @doc false
+  @spec use_refresh_token?() :: boolean
   def use_refresh_token? do
     Keyword.get(config(), :use_refresh_token, false)
   end
@@ -58,11 +67,13 @@ defmodule ExOauth2Provider.Config do
   # password auth strategy. Set config as:
   # `password_auth: {MyModule, :my_auth_method}`
   @doc false
+  @spec password_auth() :: {atom, atom} | nil
   def password_auth do
     Keyword.get(config(), :password_auth, nil)
   end
 
   @doc false
+  @spec refresh_token_revoked_on_use?() :: boolean
   def refresh_token_revoked_on_use? do
     Keyword.get(config(), :revoke_refresh_token_on_use, false)
   end
@@ -72,26 +83,32 @@ defmodule ExOauth2Provider.Config do
   # delegates security in communication to the HTTPS protocol so it is
   # wise to keep this enabled.
   @doc false
+  @spec force_ssl_in_redirect_uri?() :: boolean
   def force_ssl_in_redirect_uri? do
     Keyword.get(config(), :force_ssl_in_redirect_uri, Mix.env != :dev)
   end
 
   # Use a custom access token generator
   @doc false
+  @spec access_token_generator() :: {atom, atom} | nil
   def access_token_generator do
     Keyword.get(config(), :access_token_generator, nil)
   end
 
+  @doc false
+  @spec access_token_response_body_handler() :: {atom, atom} | nil
   def access_token_response_body_handler do
     Keyword.get(config(), :access_token_response_body_handler, nil)
   end
 
   @doc false
+  @spec grant_flows() :: [String.t]
   def grant_flows do
     Keyword.get(config(), :grant_flows, ~w(authorization_code client_credentials))
   end
 
   @doc false
+  @spec calculate_authorization_response_types() :: [Map.t]
   def calculate_authorization_response_types do
     %{"authorization_code" => {:code, ExOauth2Provider.Authorization.Code}}
     |> Enum.filter(fn({k, _}) -> Enum.member?(grant_flows(), k) end)
@@ -99,6 +116,7 @@ defmodule ExOauth2Provider.Config do
   end
 
   @doc false
+  @spec calculate_token_grant_types() :: Keyword.t
   def calculate_token_grant_types do
     [authorization_code: ExOauth2Provider.Token.AuthorizationCode,
      client_credentials: ExOauth2Provider.Token.ClientCredentials,

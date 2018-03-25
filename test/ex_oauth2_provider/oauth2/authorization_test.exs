@@ -30,7 +30,7 @@ defmodule ExOauth2Provider.AuthorizationTest do
     set_application_redirect_uri(application, "#{application.redirect_uri}\nhttps://example.com/path")
     params = @valid_request
     |> Map.delete("response_type")
-    |> Map.merge(%{"redirect_uri" => "https://example.com/path?param=1", "state" => 40612})
+    |> Map.merge(%{"redirect_uri" => "https://example.com/path?param=1", "state" => 40_612})
 
     assert preauthorize(resource_owner, params) == {:redirect,
              "https://example.com/path?error=invalid_request&error_description=The+request+is+missing+a+required+parameter%2C+includes+an+unsupported+parameter+value%2C+or+is+otherwise+malformed.&param=1&state=40612"}
@@ -45,7 +45,7 @@ defmodule ExOauth2Provider.AuthorizationTest do
     set_application_redirect_uri(application, "#{application.redirect_uri}\nhttps://example.com/path")
     params = @valid_request
     |> Map.merge(%{"response_type" => "invalid"})
-    |> Map.merge(%{"redirect_uri" => "https://example.com/path?param=1", "state" => 40612})
+    |> Map.merge(%{"redirect_uri" => "https://example.com/path?param=1", "state" => 40_612})
 
     assert preauthorize(resource_owner, params) == {:redirect, "https://example.com/path?error=unsupported_response_type&error_description=The+authorization+server+does+not+support+this+response+type.&param=1&state=40612"}
   end
