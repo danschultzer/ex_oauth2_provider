@@ -1,4 +1,6 @@
 defmodule ExOauth2Provider.Test.QueryHelper do
+  @moduledoc false
+
   import Ecto.Query
 
   alias ExOauth2Provider.OauthAccessGrants.OauthAccessGrant

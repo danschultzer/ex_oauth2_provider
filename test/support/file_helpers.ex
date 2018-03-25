@@ -1,4 +1,6 @@
 defmodule ExOauth2Provider.FileHelpers do
+  @moduledoc false
+
   import ExUnit.Assertions
 
   @doc """
