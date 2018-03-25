@@ -37,14 +37,14 @@ defmodule ExOauth2Provider.Mixfile do
   defp elixirc_paths(_), do: ["lib"]
 
   defp deps do
-    [{:ecto, "~> 2.1"},
+    [{:ecto, "~> 2.1 or ~> 2.2"},
      {:plug, "~> 1.0 or ~> 1.1 or ~> 1.2 or ~> 1.3"},
      {:poison, "~> 2.0 or ~> 3.0"},
      {:postgrex, ">= 0.11.1", optional: true},
 
      # Dev and test dependencies
-     {:credo, "~> 0.7", only: [:dev, :test]},
-     {:ex_doc, "~> 0.14", only: :dev, runtime: false}]
+     {:credo, "~> 0.9", only: [:dev, :test]},
+     {:ex_doc, "~> 0.18", only: :dev, runtime: false}]
   end
 
   defp package do
