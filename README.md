@@ -2,7 +2,7 @@
 
 [![Build Status](https://travis-ci.org/danschultzer/ex_oauth2_provider.svg?branch=master)](https://travis-ci.org/danschultzer/ex_oauth2_provider) [![hex.pm](http://img.shields.io/hexpm/v/ex_oauth2_provider.svg?style=flat)](https://hex.pm/packages/ex_oauth2_provider) [![hex.pm downloads](https://img.shields.io/hexpm/dt/ex_oauth2_provider.svg?style=flat)](https://hex.pm/packages/ex_oauth2_provider)
 
-The no brainer library to use for adding OAuth 2.0 provider capabilities to your Elixir app. You can use [phoenix_oauth2_provider](https://github.com/danschultzer/phoenix_oauth2_provider) for easy integration with your Phoenix app.
+The no-brainer library to use for adding OAuth 2.0 provider capabilities to your Elixir app. You can use [phoenix_oauth2_provider](https://github.com/danschultzer/phoenix_oauth2_provider) for easy integration with your Phoenix app.
 
 ## Installation
 
@@ -26,13 +26,13 @@ mix ex_oauth2_provider.install
 
 This will add the necessary Ecto migrations to your app, and set sample configuration in `config/config.exs`.
 
-You'll need to use a resource owner struct that already exists. This could be your User struct. If you don't have any User struct, you can add a migration like this:
+You are required to use a resource owner struct that already exists. This could be your `User` struct. If you don't have any `User` struct, you can create a migration with this:
 
 ```bash
 mix ecto.gen.migration --change "    create table(:users) do\n      add :email, :string\n    end"
 ```
 
-And use the struct in [test/support/dummy/models/user.ex](test/support/dummy/models/user.ex). The
+And use the struct in [test/support/dummy/models/user.ex](test/support/dummy/models/user.ex).
 
 If you're not using auto incremental integer (`:id`) for your primary key(s), please read the [Using UUID or custom primary key type](#using-uuid-or-custom-primary-key-type) section.
 
@@ -40,7 +40,7 @@ If you're not using auto incremental integer (`:id`) for your primary key(s), pl
 
 ### Authorization request
 
-You'll need to ensure that a resource_owner is already authenticated on these endpoints, and pass the struct as first argument in the following methods.
+You have to ensure that a `resource_owner` has been authenticated on the following endpoints, and pass the struct as the first argument in the following methods.
 
 ```elixir
 # GET /oauth/authorize?response_type=code&client_id=CLIENT_ID&redirect_uri=CALLBACK_URL&scope=read
@@ -110,7 +110,7 @@ config :ex_oauth2_provider, ExOauth2Provider,
   use_refresh_token: true
 ```
 
-The `refresh_token` grant flow will automatically be enabled.
+The `refresh_token` grant flow will then be enabled.
 
 ```elixir
 # POST /oauth/token?client_id=CLIENT_ID&client_secret=CLIENT_SECRET&grant_type=refresh_token&refresh_token=REFRESH_TOKEN
@@ -122,7 +122,7 @@ end
 
 #### Username and password
 
-You'll need to provide an authorization method that accepts username and password as arguments, and returns `{:ok, resource_owner}` or `{:error, reason}`. Something like this:
+You'll need to provide an authorization method that accepts username and password as arguments, and returns `{:ok, resource_owner}` or `{:error, reason}`. Here'a an example:
 
 ```elixir
 # Configuration in config/config.exs
@@ -142,7 +142,7 @@ defmodule MyApp.MyModule
 end
 ```
 
-The `password` grant flow will automatically be enabled.
+The `password` grant flow will then be enabled.
 
 ```elixir
 # POST /oauth/token?client_id=CLIENT_ID&grant_type=password&username=USERNAME&password=PASSWORD
@@ -166,15 +166,15 @@ config :ex_oauth2_provider, ExOauth2Provider,
 
 ## Plug API
 
-### ExOauth2Provider.Plug.VerifyHeader
+### [ExOauth2Provider.Plug.VerifyHeader](lib/ex_oauth2_provider/plug/verify_header.ex)
 
-Looks for a token in the Authorization Header. If one is not found, this does nothing.
+Looks for a token in the Authorization Header. If one is not found, this does nothing. This will always be necessary to run to load access token and resource owner.
 
-### ExOauth2Provider.Plug.EnsureAuthenticated
+### [ExOauth2Provider.Plug.EnsureAuthenticated](lib/ex_oauth2_provider/plug/ensure_authenticated.ex)
 
-Looks for a previously verified token. If one is found, continues, otherwise it will call the `:unauthenticated` function of your handler.
+Looks for a verified token loaded by [`VerifyHeader`](#exoauth2providerplugverifyheader). If one is not found it will call the `:unauthenticated` method in the `:handler` module.
 
-When you ensure a session, you can declare an error handler. This can be done as part of a pipeline or inside a Phoenix controller.
+You can use a custom `:handler` as part of a pipeline, or inside a Phoenix controller like so:
 
 ```elixir
 defmodule MyApp.MyController do
@@ -184,9 +184,11 @@ defmodule MyApp.MyController do
 end
 ```
 
-### ExOauth2Provider.Plug.EnsureScopes
+ The `:handler` module always defaults to [ExOauth2Provider.Plug.ErrorHandler](lib/ex_oauth2_provider/plug/error_handler.ex).
 
-Looks for a previously verified token. If one is found, confirms that all listed scopes are present in the token. If not, the `:unauthorized` function is called on your handler.
+### [ExOauth2Provider.Plug.EnsureScopes](lib/ex_oauth2_provider/plug/ensure_scopes.ex)
+
+Looks for a previously verified token. If one is found, confirms that all listed scopes are present in the token. If not, the `:unauthorized` function is called on your `:handler`.
 
 ```elixir
 defmodule MyApp.MyController do
@@ -207,25 +209,23 @@ defmodule MyApp.MyController do
 end
 ```
 
-### Current resource owner and token
+### Current resource owner and access token
 
-Access to the current resource owner and token is useful. You'll need to have run the VerifyHeader for token and resource access.
+If the Authorization Header was verified, you'll be able to retrieve the current resource owner or access token.
 
 ```elixir
 ExOauth2Provider.Plug.current_access_token(conn) # access the token in the default location
 ExOauth2Provider.Plug.current_access_token(conn, :secret) # access the token in the secret location
 ```
 
-For the resource
-
 ```elixir
-ExOauth2Provider.Plug.current_resource_owner(conn) # Access the loaded resource in the default location
-ExOauth2Provider.Plug.current_resource_owner(conn, :secret) # Access the loaded resource in the secret location
+ExOauth2Provider.Plug.current_resource_owner(conn) # Access the loaded resource owner in the default location
+ExOauth2Provider.Plug.current_resource_owner(conn, :secret) # Access the loaded resource owner in the secret location
 ```
 
 ### Custom access token generator
 
-You can add your own access token generator by doing the following:
+You can add your own access token generator, as this example shows:
 
 ```elixir
 # config/config.exs
@@ -279,7 +279,7 @@ mix ex_oauth2_provider.install --uuid resource_owners
 
 ### 2. If all structs should use `:uuid`
 
-If you don't have auto incrementing integer as primary keys in your database you can set up `ExOauth2Provider` to handle all primary keys as `:uuid` by doing the following.
+If you don't have auto-incrementing integers as primary keys in your database you can set up `ExOauth2Provider` to handle all primary keys as `:uuid` by doing the following.
 
 You should have a schema macro similar to this (the `@primary_key` and `@foreign_key_type` needs to be defined):
 
@@ -318,7 +318,7 @@ It's also possible to use a completely different setup by adding a custom schema
 
 This library was made thanks to [doorkeeper](https://github.com/doorkeeper-gem/doorkeeper), [guardian](https://github.com/ueberauth/guardian) and [authable](https://github.com/mustafaturan/authable), that gave the conceptual building blocks.
 
-Thanks to [Benjamin Schultzer](https://github.com/schultzer) for helping refactoring the code.
+Thanks to [Benjamin Schultzer](https://github.com/schultzer) for helping to refactor the code.
 
 ## LICENSE
 
@@ -329,4 +329,3 @@ Copyright (c) 2017 Dan Schultzer & the Contributors Permission is hereby granted
 The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
 
 THE SOFTWARE IS PROVIDED 'AS IS', WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-0
