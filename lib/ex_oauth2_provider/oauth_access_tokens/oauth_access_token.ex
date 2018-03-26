@@ -3,10 +3,14 @@ defmodule ExOauth2Provider.OauthAccessTokens.OauthAccessToken do
 
   use ExOauth2Provider.Schema
   alias ExOauth2Provider.OauthApplications.OauthApplication
+  alias ExOauth2Provider.{Config, Utils}
+
+  @resource_owner_struct Config.resource_owner_struct()
+  @resource_owner_belongs_to_opts Utils.schema_belongs_to_opts(@resource_owner_struct)
 
   schema "oauth_access_tokens" do
     belongs_to :application, OauthApplication, on_replace: :nilify
-    belongs_to :resource_owner, ExOauth2Provider.Config.resource_owner_struct(), type: ExOauth2Provider.Config.resource_owner_struct().__schema__(:type, :id)
+    belongs_to :resource_owner, @resource_owner_struct, @resource_owner_belongs_to_opts
 
     field :token,         :string, null: false
     field :refresh_token, :string

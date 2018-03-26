@@ -3,18 +3,19 @@ defmodule ExOauth2Provider.OauthApplications.OauthApplication do
 
   use ExOauth2Provider.Schema
   require Logger
+  alias ExOauth2Provider.{Config, Utils}
 
   # For Phoenix integrations
   if Code.ensure_loaded?(Phoenix.Param) do
     @derive {Phoenix.Param, key: :uid}
   end
 
-  schema "oauth_applications" do
-    if is_nil(ExOauth2Provider.Config.application_owner_struct()) do
-      Logger.error("You need to set a resource_owner or application_owner in your config and recompile ex_oauth2_provider!")
-    end
+  @owner_struct Config.application_owner_struct()
+  @owner_belongs_to_opts Utils.schema_belongs_to_opts(@owner_struct)
+  if is_nil(@owner_struct), do: Logger.error("You need to set a resource_owner or application_owner in your config and recompile ex_oauth2_provider!")
 
-    belongs_to :owner, ExOauth2Provider.Config.application_owner_struct(), type: ExOauth2Provider.Config.resource_owner_struct().__schema__(:type, :id)
+  schema "oauth_applications" do
+    belongs_to :owner, @owner_struct, @owner_belongs_to_opts
 
     field :name,         :string,     null: false
     field :uid,          :string,     null: false

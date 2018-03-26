@@ -28,4 +28,8 @@ defmodule ExOauth2Provider.Utils do
   def schema_association(module, association) do
     module.__schema__(:association, association)
   end
+
+  @spec schema_belongs_to_opts(Ecto.Schema | nil) :: Keyword.t
+  def schema_belongs_to_opts(nil), do: []
+  def schema_belongs_to_opts(module), do: [type: module.__schema__(:type, :id)]
 end
