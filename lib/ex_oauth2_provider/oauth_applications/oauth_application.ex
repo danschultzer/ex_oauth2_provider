@@ -1,7 +1,7 @@
 defmodule ExOauth2Provider.OauthApplications.OauthApplication do
   @moduledoc false
 
-  use Ecto.Schema
+  use ExOauth2Provider.Schema
   require Logger
 
   # For Phoenix integrations
@@ -14,7 +14,7 @@ defmodule ExOauth2Provider.OauthApplications.OauthApplication do
       Logger.error("You need to set a resource_owner or application_owner in your config and recompile ex_oauth2_provider!")
     end
 
-    belongs_to :owner, ExOauth2Provider.Config.application_owner_struct()
+    belongs_to :owner, ExOauth2Provider.Config.application_owner_struct(), type: ExOauth2Provider.Config.resource_owner_struct().__schema__(:type, :id)
 
     field :name,         :string,     null: false
     field :uid,          :string,     null: false

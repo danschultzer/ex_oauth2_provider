@@ -38,6 +38,53 @@ defmodule Mix.Tasks.ExOauth2Provider.InstallTest do
       assert file =~ "defmodule Mix.Tasks.ExOauth2Provider.InstallTest.Repo.Migrations.CreateOauthTables do"
       assert file =~ "use Ecto.Migration"
       assert file =~ "def change do"
+      assert file =~ "add :owner_id,          :integer, null: false"
+      assert file =~ "add :resource_owner_id,      :integer"
+      refute file =~ "add :owner_id,          :uuid,    null: false"
+      refute file =~ "add :resource_owner_id,      :uuid"
+      refute file =~ ":oauth_applications, primary_key: false"
+      refute file =~ ":oauth_access_grants, primary_key: false"
+      refute file =~ ":oauth_access_tokens, primary_key: false"
+      refute file =~ "add :id,                     :uuid,           primary_key: true"
+      refute file =~ "add :id,                :uuid,    primary_key: true"
+      refute file =~ "add :id,                     :uuid,           primary_key: true"
+      refute file =~ "add :application_id,         references(:oauth_applications, type: :uuid)"
+    end
+  end
+
+  test "generates migrations with uuid for resource_owners" do
+    run @options ++ ~w(--uuid resource_owners)
+    assert [name] = File.ls!(@migrations_path)
+    assert_file Path.join(@migrations_path, name), fn file ->
+      refute file =~ "add :owner_id,          :integer, null: false"
+      refute file =~ "add :resource_owner_id,      :integer"
+      assert file =~ "add :owner_id,          :uuid,    null: false"
+      assert file =~ "add :resource_owner_id,      :uuid"
+      refute file =~ ":oauth_applications, primary_key: false"
+      refute file =~ ":oauth_access_grants, primary_key: false"
+      refute file =~ ":oauth_access_tokens, primary_key: false"
+      refute file =~ "add :id,                     :uuid,           primary_key: true"
+      refute file =~ "add :id,                :uuid,    primary_key: true"
+      refute file =~ "add :id,                     :uuid,           primary_key: true"
+      refute file =~ "add :application_id,         references(:oauth_applications, type: :uuid)"
+    end
+  end
+
+  test "generates migrations with uuid for all" do
+    run @options ++ ~w(--uuid all)
+    assert [name] = File.ls!(@migrations_path)
+    assert_file Path.join(@migrations_path, name), fn file ->
+      refute file =~ "add :owner_id,          :integer, null: false"
+      refute file =~ "add :resource_owner_id,      :integer"
+      assert file =~ "add :owner_id,          :uuid,    null: false"
+      assert file =~ "add :resource_owner_id,      :uuid"
+      assert file =~ ":oauth_applications, primary_key: false"
+      assert file =~ ":oauth_access_grants, primary_key: false"
+      assert file =~ ":oauth_access_tokens, primary_key: false"
+      assert file =~ "add :id,                     :uuid,           primary_key: true"
+      assert file =~ "add :id,                :uuid,    primary_key: true"
+      assert file =~ "add :id,                     :uuid,           primary_key: true"
+      assert file =~ "add :application_id,         references(:oauth_applications, type: :uuid)"
     end
   end
 

@@ -12,6 +12,12 @@ defmodule ExOauth2Provider.Config do
   end
 
   @doc false
+  @spec app_schema() :: atom
+  def app_schema do
+    Keyword.get(config(), :app_schema, Ecto.Schema)
+  end
+
+  @doc false
   @spec application_owner_struct() :: atom
   def application_owner_struct do
     Keyword.get(config(), :application_owner, resource_owner_struct())

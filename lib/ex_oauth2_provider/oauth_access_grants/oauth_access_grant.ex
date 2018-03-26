@@ -1,11 +1,11 @@
 defmodule ExOauth2Provider.OauthAccessGrants.OauthAccessGrant do
   @moduledoc false
 
-  use Ecto.Schema
+  use ExOauth2Provider.Schema
   alias ExOauth2Provider.OauthApplications.OauthApplication
 
   schema "oauth_access_grants" do
-    belongs_to :resource_owner, ExOauth2Provider.Config.resource_owner_struct
+    belongs_to :resource_owner, ExOauth2Provider.Config.resource_owner_struct(), type: ExOauth2Provider.Config.resource_owner_struct().__schema__(:type, :id)
     belongs_to :application, OauthApplication
 
     field :token,        :string,     null: false

@@ -9,7 +9,8 @@ defmodule Mix.Tasks.ExOauth2Provider.Install do
 
   @config_file         "config/config.exs"
   @switches            [resource_owner: :string, config_file: :string,
-                        config: :boolean, migrations: :boolean]
+                        config: :boolean, migrations: :boolean,
+                        uuid: :string]
 
   @moduledoc """
   Generates migrations.
@@ -27,6 +28,7 @@ defmodule Mix.Tasks.ExOauth2Provider.Install do
     * `--resource-owner` - defines the resource owner, default is MyApp.User
     * `--no-config` -- Don't append to your `config/config.exs` file.
     * `--no-migrations` -- Don't add migrations.
+    * `--uuid` -- Use UUID for the following comma separated tables, use `all` if your database doesn't have auto incremental integer support
   """
 
   @doc false
@@ -43,6 +45,7 @@ defmodule Mix.Tasks.ExOauth2Provider.Install do
     repos = parse_repo(args)
     Enum.each repos, &Mix.Ecto.ensure_repo(&1, args)
     {opts, _, _} = OptionParser.parse(args, switches: @switches)
+    uuid_opts = parse_uuid(Keyword.get(opts, :uuid, ""))
 
     %{
       config: Keyword.get(opts, :config, true),
@@ -51,17 +54,32 @@ defmodule Mix.Tasks.ExOauth2Provider.Install do
       repos: repos,
       resource_owner: Keyword.get(opts, :resource_owner, "MyApp.User"),
       migrations: Keyword.get(opts, :migrations, true),
+      uuid: uuid_opts
     }
   end
 
-  defp add_migrations_files(%{migrations: true, repos: repos, app_path: app_path} = config) do
+  defp parse_uuid(string) do
+    uuid_tables = String.split(string, ",")
+
+    [:resource_owners,
+     :oauth_access_grants,
+     :oauth_access_tokens,
+     :oauth_applications]
+    |> Enum.map(&{&1, uuid?(&1, uuid_tables)})
+    |> Enum.into(%{})
+  end
+
+  defp uuid?(_, ["all"]), do: true
+  defp uuid?(table, uuid_tables), do: Enum.member?(uuid_tables, Atom.to_string(table))
+
+  defp add_migrations_files(%{migrations: true, repos: repos, app_path: app_path, uuid: uuid} = config) do
     Enum.each repos, fn repo ->
       path = Path.relative_to(migrations_path(repo), app_path)
       create_directory path
       existing_migrations = to_string File.ls!(path)
 
       for {name, template} <- migrations() do
-        create_migration_file(repo, existing_migrations, name, path, template)
+        create_migration_file(repo, existing_migrations, name, path, template, uuid)
       end
     end
 
@@ -82,10 +100,10 @@ defmodule Mix.Tasks.ExOauth2Provider.Install do
     end
   end
 
-  defp create_migration_file(repo, existing_migrations, name, path, template) do
+  defp create_migration_file(repo, existing_migrations, name, path, template, uuid) do
     unless String.match? existing_migrations, ~r/\d{14}_#{name}\.exs/ do
       file = Path.join(path, "#{next_migration_number(existing_migrations)}_#{name}.exs")
-      create_file file, EEx.eval_string(template, [mod: Module.concat([repo, Migrations, camelize(name)])])
+      create_file file, EEx.eval_string(template, [mod: Module.concat([repo, Migrations, camelize(name)]), uuid: uuid])
       Mix.shell.info "Migration file #{file} has been added."
     end
   end
