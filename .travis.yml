@@ -7,3 +7,9 @@ sudo: false
 script:
   - mix test
   - mix credo
+
+  - MIX_ENV=test mix clean
+  - UUID=resource_owners mix test
+
+  - MIX_ENV=test mix clean
+  - UUID=all mix test

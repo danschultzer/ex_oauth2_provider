@@ -10,6 +10,10 @@ config :ex_oauth2_provider, ExOauth2Provider,
   revoke_refresh_token_on_use: true,
   grant_flows: ~w(authorization_code client_credentials)
 
+if System.get_env("UUID") == "all" do
+  config :ex_oauth2_provider, ExOauth2Provider, app_schema: Dummy.UUIDSchema
+end
+
 config :ex_oauth2_provider, ecto_repos: [ExOauth2Provider.Test.Repo]
 
 config :ex_oauth2_provider, ExOauth2Provider.Test.Repo,

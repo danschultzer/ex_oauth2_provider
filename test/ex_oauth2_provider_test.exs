@@ -66,8 +66,10 @@ defmodule ExOauth2ProviderTest do
   end
 
   test "authenticate_token/1 error when no resource owner" do
+    resource_owner_id = (if is_nil(System.get_env("UUID")), do: 0, else: "09b58e2b-8fff-4b8d-ba94-18a06dd4fc29")
+
     access_token = fixture(:access_token, fixture(:user), %{})
-    |> Ecto.Changeset.change(resource_owner_id: 0)
+    |> Ecto.Changeset.change(resource_owner_id: resource_owner_id)
     |> ExOauth2Provider.repo.update!
 
     assert authenticate_token(access_token.token) == {:error, :no_association_found}

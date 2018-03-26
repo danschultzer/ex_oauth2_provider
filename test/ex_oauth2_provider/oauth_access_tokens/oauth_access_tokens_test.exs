@@ -230,7 +230,8 @@ defmodule ExOauth2Provider.OauthAccessTokensTest do
     {:ok, token2} = OauthAccessTokens.get_or_create_token(fixture(:user))
     assert token.id != token2.id
 
-    Enum.each(%{application_id: 0,
+    application_id = (if System.get_env("UUID") == "all", do: "09b58e2b-8fff-4b8d-ba94-18a06dd4fc29", else: 0)
+    Enum.each(%{application_id: application_id,
                 expires_in: 0,
                 scopes: nil}, fn({k, v}) ->
       {:ok, token2} = OauthAccessTokens.get_or_create_token(user, %{"#{k}": v})

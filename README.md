@@ -274,7 +274,19 @@ config :ex_oauth2_provider, ExOauth2Provider,
   app_schema: MyApp.Schema
 ```
 
-Remember to update the migration file, by default `ex_oauth_provider` will use integer fields for primary id's.
+You can create a UUID enabled migration file with the `--uuid` argument:
+
+```bash
+mix ex_oauth2_provider.install --uuid all
+```
+
+```bash
+mix ex_oauth2_provider.install --uuid resource_owners
+```
+
+```bash
+mix ex_oauth2_provider.install --uuid resource_owners,oauth_access_tokens
+```
 
 ## Acknowledgement
 
