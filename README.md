@@ -34,6 +34,8 @@ mix ecto.gen.migration --change "    create table(:users) do\n      add :email, 
 
 And use the struct in [test/support/dummy/models/user.ex](test/support/dummy/models/user.ex). The
 
+If you're not using auto incremental integer (`:id`) for your primary key(s), please read the [Using UUID or custom primary key type](#using-uuid-or-custom-primary-key-type) section.
+
 ## Authorize code flow
 
 ### Authorization request
@@ -265,28 +267,52 @@ end
 
 Remember to change the field type for the `token` column in the `oauth_access_tokens` table to accepts tokens larger than 255 characters.
 
-## UUID and custom primary key type
+## Using UUID or custom primary key type
 
-You can set up `ExOauth2Provider` to use you custom schema attributes in case you're not using autoincrementing integer as primary keys in your database.
+### 1. If only resource owner uses `:uuid`
 
-```elixir
-config :ex_oauth2_provider, ExOauth2Provider,
-  app_schema: MyApp.Schema
-```
-
-You can create a UUID enabled migration file with the `--uuid` argument:
-
-```bash
-mix ex_oauth2_provider.install --uuid all
-```
+You'll need to create the migration file with the argument `--uuid resource_owners`:
 
 ```bash
 mix ex_oauth2_provider.install --uuid resource_owners
 ```
 
-```bash
-mix ex_oauth2_provider.install --uuid resource_owners,oauth_access_tokens
+### 2. If all structs should use `:uuid`
+
+If you don't have auto incrementing integer as primary keys in your database you can set up `ExOauth2Provider` to handle all primary keys as `:uuid` by doing the following.
+
+You should have a schema macro similar to this (the `@primary_key` and `@foreign_key_type` needs to be defined):
+
+```elixir
+defmodule MyApp.Schema do
+  @moduledoc false
+  defmacro __using__(_) do
+    quote do
+      use Ecto.Schema
+      @primary_key {:id, :binary_id, autogenerate: true}
+      @foreign_key_type :binary_id
+    end
+  end
+end
 ```
+
+Update the `:ex_oauth2_provider` config in `config/config.exs` to use the schema macro:
+
+```elixir
+config :ex_oauth2_provider, ExOauth2Provider,
+  # ...
+  app_schema: MyApp.Schema
+```
+
+And generate a migration file that uses `:uuid` type for all tables:
+
+```bash
+mix ex_oauth2_provider.install --uuid all
+```
+
+### 3. If you need something different than `:uuid`
+
+It's also possible to use a completely different setup by adding a custom schema macro like in the section above. You'll have to update the migration file accordingly.
 
 ## Acknowledgement
 
