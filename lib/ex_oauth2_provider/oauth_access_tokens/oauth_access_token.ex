@@ -6,7 +6,7 @@ defmodule ExOauth2Provider.OauthAccessTokens.OauthAccessToken do
 
   schema "oauth_access_tokens" do
     belongs_to :application, OauthApplication, on_replace: :nilify
-    belongs_to :resource_owner, ExOauth2Provider.Config.resource_owner_struct
+    belongs_to :resource_owner, ExOauth2Provider.Config.resource_owner_struct(), type: ExOauth2Provider.Config.resource_owner_struct().__schema__(:type, :id)
 
     field :token,         :string, null: false
     field :refresh_token, :string
