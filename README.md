@@ -12,7 +12,7 @@ Add ExOauth2Provider to your list of dependencies in `mix.exs`:
 def deps do
   [
     # ...
-    {:ex_oauth2_provider, "~> 0.2"}
+    {:ex_oauth2_provider, "~> 0.3"}
     # ...
   ]
 end
@@ -29,7 +29,7 @@ This will add the necessary Ecto migrations to your app, and set sample configur
 You are required to use a resource owner struct that already exists. This could be your `User` struct. If you don't have any `User` struct, you can create a migration with this:
 
 ```bash
-mix ecto.gen.migration --change "    create table(:users) do\n      add :email, :string\n    end"
+mix ecto.gen.migration create_users --change $'    create table(:users) do\n      add :email, :string\n    end'
 ```
 
 And use the struct in [test/support/dummy/models/user.ex](test/support/dummy/models/user.ex).
