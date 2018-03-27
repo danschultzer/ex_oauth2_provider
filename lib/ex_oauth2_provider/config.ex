@@ -6,9 +6,11 @@ defmodule ExOauth2Provider.Config do
   end
 
   @doc false
-  @spec resource_owner_struct() :: atom
-  def resource_owner_struct do
-    Keyword.get(config(), :resource_owner)
+  @spec resource_owner_struct(atom) :: atom
+  def resource_owner_struct(type) do
+    config()
+    |> Keyword.get(:resource_owner)
+    |> parse_owner_struct(type)
   end
 
   @doc false
@@ -18,9 +20,13 @@ defmodule ExOauth2Provider.Config do
   end
 
   @doc false
-  @spec application_owner_struct() :: atom
-  def application_owner_struct do
-    Keyword.get(config(), :application_owner, resource_owner_struct())
+  @spec application_owner_struct(atom) :: atom
+  def application_owner_struct(type) do
+    resource_owner = Keyword.get(config(), :resource_owner)
+
+    config()
+    |> Keyword.get(:application_owner, resource_owner)
+    |> parse_owner_struct(type)
   end
 
   # Define default access token scopes for your provider
@@ -138,4 +144,9 @@ defmodule ExOauth2Provider.Config do
   defp grant_type_can_be_used?(grant_flows, grant_type) do
     Enum.member?(grant_flows, grant_type)
   end
+
+  defp parse_owner_struct({_module, foreign_key_type}, :foreign_key_type), do: foreign_key_type
+  defp parse_owner_struct({module, _foreign_key_type}, :module), do: module
+  defp parse_owner_struct(module, :module), do: module
+  defp parse_owner_struct(_module, :foreign_key_type), do: :id
 end

@@ -1,7 +1,7 @@
 defmodule Dummy.User do
   @moduledoc false
 
-  use Dummy.UUIDSchema
+  use Dummy.Schema
   import Ecto.Changeset
 
   schema "users" do

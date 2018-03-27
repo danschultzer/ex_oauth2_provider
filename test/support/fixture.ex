@@ -6,7 +6,7 @@ defmodule ExOauth2Provider.Test.Fixture do
   alias ExOauth2Provider.OauthAccessGrants
   alias ExOauth2Provider.Test.Repo
 
-  @resource_owner ExOauth2Provider.Config.resource_owner_struct()
+  @resource_owner ExOauth2Provider.Config.resource_owner_struct(:module)
 
   def fixture(:user, attrs \\ %{}) do
     {:ok, user} = %@resource_owner{}

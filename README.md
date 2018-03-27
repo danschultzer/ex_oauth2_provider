@@ -277,34 +277,26 @@ You'll need to create the migration file with the argument `--uuid resource_owne
 mix ex_oauth2_provider.install --uuid resource_owners
 ```
 
+And set the config to use `:binary_id` for `belongs_to` fields:
+
+```elixir
+config :ex_oauth2_provider, ExOauth2Provider,
+  resource_owner: {Dummy.User, :binary_id}
+```
+
 ### 2. If all structs should use `:uuid`
 
 If you don't have auto-incrementing integers as primary keys in your database you can set up `ExOauth2Provider` to handle all primary keys as `:uuid` by doing the following.
 
-You should have a schema macro similar to this (the `@primary_key` and `@foreign_key_type` needs to be defined):
-
-```elixir
-defmodule MyApp.Schema do
-  @moduledoc false
-  defmacro __using__(_) do
-    quote do
-      use Ecto.Schema
-      @primary_key {:id, :binary_id, autogenerate: true}
-      @foreign_key_type :binary_id
-    end
-  end
-end
-```
-
-Update the `:ex_oauth2_provider` config in `config/config.exs` to use the schema macro:
+Update the `:ex_oauth2_provider` config in `config/config.exs` to use the the [UUID schema](lib/ex_oauth2_provider/schemas/uuid.ex) macro:
 
 ```elixir
 config :ex_oauth2_provider, ExOauth2Provider,
-  # ...
-  app_schema: MyApp.Schema
+  resource_owner: {Dummy.User, :binary_id},
+  app_schema: ExOauth2Provider.Schema.UUID
 ```
 
-And generate a migration file that uses `:uuid` type for all tables:
+And generate a migration file that uses `:uuid` for all tables:
 
 ```bash
 mix ex_oauth2_provider.install --uuid all
@@ -312,7 +304,7 @@ mix ex_oauth2_provider.install --uuid all
 
 ### 3. If you need something different than `:uuid`
 
-It's also possible to use a completely different setup by adding a custom schema macro like in the section above. You'll have to update the migration file accordingly.
+It's also possible to use a completely different setup by adding a custom schema macro, however you'll need to ensure that the schema file is compiled before this library and that you've updated the migration file accordingly.
 
 ## Acknowledgement
 
