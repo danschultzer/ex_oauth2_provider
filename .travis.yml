@@ -3,13 +3,12 @@ elixir:
   - 1.4
 otp_release:
   - 19.0
+env:
+  -
+  - UUID=resource_owners
+  - UUID=all
 sudo: false
 script:
   - mix test
+after_script:
   - mix credo
-
-  - MIX_ENV=test mix clean
-  - UUID=resource_owners mix test
-
-  - MIX_ENV=test mix clean
-  - UUID=all mix test
