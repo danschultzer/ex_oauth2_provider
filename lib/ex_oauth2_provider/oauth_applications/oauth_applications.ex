@@ -218,10 +218,18 @@ defmodule ExOauth2Provider.OauthApplications do
   defp application_changeset(%OauthApplication{} = application, params) do
     application
     |> cast(params, [:name, :secret, :redirect_uri, :scopes])
-    |> validate_required([:name, :uid, :secret, :redirect_uri])
+    |> validate_required([:name, :uid, :redirect_uri])
+    |> validate_secret_not_nil()
     |> validate_scopes()
     |> validate_redirect_uri()
     |> unique_constraint(:uid)
+  end
+
+  defp validate_secret_not_nil(changeset) do
+    case get_field(changeset, :secret) do
+      nil -> add_error(changeset, :secret, "can't be blank")
+      _ -> changeset
+    end
   end
 
   defp new_application_changeset(%OauthApplication{} = application, owner, params) do
