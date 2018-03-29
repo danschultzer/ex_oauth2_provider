@@ -126,9 +126,13 @@ defmodule ExOauth2Provider.OauthApplicationsTest do
   end
 
   test "change_application/1 validates secret" do
+    application = %OauthApplication{secret: nil}
+    changeset = OauthApplications.change_application(application)
+    assert changeset.errors[:secret] == {"can't be blank", []}
+
     application = %OauthApplication{secret: ""}
     changeset = OauthApplications.change_application(application)
-    assert changeset.errors[:secret]
+    assert is_nil(changeset.errors[:secret])
   end
 
   test "change_application/1 requires valid redirect uri" do
