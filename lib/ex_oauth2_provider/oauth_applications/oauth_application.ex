@@ -17,7 +17,7 @@ defmodule ExOauth2Provider.OauthApplications.OauthApplication do
 
     field :name,         :string,     null: false
     field :uid,          :string,     null: false
-    field :secret,       :string,     null: false
+    field :secret,       :string,     null: false, default: ""
     field :redirect_uri, :string,     null: false
     field :scopes,       :string,     null: false, default: ""
 
