@@ -83,6 +83,12 @@ defmodule ExOauth2Provider.OauthApplicationsTest do
     assert application.secret != application2.secret
   end
 
+  test "create_application/2 permits empty string secret", %{user: user} do
+    attrs = Map.merge(@valid_attrs, %{secret: ""})
+    assert {:ok, application} = OauthApplications.create_application(user, attrs)
+    assert application.secret == ""
+  end
+
   test "create_application/2 adds random uid", %{user: user} do
     {:ok, application} = OauthApplications.create_application(user, @valid_attrs)
     {:ok, application2} = OauthApplications.create_application(user, @valid_attrs)
