@@ -88,6 +88,7 @@ defmodule ExOauth2Provider.OauthAccessTokens do
     |> order_by([x], desc: x.inserted_at)
     |> ExOauth2Provider.repo.all()
     |> check_matching_scopes(scopes)
+    |> check_expiration()
   end
 
   defp check_matching_scopes(tokens, scopes) when is_list(tokens) do
@@ -101,6 +102,15 @@ defmodule ExOauth2Provider.OauthAccessTokens do
     case Scopes.equal?(token_scopes, request_scopes) do
       true -> token
       _    -> nil
+    end
+  end
+
+  defp check_expiration(nil), do: nil
+
+  defp check_expiration(token) do
+    case is_expired?(token) do
+      false -> token
+      _ -> nil
     end
   end
 
@@ -120,6 +130,7 @@ defmodule ExOauth2Provider.OauthAccessTokens do
     |> where(^resource_owner_clause)
     |> where([o], is_nil(o.revoked_at))
     |> ExOauth2Provider.repo.all()
+    |> Enum.reject(&is_expired?/1)
   end
 
   @doc """
