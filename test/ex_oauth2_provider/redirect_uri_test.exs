@@ -90,4 +90,9 @@ defmodule ExOauth2Provider.RedirectURITest do
     assert Regex.match?(~r/query1=value/, uri)
     assert Regex.match?(~r/parameter=value/, uri)
   end
+
+  test "uri_with_query/2 moves query parameters to fragment when access token is present" do
+    uri = uri_with_query("https://example.com/", %{state: "abc", access_token: "12345"})
+    assert uri == "https://example.com/#access_token=12345&state=abc"
+  end
 end

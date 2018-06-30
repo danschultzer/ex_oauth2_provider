@@ -116,21 +116,25 @@ defmodule ExOauth2Provider.Config do
   @doc false
   @spec grant_flows() :: [String.t]
   def grant_flows do
-    Keyword.get(config(), :grant_flows, ~w(authorization_code client_credentials))
+    Keyword.get(config(), :grant_flows, ~w(authorization_code implicit client_credentials))
   end
 
   @doc false
   @spec calculate_authorization_response_types() :: [Map.t]
   def calculate_authorization_response_types do
-    %{"authorization_code" => {:code, ExOauth2Provider.Authorization.Code}}
-    |> Enum.filter(fn({k, _}) -> Enum.member?(grant_flows(), k) end)
-    |> Enum.map(fn({_, v}) -> v end)
+    %{
+      "authorization_code" => {:code, ExOauth2Provider.Authorization.Code},
+      "implicit" => {:token, ExOauth2Provider.Authorization.Implicit}
+    }
+    |> Enum.filter(fn {k, _} -> Enum.member?(grant_flows(), k) end)
+    |> Enum.map(fn {_, v} -> v end)
   end
 
   @doc false
   @spec calculate_token_grant_types() :: Keyword.t
   def calculate_token_grant_types do
     [authorization_code: ExOauth2Provider.Token.AuthorizationCode,
+     implicit: ExOauth2Provider.Token.Implicit,
      client_credentials: ExOauth2Provider.Token.ClientCredentials,
      password: ExOauth2Provider.Token.Password,
      refresh_token: ExOauth2Provider.Token.RefreshToken]

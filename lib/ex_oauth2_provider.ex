@@ -15,7 +15,7 @@ defmodule ExOauth2Provider do
         use_refresh_token: false,
         revoke_refresh_token_on_use: false,
         force_ssl_in_redirect_uri: true,
-        grant_flows: ~w(authorization_code client_credentials),
+        grant_flows: ~w(authorization_code implicit client_credentials),
         password_auth: nil,
         access_token_response_body_handler: nil
 
