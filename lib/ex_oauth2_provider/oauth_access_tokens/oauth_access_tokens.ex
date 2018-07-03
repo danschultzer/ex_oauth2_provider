@@ -121,7 +121,6 @@ defmodule ExOauth2Provider.OauthAccessTokens do
     |> where(^resource_owner_clause)
     |> where([o], is_nil(o.revoked_at))
     |> ExOauth2Provider.repo.all()
-    |> Enum.reject(&is_expired?/1)
   end
 
   @doc """

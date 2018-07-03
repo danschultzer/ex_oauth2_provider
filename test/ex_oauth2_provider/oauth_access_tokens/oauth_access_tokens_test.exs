@@ -90,13 +90,15 @@ defmodule ExOauth2Provider.OauthAccessTokensTest do
     {:ok, token} = OauthAccessTokens.create_token(user, %{application: application})
     assert [%OauthAccessToken{}] = OauthAccessTokens.get_active_tokens_for(user)
 
+    token
+    |> Ecto.Changeset.change(expires_in: -1)
+    |> ExOauth2Provider.repo().update()
+    assert [%OauthAccessToken{}] = OauthAccessTokens.get_active_tokens_for(user)
+
     OauthAccessTokens.revoke(token)
     assert [] = OauthAccessTokens.get_active_tokens_for(user)
 
     assert [] == OauthAccessTokens.get_active_tokens_for(fixture(:user))
-
-    {:ok, _} = OauthAccessTokens.create_token(user, %{application: application, expires_in: -1})
-    assert OauthAccessTokens.get_active_tokens_for(user) == []
   end
 
   test "create_token/2 with valid attributes", %{user: user} do
