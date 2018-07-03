@@ -199,6 +199,10 @@ defmodule ExOauth2Provider.OauthAccessTokensTest do
 
     {:ok, token2} = OauthAccessTokens.get_or_create_token(user)
     assert token.id == token2.id
+
+    update(token, scopes: "read write")
+    {:ok, token3} = OauthAccessTokens.get_or_create_token(user, %{scopes: "read write"})
+    assert token.id == token3.id
   end
 
   test "get_or_create_token/2 with resource owner and application", %{user: user, application: application} do
@@ -227,13 +231,20 @@ defmodule ExOauth2Provider.OauthAccessTokensTest do
   end
 
   test "get_or_create_token/2 creates token when matching has expired", %{user: user} do
-    {:ok, token} = OauthAccessTokens.get_or_create_token(user, %{expires_in: 1})
+    {:ok, token1} = OauthAccessTokens.create_token(user, %{expires_in: 1})
+    {:ok, token2} = OauthAccessTokens.create_token(user, %{expires_in: 1})
+
+    {:ok, token} = OauthAccessTokens.get_or_create_token(user)
+    assert token.id == token2.id
 
     inserted_at = NaiveDateTime.add(NaiveDateTime.utc_now(), -token.expires_in, :second)
-    update(token, inserted_at: inserted_at)
+    update(token2, inserted_at: inserted_at)
+    {:ok, token} = OauthAccessTokens.get_or_create_token(user)
+    assert token.id == token1.id
 
-    {:ok, token2} = OauthAccessTokens.get_or_create_token(user)
-    assert token.id != token2.id
+    update(token1, inserted_at: inserted_at)
+    {:ok, token} = OauthAccessTokens.get_or_create_token(user)
+    refute token.id in [token1.id, token2.id]
   end
 
   test "get_or_create_token/2 creates token when params are different", %{user: user} do

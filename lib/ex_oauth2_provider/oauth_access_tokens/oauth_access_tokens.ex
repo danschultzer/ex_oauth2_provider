@@ -209,8 +209,8 @@ defmodule ExOauth2Provider.OauthAccessTokens do
     |> tranform_assocations_in_attrs()
     |> Map.delete(:use_refresh_token)
     |> build_access_token_by_attrs_query()
-    |> ExOauth2Provider.repo.one()
-    |> filter_accessible()
+    |> ExOauth2Provider.repo.all()
+    |> Enum.find(nil, &is_accessible?/1)
   end
 
   defp tranform_assocations_in_attrs(attrs) do
@@ -252,7 +252,6 @@ defmodule ExOauth2Provider.OauthAccessTokens do
            false -> where(query, [o], field(o, ^k) == ^v)
          end
        end)
-    |> limit(1)
   end
 
   defp filter_accessible(access_tokens) when is_list(access_tokens) do
