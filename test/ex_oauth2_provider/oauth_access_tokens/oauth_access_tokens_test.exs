@@ -61,7 +61,7 @@ defmodule ExOauth2Provider.OauthAccessTokensTest do
     assert %OauthAccessToken{id: id} = OauthAccessTokens.get_matching_token_for(user, application, "public")
     assert token2.id == id
 
-    inserted_at = NaiveDateTime.utc_now |> NaiveDateTime.add(1, :second)
+    inserted_at = NaiveDateTime.add(NaiveDateTime.utc_now(), 1, :second)
     token1
     |> Ecto.Changeset.change(inserted_at: inserted_at)
     |> ExOauth2Provider.repo.update
@@ -73,9 +73,11 @@ defmodule ExOauth2Provider.OauthAccessTokensTest do
     |> ExOauth2Provider.repo.update
     assert %OauthAccessToken{id: id} = OauthAccessTokens.get_matching_token_for(user, application, "write read")
     assert id == token1.id
+    assert %OauthAccessToken{id: id} = OauthAccessTokens.get_matching_token_for(user, application, "public")
+    assert id == token2.id
 
-    assert nil == OauthAccessTokens.get_matching_token_for(user, application, "other_read")
-    assert nil == OauthAccessTokens.get_matching_token_for(fixture(:user), application, nil)
+    refute OauthAccessTokens.get_matching_token_for(user, application, "other_read")
+    refute OauthAccessTokens.get_matching_token_for(fixture(:user), application, nil)
   end
 
   test "get_active_tokens_for/1", %{user: user, application: application} do
