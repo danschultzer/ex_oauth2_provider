@@ -46,6 +46,15 @@ defmodule ExOauth2Provider.Token.Strategy.AuthorizationCodeTest do
     refute is_nil(get_last_access_token().refresh_token)
   end
 
+  test "#grant/1 returns access token when client secret not required", %{resource_owner: resource_owner, application: application} do
+    application |> Ecto.Changeset.change(secret: "") |> ExOauth2Provider.repo.update!()
+    valid_request_no_client_secret = Map.drop(@valid_request, ["client_secret"])
+
+    assert {:ok, access_token} = grant(valid_request_no_client_secret)
+    assert get_last_access_token().resource_owner_id == resource_owner.id
+    assert get_last_access_token().application_id == application.id
+  end
+
   def access_token_response_body_handler(body, access_token) do
     body
     |> Map.merge(%{custom_attr: access_token.inserted_at})
