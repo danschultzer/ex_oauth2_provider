@@ -9,6 +9,9 @@ defmodule ExOauth2Provider.Test.QueryHelper do
   def get_access_grant_by_code(code),
     do: ExOauth2Provider.repo.get_by!(OauthAccessGrant, token: code)
 
+  def get_access_token_by_token(token),
+    do: ExOauth2Provider.repo().get_by!(OauthAccessToken, token: token)
+
   def get_last_access_grant do
     ExOauth2Provider.repo.one(from x in OauthAccessGrant,
       order_by: [desc: x.id], limit: 1)

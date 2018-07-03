@@ -8,7 +8,7 @@ config :ex_oauth2_provider, ExOauth2Provider,
   password_auth: {ExOauth2Provider.Test.Auth, :auth},
   use_refresh_token: true,
   revoke_refresh_token_on_use: true,
-  grant_flows: ~w(authorization_code client_credentials)
+  grant_flows: ~w(authorization_code implicit client_credentials)
 
 if System.get_env("UUID") do
   config :ex_oauth2_provider, ExOauth2Provider, resource_owner: {Dummy.User, :binary_id}

@@ -16,8 +16,10 @@ defmodule ExOauth2Provider.Authorization.Utils.Response do
   @spec preauthorize_response(Map.t) :: {:ok, Ecto.Schema.t, [String.t]} |
                                         {:error, Map.t, integer} |
                                         {:redirect, String.t} |
-                                        {:native_redirect, %{code: String.t}}
+                                        {:native_redirect, %{code: String.t}} |
+                                        {:native_redirect, %{access_token: String.t}}
   def preauthorize_response(%{grant: grant} = params), do: build_response(params, %{code: grant.token})
+  def preauthorize_response(%{access_token: access_token} = params), do: build_response(params, %{access_token: access_token.token})
   def preauthorize_response(%{error: error} = params), do: build_response(params, error)
   def preauthorize_response(%{client: client, request: %{"scope" => scopes}}), do: {:ok, client, Scopes.to_list(scopes)}
 
@@ -25,8 +27,10 @@ defmodule ExOauth2Provider.Authorization.Utils.Response do
   @spec authorize_response(Map.t) :: {:ok, Ecto.Schema.t, [String.t]} |
                                      {:error, Map.t, integer} |
                                      {:redirect, String.t} |
-                                     {:native_redirect, %{code: String.t}}
+                                     {:native_redirect, %{code: String.t}} |
+                                     {:native_redirect, %{access_token: String.t}}
   def authorize_response(%{grant: grant} = params), do: build_response(params, %{code: grant.token})
+  def authorize_response(%{access_token: access_token} = params), do: build_response(params, %{access_token: access_token.token})
   def authorize_response(%{error: error} = params), do: build_response(params, error)
 
   @doc false
