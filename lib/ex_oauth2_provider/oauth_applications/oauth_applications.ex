@@ -116,7 +116,7 @@ defmodule ExOauth2Provider.OauthApplications do
     %{owner_key: owner_key, related_key: related_key} = ExOauth2Provider.Utils.schema_association(OauthAccessTokens.OauthAccessToken, :application)
 
     application_ids = resource_owner
-                      |> OauthAccessTokens.get_active_tokens_for()
+                      |> OauthAccessTokens.get_authorized_tokens_for()
                       |> Enum.map(&Map.get(&1, owner_key))
 
     OauthApplication

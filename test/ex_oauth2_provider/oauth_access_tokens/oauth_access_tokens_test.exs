@@ -78,16 +78,27 @@ defmodule ExOauth2Provider.OauthAccessTokensTest do
 
     refute OauthAccessTokens.get_matching_token_for(user, application, "other_read")
     refute OauthAccessTokens.get_matching_token_for(fixture(:user), application, nil)
+
+    token1
+    |> Ecto.Changeset.change(expires_in: -1)
+    |> ExOauth2Provider.repo().update
+
+    refute OauthAccessTokens.get_matching_token_for(user, application, "write read")
   end
 
-  test "get_active_tokens_for/1", %{user: user, application: application} do
+  test "get_authorized_tokens_for/1", %{user: user, application: application} do
     {:ok, token} = OauthAccessTokens.create_token(user, %{application: application})
-    assert [%OauthAccessToken{}] = OauthAccessTokens.get_active_tokens_for(user)
+    assert [%OauthAccessToken{}] = OauthAccessTokens.get_authorized_tokens_for(user)
+
+    token
+    |> Ecto.Changeset.change(expires_in: -1)
+    |> ExOauth2Provider.repo().update()
+    assert [%OauthAccessToken{}] = OauthAccessTokens.get_authorized_tokens_for(user)
 
     OauthAccessTokens.revoke(token)
-    assert [] = OauthAccessTokens.get_active_tokens_for(user)
+    assert [] = OauthAccessTokens.get_authorized_tokens_for(user)
 
-    assert [] == OauthAccessTokens.get_active_tokens_for(fixture(:user))
+    assert [] == OauthAccessTokens.get_authorized_tokens_for(fixture(:user))
   end
 
   test "create_token/2 with valid attributes", %{user: user} do

@@ -65,7 +65,7 @@ defmodule ExOauth2Provider.OauthAccessTokens do
   end
 
   @doc """
-  Gets the most recent matching access token for a resource owner.
+  Gets the most recent, acccessible, matching access token for a resource owner.
 
   ## Examples
 
@@ -87,6 +87,7 @@ defmodule ExOauth2Provider.OauthAccessTokens do
     |> where([x], is_nil(x.revoked_at))
     |> order_by([x], desc: x.inserted_at)
     |> ExOauth2Provider.repo.all()
+    |> filter_accessible()
     |> check_matching_scopes(scopes)
   end
 
@@ -104,16 +105,23 @@ defmodule ExOauth2Provider.OauthAccessTokens do
     end
   end
 
+  @spec get_active_tokens_for(Ecto.Schema.t) :: [%OauthAccessToken{}]
+  @since "0.3.3"
+  @deprecated "Use get_authorized_tokens_for/2 instead"
+  def get_active_tokens_for(resource_owner) do
+    get_authorized_tokens_for(resource_owner)
+  end
+
   @doc """
-  Gets all active tokens for resource owner.
+  Gets all authorized access tokens for resource owner.
 
   ## Examples
 
-      iex> get_active_tokens_for(resource_owner)
+      iex> get_authorized_tokens_for(resource_owner)
       [%OauthAccessToken{}, ...]
   """
-  @spec get_active_tokens_for(Ecto.Schema.t) :: [%OauthAccessToken{}]
-  def get_active_tokens_for(resource_owner) do
+  @spec get_authorized_tokens_for(Ecto.Schema.t) :: [%OauthAccessToken{}]
+  def get_authorized_tokens_for(resource_owner) do
     resource_owner_clause = ExOauth2Provider.Utils.belongs_to_clause(OauthAccessToken, :resource_owner, resource_owner)
 
     OauthAccessToken
@@ -247,6 +255,9 @@ defmodule ExOauth2Provider.OauthAccessTokens do
     |> limit(1)
   end
 
+  defp filter_accessible(access_tokens) when is_list(access_tokens) do
+    Enum.filter(access_tokens, &is_accessible?/1)
+  end
   defp filter_accessible(access_token) do
     case is_accessible?(access_token) do
       true  -> access_token
