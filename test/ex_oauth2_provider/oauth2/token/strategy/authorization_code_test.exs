@@ -55,11 +55,6 @@ defmodule ExOauth2Provider.Token.Strategy.AuthorizationCodeTest do
     assert get_last_access_token().application_id == application.id
   end
 
-  def access_token_response_body_handler(body, access_token) do
-    body
-    |> Map.merge(%{custom_attr: access_token.inserted_at})
-  end
-
   test "#grant/1 returns access token with custom response handler" do
     set_config(:access_token_response_body_handler, {ExOauth2Provider.Token.Strategy.AuthorizationCodeTest, :access_token_response_body_handler})
     assert {:ok, access_token} = AuthorizationCode.grant(@valid_request)
@@ -143,5 +138,9 @@ defmodule ExOauth2Provider.Token.Strategy.AuthorizationCodeTest do
     request_invalid_redirect_uri = Map.merge(@valid_request, %{"redirect_uri" => "invalid"})
     assert {:error, error, :unprocessable_entity} = grant(request_invalid_redirect_uri)
     assert error == @invalid_grant
+  end
+
+  def access_token_response_body_handler(body, access_token) do
+    Map.merge(body, %{custom_attr: access_token.inserted_at})
   end
 end

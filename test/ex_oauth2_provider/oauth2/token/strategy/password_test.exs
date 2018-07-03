@@ -93,11 +93,6 @@ defmodule ExOauth2Provider.Token.Strategy.PasswordTest do
     assert get_last_access_token().application_id == application.id
   end
 
-  def access_token_response_body_handler(body, access_token) do
-    body
-    |> Map.merge(%{custom_attr: access_token.inserted_at})
-  end
-
   test "#grant/1 returns access token with custom response handler" do
     set_config(:access_token_response_body_handler, {ExOauth2Provider.Token.Strategy.AuthorizationCodeTest, :access_token_response_body_handler})
     assert {:ok, access_token} = Password.grant(@valid_request)
@@ -114,5 +109,9 @@ defmodule ExOauth2Provider.Token.Strategy.PasswordTest do
   test "#grant/1 returns access token with limited scope" do
     assert {:ok, _} = grant(Map.merge(@valid_request, %{"scope" => "app:read"}))
     assert get_last_access_token().scopes == "app:read"
+  end
+
+  def access_token_response_body_handler(body, access_token) do
+    Map.merge(body, %{custom_attr: access_token.inserted_at})
   end
 end

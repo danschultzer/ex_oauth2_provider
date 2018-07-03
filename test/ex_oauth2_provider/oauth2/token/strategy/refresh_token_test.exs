@@ -83,11 +83,6 @@ defmodule ExOauth2Provider.Token.Strategy.RefreshTokenTest do
     assert OauthAccessTokens.is_revoked?(access_token)
   end
 
-  def access_token_response_body_handler(body, access_token) do
-    body
-    |> Map.merge(%{custom_attr: access_token.inserted_at})
-  end
-
   test "#grant/1 returns access token with custom response handler", %{valid_request: valid_request} do
     set_config(:access_token_response_body_handler, {ExOauth2Provider.Token.Strategy.AuthorizationCodeTest, :access_token_response_body_handler})
 
@@ -106,5 +101,9 @@ defmodule ExOauth2Provider.Token.Strategy.RefreshTokenTest do
 
     assert "" == new_access_token.previous_refresh_token
     refute OauthAccessTokens.is_revoked?(access_token)
+  end
+
+  def access_token_response_body_handler(body, access_token) do
+    Map.merge(body, %{custom_attr: access_token.inserted_at})
   end
 end

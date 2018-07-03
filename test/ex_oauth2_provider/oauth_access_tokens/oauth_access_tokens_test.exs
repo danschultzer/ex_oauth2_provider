@@ -130,10 +130,6 @@ defmodule ExOauth2Provider.OauthAccessTokensTest do
     assert token.token != token2.token
   end
 
-  def access_token_generator(values) do
-    "custom_generated-#{values.resource_owner_id}"
-  end
-
   test "create_token/2 with custom access token generator", %{user: user} do
     set_config(:access_token_generator, {ExOauth2Provider.OauthAccessTokensTest, :access_token_generator})
 
@@ -300,9 +296,13 @@ defmodule ExOauth2Provider.OauthAccessTokensTest do
     assert OauthAccessTokens.is_accessible?(token)
   end
 
-  def update(token, changes) do
+  defp update(token, changes) do
     token
     |> Ecto.Changeset.change(changes)
     |> ExOauth2Provider.repo.update()
+  end
+
+  def access_token_generator(values) do
+    "custom_generated-#{values.resource_owner_id}"
   end
 end
