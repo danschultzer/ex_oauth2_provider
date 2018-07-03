@@ -105,16 +105,23 @@ defmodule ExOauth2Provider.OauthAccessTokens do
     end
   end
 
+  @spec get_active_tokens_for(Ecto.Schema.t) :: [%OauthAccessToken{}]
+  @since "0.3.3"
+  @deprecated "Use get_authorized_tokens_for/2 instead"
+  def get_active_tokens_for(resource_owner) do
+    get_authorized_tokens_for(resource_owner)
+  end
+
   @doc """
-  Gets all active tokens for resource owner.
+  Gets all authorized access tokens for resource owner.
 
   ## Examples
 
-      iex> get_active_tokens_for(resource_owner)
+      iex> get_authorized_tokens_for(resource_owner)
       [%OauthAccessToken{}, ...]
   """
-  @spec get_active_tokens_for(Ecto.Schema.t) :: [%OauthAccessToken{}]
-  def get_active_tokens_for(resource_owner) do
+  @spec get_authorized_tokens_for(Ecto.Schema.t) :: [%OauthAccessToken{}]
+  def get_authorized_tokens_for(resource_owner) do
     resource_owner_clause = ExOauth2Provider.Utils.belongs_to_clause(OauthAccessToken, :resource_owner, resource_owner)
 
     OauthAccessToken
