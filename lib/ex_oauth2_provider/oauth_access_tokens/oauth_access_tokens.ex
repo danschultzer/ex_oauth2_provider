@@ -65,7 +65,7 @@ defmodule ExOauth2Provider.OauthAccessTokens do
   end
 
   @doc """
-  Gets the most recent matching access token for a resource owner.
+  Gets the most recent, acccessible, matching access token for a resource owner.
 
   ## Examples
 
@@ -87,8 +87,8 @@ defmodule ExOauth2Provider.OauthAccessTokens do
     |> where([x], is_nil(x.revoked_at))
     |> order_by([x], desc: x.inserted_at)
     |> ExOauth2Provider.repo.all()
+    |> filter_accessible()
     |> check_matching_scopes(scopes)
-    |> check_expiration()
   end
 
   defp check_matching_scopes(tokens, scopes) when is_list(tokens) do
@@ -102,15 +102,6 @@ defmodule ExOauth2Provider.OauthAccessTokens do
     case Scopes.equal?(token_scopes, request_scopes) do
       true -> token
       _    -> nil
-    end
-  end
-
-  defp check_expiration(nil), do: nil
-
-  defp check_expiration(token) do
-    case is_expired?(token) do
-      false -> token
-      _ -> nil
     end
   end
 
@@ -258,6 +249,9 @@ defmodule ExOauth2Provider.OauthAccessTokens do
     |> limit(1)
   end
 
+  defp filter_accessible(access_tokens) when is_list(access_tokens) do
+    Enum.filter(access_tokens, &is_accessible?/1)
+  end
   defp filter_accessible(access_token) do
     case is_accessible?(access_token) do
       true  -> access_token
