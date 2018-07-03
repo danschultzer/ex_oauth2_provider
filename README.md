@@ -89,7 +89,7 @@ Revocation will return `{:ok, %{}}` status even if the token is invalid.
 
 ### Authorization code flow in a Single Page Application
 
-`ex_oauth2_provider` doesn't support **implicit** grant flow. Instead you should set up an application with no client secret, and use the **Authorize code** grant flow. `ex_oauth2_provider` won't require a `client_secret` unless it has been set for the application.
+ExOauth2Provider doesn't support **implicit** grant flow. Instead you should set up an application with no client secret, and use the **Authorize code** grant flow. `client_secret` isn't required unless it has been set for the application.
 
 ### Other supported token grants
 
