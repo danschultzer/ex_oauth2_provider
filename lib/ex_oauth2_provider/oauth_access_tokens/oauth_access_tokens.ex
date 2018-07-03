@@ -86,11 +86,13 @@ defmodule ExOauth2Provider.OauthAccessTokens do
     |> where(^resource_owner_clause)
     |> where([x], is_nil(x.revoked_at))
     |> order_by([x], desc: x.inserted_at)
-    |> limit(1)
-    |> ExOauth2Provider.repo.one()
+    |> ExOauth2Provider.repo.all()
     |> check_matching_scopes(scopes)
   end
 
+  defp check_matching_scopes(tokens, scopes) when is_list(tokens) do
+    Enum.find(tokens, nil, &check_matching_scopes(&1, scopes))
+  end
   defp check_matching_scopes(nil, _), do: nil
   defp check_matching_scopes(token, scopes) do
     token_scopes   = Scopes.to_list(token.scopes)
