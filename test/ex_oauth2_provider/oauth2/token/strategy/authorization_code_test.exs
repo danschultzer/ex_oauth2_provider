@@ -51,6 +51,7 @@ defmodule ExOauth2Provider.Token.Strategy.AuthorizationCodeTest do
     valid_request_no_client_secret = Map.drop(@valid_request, ["client_secret"])
 
     assert {:ok, access_token} = grant(valid_request_no_client_secret)
+    assert access_token.access_token == get_last_access_token().token
     assert get_last_access_token().resource_owner_id == resource_owner.id
     assert get_last_access_token().application_id == application.id
   end
