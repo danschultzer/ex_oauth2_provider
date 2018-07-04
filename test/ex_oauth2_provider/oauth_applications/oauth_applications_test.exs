@@ -1,19 +1,19 @@
 defmodule ExOauth2Provider.OauthApplicationsTest do
   use ExOauth2Provider.TestCase
 
-  alias ExOauth2Provider.Test.Fixture
+  alias ExOauth2Provider.Test.Fixtures
   alias ExOauth2Provider.{OauthAccessTokens, OauthApplications, OauthApplications.OauthApplication}
 
   @valid_attrs    %{name: "Application", redirect_uri: "https://example.org/endpoint"}
   @invalid_attrs  %{}
 
   setup do
-    {:ok, %{user: Fixture.fixture(:user)}}
+    {:ok, %{user: Fixtures.resource_owner()}}
   end
 
   test "get_applications_for/1", %{user: user} do
     assert {:ok, application} = OauthApplications.create_application(user, @valid_attrs)
-    assert {:ok, _application} = OauthApplications.create_application(Fixture.fixture(:user), @valid_attrs)
+    assert {:ok, _application} = OauthApplications.create_application(Fixtures.resource_owner(), @valid_attrs)
 
     assert [%OauthApplication{id: id}] = OauthApplications.get_applications_for(user)
     assert id == application.id
@@ -40,18 +40,18 @@ defmodule ExOauth2Provider.OauthApplicationsTest do
     assert id == application.id
 
     assert_raise Ecto.NoResultsError, fn ->
-      OauthApplications.get_application_for!(Fixture.fixture(:user), application.uid)
+      OauthApplications.get_application_for!(Fixtures.resource_owner(), application.uid)
     end
   end
 
   test "get_authorized_applications_for/1", %{user: user} do
-    application = Fixture.fixture(:application, Fixture.fixture(:user), %{})
-    application2 = Fixture.fixture(:application, Fixture.fixture(:user), %{uid: "newapp"})
+    application = Fixtures.application(Fixtures.resource_owner(), %{})
+    application2 = Fixtures.application(Fixtures.resource_owner(), %{uid: "newapp"})
     assert {:ok, token} = OauthAccessTokens.create_token(user, %{application: application})
     assert {:ok, _token} = OauthAccessTokens.create_token(user, %{application: application2})
 
     assert OauthApplications.get_authorized_applications_for(user) == [application, application2]
-    assert OauthApplications.get_authorized_applications_for(Fixture.fixture(:user)) == []
+    assert OauthApplications.get_authorized_applications_for(Fixtures.resource_owner()) == []
 
     OauthAccessTokens.revoke(token)
     assert OauthApplications.get_authorized_applications_for(user) == [application2]
@@ -166,7 +166,7 @@ defmodule ExOauth2Provider.OauthApplicationsTest do
   end
 
   test "revoke_all_access_tokens_for/2", %{user: user} do
-    application = Fixture.fixture(:application, Fixture.fixture(:user), %{})
+    application = Fixtures.application(Fixtures.resource_owner(), %{})
     {:ok, token} = OauthAccessTokens.create_token(user, %{application: application})
     {:ok, token2} = OauthAccessTokens.create_token(user, %{application: application})
     {:ok, token3} = OauthAccessTokens.create_token(user, %{application: application})

@@ -1,7 +1,7 @@
 defmodule ExOauth2Provider.Token.Strategy.PasswordTest do
   use ExOauth2Provider.TestCase
 
-  alias ExOauth2Provider.Test.{ConfigHelpers, Fixture, QueryHelpers}
+  alias ExOauth2Provider.Test.{ConfigHelpers, Fixtures, QueryHelpers}
   alias ExOauth2Provider.{Config, Token, Token.Password, OauthAccessTokens.OauthAccessToken}
 
   @client_id            "Jf5rM8hQBc"
@@ -24,8 +24,8 @@ defmodule ExOauth2Provider.Token.Strategy.PasswordTest do
                          }
 
   setup do
-    user = Fixture.fixture(:user, %{email: @username})
-    application = Fixture.fixture(:application, Fixture.fixture(:user), %{uid: @client_id, secret: @client_secret, scopes: "app:read app:write"})
+    user = Fixtures.resource_owner(%{email: @username})
+    application = Fixtures.application(Fixtures.resource_owner(), %{uid: @client_id, secret: @client_secret, scopes: "app:read app:write"})
     {:ok, %{user: user, application: application}}
   end
 

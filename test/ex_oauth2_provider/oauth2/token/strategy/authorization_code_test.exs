@@ -1,7 +1,7 @@
 defmodule ExOauth2Provider.Token.Strategy.AuthorizationCodeTest do
   use ExOauth2Provider.TestCase
 
-  alias ExOauth2Provider.Test.{ConfigHelpers, Fixture, QueryHelpers}
+  alias ExOauth2Provider.Test.{ConfigHelpers, Fixtures, QueryHelpers}
   alias ExOauth2Provider.{Token, Token.AuthorizationCode, OauthAccessTokens.OauthAccessToken}
 
   @client_id          "Jf5rM8hQBc"
@@ -22,13 +22,13 @@ defmodule ExOauth2Provider.Token.Strategy.AuthorizationCodeTest do
                         }
 
   setup do
-    resource_owner = Fixture.fixture(:user)
-    application = Fixture.fixture(:application, Fixture.fixture(:user), %{uid: @client_id, secret: @client_secret})
+    resource_owner = Fixtures.resource_owner()
+    application = Fixtures.application(Fixtures.resource_owner(), %{uid: @client_id, secret: @client_secret})
     {:ok, %{resource_owner: resource_owner, application: application}}
   end
 
   setup %{resource_owner: resource_owner, application: application} do
-    access_grant = Fixture.fixture(:access_grant, application, resource_owner, @code, @redirect_uri)
+    access_grant = Fixtures.access_grant(application, resource_owner, @code, @redirect_uri)
     {:ok, %{resource_owner: resource_owner, application: application, access_grant: access_grant}}
   end
 
@@ -82,7 +82,7 @@ defmodule ExOauth2Provider.Token.Strategy.AuthorizationCodeTest do
 
   test "#grant/1 doesn't duplicate access token", %{resource_owner: resource_owner, application: application} do
     assert {:ok, body} = Token.grant(@valid_request)
-    access_grant = Fixture.fixture(:access_grant, application, resource_owner, "new_code", @redirect_uri)
+    access_grant = Fixtures.access_grant(application, resource_owner, "new_code", @redirect_uri)
     valid_request = Map.merge(@valid_request, %{"code" => access_grant.token})
     assert {:ok, body2} = Token.grant(valid_request)
 
@@ -108,7 +108,7 @@ defmodule ExOauth2Provider.Token.Strategy.AuthorizationCodeTest do
   end
 
   test "#grant/1 error when grant owned by another client", %{access_grant: access_grant} do
-    new_application = Fixture.fixture(:application, Fixture.fixture(:user), %{uid: "new_app"})
+    new_application = Fixtures.application(Fixtures.resource_owner(), %{uid: "new_app"})
     QueryHelpers.change!(access_grant, application_id: new_application.id)
 
     assert Token.grant(@valid_request) == {:error, @invalid_grant, :unprocessable_entity}

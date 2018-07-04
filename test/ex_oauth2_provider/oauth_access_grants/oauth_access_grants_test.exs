@@ -1,14 +1,14 @@
 defmodule ExOauth2Provider.OauthAccessGrantTest do
   use ExOauth2Provider.TestCase
 
-  alias ExOauth2Provider.Test.Fixture
+  alias ExOauth2Provider.Test.Fixtures
   alias ExOauth2Provider.{OauthAccessGrants, OauthAccessGrants.OauthAccessGrant}
 
   @valid_attrs %{expires_in: 600, redirect_uri: "https://example.org/endpoint"}
 
   setup do
-    user = Fixture.fixture(:user)
-    {:ok, %{user: user, application: Fixture.fixture(:application, user, %{scopes: "public read"})}}
+    user = Fixtures.resource_owner()
+    {:ok, %{user: user, application: Fixtures.application(user, %{scopes: "public read"})}}
   end
 
   test "get_valid_grant/2", %{user: user, application: application} do
@@ -17,7 +17,7 @@ defmodule ExOauth2Provider.OauthAccessGrantTest do
     assert %OauthAccessGrants.OauthAccessGrant{id: id} = OauthAccessGrants.get_active_grant_for(application, grant.token)
     assert id == grant.id
 
-    different_application = Fixture.fixture(:application, user, %{uid: "2"})
+    different_application = Fixtures.application(user, %{uid: "2"})
     refute OauthAccessGrants.get_active_grant_for(different_application, grant.token)
   end
 

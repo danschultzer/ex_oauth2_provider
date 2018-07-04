@@ -1,7 +1,7 @@
 defmodule ExOauth2Provider.AuthorizationTest do
   use ExOauth2Provider.TestCase
 
-  alias ExOauth2Provider.Test.{Fixture, QueryHelpers}
+  alias ExOauth2Provider.Test.{Fixtures, QueryHelpers}
   alias ExOauth2Provider.Authorization
 
   @client_id              "Jf5rM8hQBc"
@@ -15,8 +15,8 @@ defmodule ExOauth2Provider.AuthorizationTest do
                           }
 
   setup do
-    user = Fixture.fixture(:user)
-    application = Fixture.fixture(:application, user, %{uid: @client_id, secret: @client_secret})
+    user = Fixtures.resource_owner()
+    application = Fixtures.application(user, %{uid: @client_id, secret: @client_secret})
     {:ok, %{resource_owner: user, application: application}}
   end
 

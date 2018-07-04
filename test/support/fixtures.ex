@@ -1,24 +1,20 @@
-defmodule ExOauth2Provider.Test.Fixture do
+defmodule ExOauth2Provider.Test.Fixtures do
   @moduledoc false
 
-  alias ExOauth2Provider.OauthApplications
-  alias ExOauth2Provider.OauthAccessTokens
-  alias ExOauth2Provider.OauthAccessGrants
   alias ExOauth2Provider.Test.Repo
+  alias ExOauth2Provider.{OauthApplications.OauthApplication, OauthAccessGrants.OauthAccessGrant, OauthAccessTokens}
 
   @resource_owner ExOauth2Provider.Config.resource_owner_struct(:module)
 
-  def fixture(:user, attrs \\ %{}) do
-    {:ok, user} = %@resource_owner{}
+  def resource_owner(attrs \\ %{}) do
+    %@resource_owner{}
     |> Map.merge(%{email: "foo@example.com"})
     |> Map.merge(attrs)
-    |> Repo.insert
-
-    user
+    |> Repo.insert!()
   end
 
-  def fixture(:application, user, %{} = attrs) do
-    {:ok, application} = %OauthApplications.OauthApplication{}
+  def application(user, attrs \\ %{}) do
+    %OauthApplication{}
     |> Map.merge(%{uid: "test",
                    secret: "secret",
                    name: "OAuth Application",
@@ -26,20 +22,17 @@ defmodule ExOauth2Provider.Test.Fixture do
                    scopes: "public read write"})
     |> Map.merge(attrs)
     |> Map.merge(%{owner_id: user.id})
-    |> Repo.insert
-
-    application
+    |> Repo.insert!()
   end
 
-  def fixture(:access_token, resource_owner, %{} = params) do
-    {:ok, access_token} = resource_owner
-    |> OauthAccessTokens.create_token(params)
+  def access_token(resource_owner, params \\ %{}) do
+    {:ok, access_token} = OauthAccessTokens.create_token(resource_owner, params)
 
     access_token
   end
 
-  def fixture(:access_grant, application, user, code, redirect_uri) do
-    {:ok, grant} = %OauthAccessGrants.OauthAccessGrant{}
+  def access_grant(application, user, code, redirect_uri) do
+    %OauthAccessGrant{}
     |> Map.merge(%{expires_in: 900,
                    redirect_uri: "urn:ietf:wg:oauth:2.0:oob"})
     |> Map.merge(%{application_id: application.id,
@@ -47,9 +40,7 @@ defmodule ExOauth2Provider.Test.Fixture do
                    token: code,
                    scopes: "read",
                    redirect_uri: redirect_uri})
-    |> Repo.insert
-
-    grant
+    |> Repo.insert!()
   end
 
   @doc false

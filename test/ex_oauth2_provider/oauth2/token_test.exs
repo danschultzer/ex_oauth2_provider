@@ -1,14 +1,14 @@
 defmodule ExOauth2Provider.TokenTest do
   use ExOauth2Provider.TestCase
 
-  alias ExOauth2Provider.Test.Fixture
+  alias ExOauth2Provider.Test.Fixtures
   alias ExOauth2Provider.Token
 
   @client_id          "Jf5rM8hQBc"
   @client_secret      "secret"
 
   setup do
-    application = Fixture.fixture(:application, Fixture.fixture(:user), %{})
+    application = Fixtures.application(Fixtures.resource_owner(), %{})
     {:ok, %{application: application}}
   end
 

@@ -3,14 +3,14 @@ defmodule ExOauth2Provider.Plug.VerifyHeaderTest do
   use ExOauth2Provider.TestCase
   use Plug.Test
 
-  alias ExOauth2Provider.Test.{Fixture, PlugHelpers}
+  alias ExOauth2Provider.Test.{Fixtures, PlugHelpers}
   alias ExOauth2Provider.{Plug, Plug.VerifyHeader}
 
   setup do
     {
       :ok,
       conn: conn(:get, "/"),
-      access_token: Fixture.fixture(:access_token, Fixture.fixture(:user), %{})
+      access_token: Fixtures.access_token(Fixtures.resource_owner(), %{})
     }
   end
 
@@ -54,7 +54,7 @@ defmodule ExOauth2Provider.Plug.VerifyHeaderTest do
   end
 
   test "with a realm specified and multiple auth headers", context do
-    another_access_token = Fixture.fixture(:access_token, Fixture.fixture(:user), %{})
+    another_access_token = Fixtures.access_token(Fixtures.resource_owner(), %{})
 
     conn = context.conn
            |> put_req_header("authorization", "Bearer #{context.access_token.token}")
@@ -66,7 +66,7 @@ defmodule ExOauth2Provider.Plug.VerifyHeaderTest do
   end
 
   test "pulls different tokens into different locations", context do
-    another_access_token = Fixture.fixture(:access_token, Fixture.fixture(:user), %{})
+    another_access_token = Fixtures.access_token(Fixtures.resource_owner(), %{})
 
     # Can't use the put_req_header here since it overrides previous values
     the_conn = %{context.conn | req_headers: [

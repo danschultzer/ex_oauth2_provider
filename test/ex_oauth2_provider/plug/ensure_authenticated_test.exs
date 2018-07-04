@@ -3,7 +3,7 @@ defmodule ExOauth2Provider.Plug.EnsureAuthenticatedTest do
   use ExOauth2Provider.TestCase
   use Plug.Test
 
-  alias ExOauth2Provider.Test.{Fixture, PlugHelpers}
+  alias ExOauth2Provider.Test.{Fixtures, PlugHelpers}
   alias Plug.Conn
   alias ExOauth2Provider.{Plug, Plug.EnsureAuthenticated, Plug.ErrorHandler}
 
@@ -18,8 +18,8 @@ defmodule ExOauth2Provider.Plug.EnsureAuthenticatedTest do
   end
 
   setup do
-    application = Fixture.fixture(:application, Fixture.fixture(:user), %{scopes: "app:read app:write"})
-    access_token = Fixture.fixture(:access_token, Fixture.fixture(:user), %{application: application, scopes: "app:read"})
+    application = Fixtures.application(Fixtures.resource_owner(), %{scopes: "app:read app:write"})
+    access_token = Fixtures.access_token(Fixtures.resource_owner(), %{application: application, scopes: "app:read"})
     {
       :ok,
       conn: conn(:get, "/foo"),

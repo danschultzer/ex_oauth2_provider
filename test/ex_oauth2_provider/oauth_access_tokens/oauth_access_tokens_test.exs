@@ -1,12 +1,12 @@
 defmodule ExOauth2Provider.OauthAccessTokensTest do
   use ExOauth2Provider.TestCase
 
-  alias ExOauth2Provider.Test.{ConfigHelpers, Fixture}
+  alias ExOauth2Provider.Test.{ConfigHelpers, Fixtures}
   alias ExOauth2Provider.{OauthAccessTokens, OauthAccessTokens.OauthAccessToken}
 
   setup do
-    user = Fixture.fixture(:user)
-    {:ok, %{user: user, application: Fixture.fixture(:application, user, %{})}}
+    user = Fixtures.resource_owner()
+    {:ok, %{user: user, application: Fixtures.application(user, %{})}}
   end
 
   test "get_by_token/1", %{user: user} do
@@ -32,7 +32,7 @@ defmodule ExOauth2Provider.OauthAccessTokensTest do
 
     refute OauthAccessTokens.get_by_previous_refresh_token_for(old_access_token)
 
-    {:ok, new_access_token_different_user} = OauthAccessTokens.create_token(Fixture.fixture(:user), %{use_refresh_token: true, previous_refresh_token: old_access_token})
+    {:ok, new_access_token_different_user} = OauthAccessTokens.create_token(Fixtures.resource_owner(), %{use_refresh_token: true, previous_refresh_token: old_access_token})
 
     refute OauthAccessTokens.get_by_previous_refresh_token_for(new_access_token_different_user)
   end
@@ -46,10 +46,10 @@ defmodule ExOauth2Provider.OauthAccessTokensTest do
 
     refute OauthAccessTokens.get_by_previous_refresh_token_for(old_access_token)
 
-    {:ok, new_access_token_different_user} = OauthAccessTokens.create_token(Fixture.fixture(:user), %{application: application, use_refresh_token: true, previous_refresh_token: old_access_token})
+    {:ok, new_access_token_different_user} = OauthAccessTokens.create_token(Fixtures.resource_owner(), %{application: application, use_refresh_token: true, previous_refresh_token: old_access_token})
     refute OauthAccessTokens.get_by_previous_refresh_token_for(new_access_token_different_user)
 
-    new_application = Fixture.fixture(:application, user, %{uid: "new_app"})
+    new_application = Fixtures.application(user, %{uid: "new_app"})
     {:ok, new_access_token_different_app} = OauthAccessTokens.create_token(user, %{application: new_application, use_refresh_token: true, previous_refresh_token: old_access_token})
 
     refute OauthAccessTokens.get_by_previous_refresh_token_for(new_access_token_different_app)
@@ -75,7 +75,7 @@ defmodule ExOauth2Provider.OauthAccessTokensTest do
   test "get_matching_token_for/1 with different resource owner", %{user: user, application: application} do
     {:ok, _access_token} = OauthAccessTokens.create_token(user, %{application: application})
 
-    refute OauthAccessTokens.get_matching_token_for(Fixture.fixture(:user), application, nil)
+    refute OauthAccessTokens.get_matching_token_for(Fixtures.resource_owner(), application, nil)
   end
 
   test "get_matching_token_for/1 with scope", %{user: user, application: application} do
@@ -116,7 +116,7 @@ defmodule ExOauth2Provider.OauthAccessTokensTest do
     OauthAccessTokens.revoke(access_token)
     assert OauthAccessTokens.get_authorized_tokens_for(user) == []
 
-    assert OauthAccessTokens.get_authorized_tokens_for(Fixture.fixture(:user)) == []
+    assert OauthAccessTokens.get_authorized_tokens_for(Fixtures.resource_owner()) == []
   end
 
   test "create_token/2 with valid attributes", %{user: user} do
@@ -271,7 +271,7 @@ defmodule ExOauth2Provider.OauthAccessTokensTest do
   test "get_or_create_token/2 creates token when params are different", %{user: user} do
     {:ok, access_token} = OauthAccessTokens.get_or_create_token(user, nil, nil, %{})
 
-    {:ok, access_token2} = OauthAccessTokens.get_or_create_token(Fixture.fixture(:user), nil, nil, %{})
+    {:ok, access_token2} = OauthAccessTokens.get_or_create_token(Fixtures.resource_owner(), nil, nil, %{})
     assert access_token2.id != access_token.id
 
     application_id = (if System.get_env("UUID") == "all", do: "09b58e2b-8fff-4b8d-ba94-18a06dd4fc29", else: 0)

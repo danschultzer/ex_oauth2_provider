@@ -1,7 +1,7 @@
 defmodule ExOauth2Provider.Token.Strategy.ClientCredentialsTest do
   use ExOauth2Provider.TestCase
 
-  alias ExOauth2Provider.Test.{Fixture, QueryHelpers}
+  alias ExOauth2Provider.Test.{Fixtures, QueryHelpers}
   alias ExOauth2Provider.{Token, OauthAccessTokens.OauthAccessToken}
 
   @client_id            "Jf5rM8hQBc"
@@ -15,7 +15,7 @@ defmodule ExOauth2Provider.Token.Strategy.ClientCredentialsTest do
                         }
 
   setup do
-    application = Fixture.fixture(:application, Fixture.fixture(:user), %{uid: @client_id, secret: @client_secret, scopes: "app:read app:write"})
+    application = Fixtures.application(Fixtures.resource_owner(), %{uid: @client_id, secret: @client_secret, scopes: "app:read app:write"})
     {:ok, %{application: application}}
   end
 

@@ -1,7 +1,7 @@
 defmodule ExOauth2Provider.Token.Strategy.RevokeTest do
   use ExOauth2Provider.TestCase
 
-  alias ExOauth2Provider.Test.{Fixture, QueryHelpers}
+  alias ExOauth2Provider.Test.{Fixtures, QueryHelpers}
   alias ExOauth2Provider.{OauthAccessTokens, Token, OauthAccessTokens.OauthAccessToken}
 
   @client_id            "Jf5rM8hQBc"
@@ -11,9 +11,9 @@ defmodule ExOauth2Provider.Token.Strategy.RevokeTest do
                          }
 
   setup do
-    user = Fixture.fixture(:user)
-    application = Fixture.fixture(:application, user, %{uid: @client_id, secret: @client_secret, scopes: "app:read app:write"})
-    access_token = Fixture.fixture(:access_token, user, %{application: application, use_refresh_token: true, scopes: "app:read"})
+    user = Fixtures.resource_owner()
+    application = Fixtures.application(user, %{uid: @client_id, secret: @client_secret, scopes: "app:read app:write"})
+    access_token = Fixtures.access_token(user, %{application: application, use_refresh_token: true, scopes: "app:read"})
 
     valid_request = %{"client_id" => @client_id,
                       "client_secret" => @client_secret,
@@ -48,7 +48,7 @@ defmodule ExOauth2Provider.Token.Strategy.RevokeTest do
   end
 
   test "#revoke/1 when access token owned by another client", %{valid_request: valid_request, access_token: access_token} do
-    new_application = Fixture.fixture(:application, Fixture.fixture(:user), %{uid: "new_app", client_secret: "new"})
+    new_application = Fixtures.application(Fixtures.resource_owner(), %{uid: "new_app", client_secret: "new"})
     QueryHelpers.change!(access_token, application_id: new_application.id)
 
     assert Token.revoke(valid_request) == {:ok, %{}}
