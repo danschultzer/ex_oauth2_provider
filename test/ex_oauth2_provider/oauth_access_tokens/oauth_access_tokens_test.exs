@@ -313,6 +313,10 @@ defmodule ExOauth2Provider.OauthAccessTokensTest do
     assert OauthAccessTokens.is_accessible?(token)
   end
 
+  test "is_accessible?/1#false when nil" do
+    refute OauthAccessTokens.is_accessible?(nil)
+  end
+
   defp update(token, changes) do
     token
     |> Ecto.Changeset.change(changes)
