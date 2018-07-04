@@ -2,8 +2,9 @@ defmodule ExOauth2Provider.Token do
   @moduledoc """
   Handler for dealing with generating access tokens.
   """
-  alias ExOauth2Provider.Token.Revoke
-  alias ExOauth2Provider.Utils.Error
+  alias ExOauth2Provider.{Config,
+                          Token.Revoke,
+                          Utils.Error}
   alias Ecto.Schema
 
   @doc """
@@ -44,7 +45,7 @@ defmodule ExOauth2Provider.Token do
   def revoke(request), do: Revoke.revoke(request)
 
   defp validate_grant_type(%{"grant_type" => grant_type}) do
-    ExOauth2Provider.Config.calculate_token_grant_types()
+    Config.calculate_token_grant_types()
     |> Keyword.fetch(String.to_atom(grant_type))
     |> case do
       {:ok, token_module} -> {:ok, token_module}

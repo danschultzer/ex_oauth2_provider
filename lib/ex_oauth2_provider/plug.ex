@@ -72,6 +72,6 @@ defmodule ExOauth2Provider.Plug do
   @doc false
   @spec set_current_access_token(Conn.t(), OauthAccessToken.t(), atom()) :: Conn.t()
   def set_current_access_token(conn, access_token, the_key \\ :default) do
-    Plug.Conn.put_private(conn, access_token_key(the_key), access_token)
+    Conn.put_private(conn, access_token_key(the_key), access_token)
   end
 end

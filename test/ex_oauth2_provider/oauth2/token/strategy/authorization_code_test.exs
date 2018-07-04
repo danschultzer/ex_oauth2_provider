@@ -2,7 +2,7 @@ defmodule ExOauth2Provider.Token.Strategy.AuthorizationCodeTest do
   use ExOauth2Provider.TestCase
 
   alias ExOauth2Provider.Test.{ConfigHelpers, Fixtures, QueryHelpers}
-  alias ExOauth2Provider.{Token, Token.AuthorizationCode, OauthAccessTokens.OauthAccessToken}
+  alias ExOauth2Provider.{Config, Token, Token.AuthorizationCode, OauthAccessGrants, OauthAccessTokens.OauthAccessToken}
 
   @client_id          "Jf5rM8hQBc"
   @client_secret      "secret"
@@ -40,12 +40,12 @@ defmodule ExOauth2Provider.Token.Strategy.AuthorizationCodeTest do
     assert access_token.resource_owner_id == resource_owner.id
     assert access_token.application_id == application.id
     assert access_token.scopes == access_grant.scopes
-    assert access_token.expires_in == ExOauth2Provider.Config.access_token_expires_in()
+    assert access_token.expires_in == Config.access_token_expires_in()
     refute is_nil(access_token.refresh_token)
   end
 
   test "#grant/1 returns access token when client secret not required", %{resource_owner: resource_owner, application: application} do
-    application |> Ecto.Changeset.change(secret: "") |> ExOauth2Provider.repo.update!()
+    QueryHelpers.change!(application, secret: "")
     valid_request_no_client_secret = Map.drop(@valid_request, ["client_secret"])
 
     assert {:ok, body} = Token.grant(valid_request_no_client_secret)
@@ -128,7 +128,7 @@ defmodule ExOauth2Provider.Token.Strategy.AuthorizationCodeTest do
   end
 
   test "#grant/1 error when grant revoked", %{access_grant: access_grant} do
-    ExOauth2Provider.OauthAccessGrants.revoke(access_grant)
+    OauthAccessGrants.revoke(access_grant)
 
     assert Token.grant(@valid_request) == {:error, @invalid_grant, :unprocessable_entity}
   end

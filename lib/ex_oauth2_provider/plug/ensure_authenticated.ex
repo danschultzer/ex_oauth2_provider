@@ -20,6 +20,7 @@ defmodule ExOauth2Provider.Plug.EnsureAuthenticated do
   """
   import Plug.Conn
   alias Plug.Conn
+  alias ExOauth2Provider.Plug
 
   @doc false
   @spec init(Keyword.t) :: map()
@@ -44,7 +45,7 @@ defmodule ExOauth2Provider.Plug.EnsureAuthenticated do
   @doc false
   @spec get_authentication(Conn.t(), atom(), map()) :: {Conn.t(), {:ok, binary()} | {:error, term()}}
   defp get_authentication(conn, key, opts),
-    do: {conn, ExOauth2Provider.Plug.get_current_access_token(conn, key), opts}
+    do: {conn, Plug.get_current_access_token(conn, key), opts}
 
   @doc false
   defp handle_authentication({conn, {:ok, _}, _}), do: conn
@@ -52,7 +53,7 @@ defmodule ExOauth2Provider.Plug.EnsureAuthenticated do
     do: handle_error(conn, reason, opts)
 
   @doc false
-  defp handle_error(%Plug.Conn{params: params} = conn, reason, opts) do
+  defp handle_error(%Conn{params: params} = conn, reason, opts) do
     conn = conn |> assign(:ex_oauth2_provider_failure, reason) |> halt
     params = Map.merge(params, %{reason: reason})
     {module, method} = Map.get(opts, :handler)

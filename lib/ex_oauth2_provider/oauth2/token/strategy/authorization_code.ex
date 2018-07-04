@@ -2,12 +2,13 @@ defmodule ExOauth2Provider.Token.AuthorizationCode do
   @moduledoc """
   Functions for dealing with authorization code strategy.
   """
-  alias ExOauth2Provider.OauthAccessGrants
-  alias ExOauth2Provider.OauthAccessGrants.OauthAccessGrant
-  alias ExOauth2Provider.Token.Utils
-  alias ExOauth2Provider.Token.Utils.Response
-  alias ExOauth2Provider.Utils.Error
-  alias ExOauth2Provider.OauthAccessTokens
+  alias ExOauth2Provider.{Config,
+                          OauthAccessGrants,
+                          OauthAccessGrants.OauthAccessGrant,
+                          Token.Utils,
+                          Token.Utils.Response,
+                          Utils.Error,
+                          OauthAccessTokens}
 
   @doc """
   Will grant access token by client credentials.
@@ -37,7 +38,7 @@ defmodule ExOauth2Provider.Token.AuthorizationCode do
 
   defp issue_access_token_by_grant(%{error: _} = params), do: params
   defp issue_access_token_by_grant(%{access_grant: access_grant, request: _} = params) do
-    token_params = %{use_refresh_token: ExOauth2Provider.Config.use_refresh_token?()}
+    token_params = %{use_refresh_token: Config.use_refresh_token?()}
 
     result = ExOauth2Provider.repo.transaction(fn ->
       access_grant

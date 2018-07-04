@@ -3,6 +3,7 @@ defmodule ExOauth2Provider.Plug.ErrorHandlerTest do
   use ExUnit.Case, async: true
   use Plug.Test
 
+  alias Plug.Conn.Utils
   alias ExOauth2Provider.Plug.ErrorHandler
 
   setup do
@@ -86,7 +87,7 @@ defmodule ExOauth2Provider.Plug.ErrorHandlerTest do
   defp content_type(headers) do
     {:ok, type, subtype, _params} = headers
                                     |> header_value("content-type")
-                                    |> Plug.Conn.Utils.content_type
+                                    |> Utils.content_type
     "#{type}/#{subtype}"
   end
 
@@ -94,6 +95,6 @@ defmodule ExOauth2Provider.Plug.ErrorHandlerTest do
     headers
     |> Enum.filter(fn({k, _}) -> k == key end)
     |> Enum.map(fn({_, v}) -> v end)
-    |> List.first
+    |> List.first()
   end
 end

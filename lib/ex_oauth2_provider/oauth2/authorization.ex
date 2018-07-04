@@ -2,9 +2,10 @@ defmodule ExOauth2Provider.Authorization do
   @moduledoc """
   Handler for dealing with generating access grants.
   """
-  alias ExOauth2Provider.Utils.Error
-  alias ExOauth2Provider.Authorization.Utils
-  alias ExOauth2Provider.Authorization.Utils.Response
+  alias ExOauth2Provider.{Config,
+                          Utils.Error,
+                          Authorization.Utils,
+                          Authorization.Utils.Response}
   alias Ecto.Schema
 
   @doc """
@@ -64,7 +65,7 @@ defmodule ExOauth2Provider.Authorization do
   end
 
   defp validate_response_type(%{"response_type" => response_type}) do
-    ExOauth2Provider.Config.calculate_authorization_response_types()
+    Config.calculate_authorization_response_types()
     |> Keyword.fetch(String.to_atom(response_type))
     |> case do
       {:ok, authorization_module} -> {:ok, authorization_module}

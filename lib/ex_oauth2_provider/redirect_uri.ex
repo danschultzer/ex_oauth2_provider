@@ -2,7 +2,8 @@ defmodule ExOauth2Provider.RedirectURI do
   @moduledoc """
   Functions for dealing with redirect uri.
   """
-  import ExOauth2Provider.Utils
+  alias ExOauth2Provider.Utils
+  alias ExOauth2Provider.Config
 
   @doc """
   Validates if a url can be used as a redirect_uri
@@ -71,7 +72,7 @@ defmodule ExOauth2Provider.RedirectURI do
   """
   @spec native_redirect_uri?(binary()) :: boolean()
   def native_redirect_uri?(url) do
-    ExOauth2Provider.Config.native_redirect_uri == url
+    Config.native_redirect_uri == url
   end
 
   @doc """
@@ -89,11 +90,11 @@ defmodule ExOauth2Provider.RedirectURI do
   defp add_query_params(query, attrs) do
     (query || "")
     |> URI.decode_query(attrs)
-    |> remove_empty_values()
+    |> Utils.remove_empty_values()
     |> URI.encode_query()
   end
 
   defp invalid_ssl_uri?(uri) do
-    ExOauth2Provider.Config.force_ssl_in_redirect_uri?() and uri.scheme == "http"
+    Config.force_ssl_in_redirect_uri?() and uri.scheme == "http"
   end
 end

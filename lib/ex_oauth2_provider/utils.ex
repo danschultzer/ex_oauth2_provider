@@ -2,6 +2,7 @@ defmodule ExOauth2Provider.Utils do
   @moduledoc false
 
   alias Ecto.Schema
+  alias ExOauth2Provider.Utils
 
   @doc false
   @spec remove_empty_values(map()) :: map()
@@ -21,7 +22,7 @@ defmodule ExOauth2Provider.Utils do
 
   @spec belongs_to_clause(Schema, atom(), Schema.t()) :: Keyword.t()
   def belongs_to_clause(module, association, struct) do
-    %{owner_key: owner_key, related_key: related_key} = ExOauth2Provider.Utils.schema_association(module, association)
+    %{owner_key: owner_key, related_key: related_key} = Utils.schema_association(module, association)
     value = Map.get(struct, related_key)
     Keyword.new([{owner_key, value}])
   end

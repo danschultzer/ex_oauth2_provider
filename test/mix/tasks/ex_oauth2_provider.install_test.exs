@@ -3,6 +3,7 @@ defmodule Mix.Tasks.ExOauth2Provider.InstallTest do
 
   alias Mix.Tasks.ExOauth2Provider.Install
   alias ExOauth2Provider.Test.FileHelpers
+  alias Mix.Tasks.Ecto.Gen.Migration
 
   defmodule Repo do
     def __adapter__ do
@@ -101,7 +102,7 @@ defmodule Mix.Tasks.ExOauth2Provider.InstallTest do
   end
 
   test "doesn't make duplicate timestamp migrations" do
-    Mix.Tasks.Ecto.Gen.Migration.run(["test"] ++ @options)
+    Migration.run(["test"] ++ @options)
     Install.run(@options)
 
     assert [test_migration, migration_file] = @migrations_path |> File.ls!() |> Enum.sort()

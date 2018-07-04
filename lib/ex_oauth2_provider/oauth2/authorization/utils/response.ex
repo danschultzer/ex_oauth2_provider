@@ -1,11 +1,8 @@
 defmodule ExOauth2Provider.Authorization.Utils.Response do
   @moduledoc false
 
-  alias ExOauth2Provider.RedirectURI
-  alias ExOauth2Provider.Scopes
+  alias ExOauth2Provider.{RedirectURI, Scopes, Utils}
   alias Ecto.Schema
-
-  import ExOauth2Provider.Utils
 
   @doc false
   @spec error_response(map()) :: {:error, map(), integer()} |
@@ -54,7 +51,7 @@ defmodule ExOauth2Provider.Authorization.Utils.Response do
       state ->
         %{"state" => state}
         |> Map.merge(payload)
-        |> remove_empty_values()
+        |> Utils.remove_empty_values()
     end
   end
 

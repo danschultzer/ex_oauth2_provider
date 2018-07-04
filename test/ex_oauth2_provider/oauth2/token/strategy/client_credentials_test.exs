@@ -2,7 +2,7 @@ defmodule ExOauth2Provider.Token.Strategy.ClientCredentialsTest do
   use ExOauth2Provider.TestCase
 
   alias ExOauth2Provider.Test.{Fixtures, QueryHelpers}
-  alias ExOauth2Provider.{Token, OauthAccessTokens.OauthAccessToken}
+  alias ExOauth2Provider.{Config, Token, OauthAccessTokens.OauthAccessToken}
 
   @client_id            "Jf5rM8hQBc"
   @client_secret        "secret"
@@ -39,7 +39,7 @@ defmodule ExOauth2Provider.Token.Strategy.ClientCredentialsTest do
     assert is_nil(access_token.resource_owner_id)
     assert access_token.application_id == application.id
     assert access_token.scopes == "app:read"
-    assert access_token.expires_in == ExOauth2Provider.Config.access_token_expires_in()
+    assert access_token.expires_in == Config.access_token_expires_in()
 
     # MUST NOT have refresh token
     assert access_token.refresh_token == nil

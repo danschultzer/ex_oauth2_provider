@@ -7,8 +7,9 @@ defmodule ExOauth2Provider.OauthAccessGrants do
   use ExOauth2Provider.Mixin.Expirable
   use ExOauth2Provider.Mixin.Revocable
   use ExOauth2Provider.Mixin.Scopes
-  alias ExOauth2Provider.OauthApplications.OauthApplication
-  alias ExOauth2Provider.OauthAccessGrants.OauthAccessGrant
+  alias ExOauth2Provider.{OauthApplications.OauthApplication,
+                          OauthAccessGrants.OauthAccessGrant,
+                          Utils}
 
   @doc """
   Gets a single access grant registered with an application.
@@ -25,7 +26,7 @@ defmodule ExOauth2Provider.OauthAccessGrants do
   @spec get_active_grant_for(OauthApplication.t(), binary()) :: OauthAccessGrant.t() | nil
   def get_active_grant_for(application, token) do
     clauses = OauthAccessGrant
-    |> ExOauth2Provider.Utils.belongs_to_clause(:application, application)
+    |> Utils.belongs_to_clause(:application, application)
     |> Keyword.put(:token, token)
 
     OauthAccessGrant
@@ -66,6 +67,6 @@ defmodule ExOauth2Provider.OauthAccessGrants do
   end
 
   defp put_token(changeset) do
-    put_change(changeset, :token, ExOauth2Provider.Utils.generate_token)
+    put_change(changeset, :token, Utils.generate_token())
   end
 end

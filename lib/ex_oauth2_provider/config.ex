@@ -1,7 +1,7 @@
 defmodule ExOauth2Provider.Config do
   @moduledoc false
 
-  defp config() do
+  defp config do
     ExOauth2Provider.config()
   end
 

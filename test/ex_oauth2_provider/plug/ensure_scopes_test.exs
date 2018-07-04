@@ -3,16 +3,17 @@ defmodule ExOauth2Provider.Plug.EnsureScopeTest do
   use ExOauth2Provider.TestCase
   use Plug.Test
 
+  alias Plug.Conn
   alias ExOauth2Provider.Test.PlugHelpers
-  alias ExOauth2Provider.Plug.EnsureScopes
+  alias ExOauth2Provider.{Plug, Plug.EnsureScopes, Plug.ErrorHandler}
 
   defmodule TestHandler do
     @moduledoc false
 
     def unauthorized(conn, _) do
       conn
-      |> Plug.Conn.assign(:ex_oauth2_provider_spec, :forbidden)
-      |> Plug.Conn.send_resp(401, "Unauthorized")
+      |> Conn.assign(:ex_oauth2_provider_spec, :forbidden)
+      |> Conn.send_resp(401, "Unauthorized")
     end
   end
 
@@ -38,7 +39,7 @@ defmodule ExOauth2Provider.Plug.EnsureScopeTest do
   test "init/1 defaults the handler option to ExOauth2Provider.Plug.ErrorHandler" do
     %{handler: handler_opts} = EnsureScopes.init(%{})
 
-    assert handler_opts == {ExOauth2Provider.Plug.ErrorHandler, :unauthorized}
+    assert handler_opts == {ErrorHandler, :unauthorized}
   end
 
   test "is valid when there's no scopes", %{conn: conn, access_token: access_token} do
@@ -102,8 +103,8 @@ defmodule ExOauth2Provider.Plug.EnsureScopeTest do
 
   defp run_ensure_scopes_plug(conn, access_token, args) do
     conn
-    |> ExOauth2Provider.Plug.set_current_access_token({:ok, access_token})
-    |> Plug.Conn.fetch_query_params()
+    |> Plug.set_current_access_token({:ok, access_token})
+    |> Conn.fetch_query_params()
     |> PlugHelpers.run_plug(EnsureScopes, Keyword.merge([handler: TestHandler], args))
   end
 end

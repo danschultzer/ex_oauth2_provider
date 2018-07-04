@@ -2,11 +2,12 @@ defmodule ExOauth2Provider.Token.Password do
   @moduledoc """
   Functions for dealing with refresh token strategy.
   """
-  alias ExOauth2Provider.Utils.Error
-  alias ExOauth2Provider.Token.Utils
-  alias ExOauth2Provider.Token.Utils.Response
-  alias ExOauth2Provider.Scopes
-  alias ExOauth2Provider.OauthAccessTokens
+  alias ExOauth2Provider.{Config,
+                          Utils.Error,
+                          Token.Utils,
+                          Token.Utils.Response,
+                          Scopes,
+                          OauthAccessTokens}
 
   @doc """
   Will grant access token by password authentication.
@@ -26,7 +27,7 @@ defmodule ExOauth2Provider.Token.Password do
   @spec grant(map()) :: {:ok, map()} | {:error, map(), atom()}
   def grant(%{"grant_type" => "password"} = request) do
     %{request: request}
-    |> get_password_auth_method(ExOauth2Provider.Config.password_auth)
+    |> get_password_auth_method(Config.password_auth)
     |> load_resource_owner()
     |> Utils.load_client()
     |> set_defaults()
@@ -56,7 +57,7 @@ defmodule ExOauth2Provider.Token.Password do
 
   defp issue_access_token(%{error: _} = params), do: params
   defp issue_access_token(%{client: client, resource_owner: resource_owner, request: request} = params) do
-    token_params = %{use_refresh_token: ExOauth2Provider.Config.use_refresh_token?()}
+    token_params = %{use_refresh_token: Config.use_refresh_token?()}
 
     case OauthAccessTokens.get_or_create_token(resource_owner, client, request["scope"], token_params) do
       {:ok, access_token} -> Map.merge(params, %{access_token: access_token})

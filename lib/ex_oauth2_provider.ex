@@ -35,7 +35,7 @@ defmodule ExOauth2Provider do
   expire.
   """
 
-  alias ExOauth2Provider.OauthAccessTokens
+  alias ExOauth2Provider.{Config, OauthAccessTokens}
 
   @doc """
   Authenticate an access token.
@@ -51,7 +51,7 @@ defmodule ExOauth2Provider do
   def authenticate_token(token) do
     token
     |> load_access_token()
-    |> revoke_previous_refresh_token(ExOauth2Provider.Config.refresh_token_revoked_on_use?())
+    |> revoke_previous_refresh_token(Config.refresh_token_revoked_on_use?())
     |> validate_access_token()
     |> load_resource()
   end

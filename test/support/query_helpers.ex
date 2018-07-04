@@ -2,10 +2,11 @@ defmodule ExOauth2Provider.Test.QueryHelpers do
   @moduledoc false
 
   import Ecto.Query
+  alias Ecto.Changeset
 
   def change!(struct, changes) do
     struct
-    |> Ecto.Changeset.change(changes)
+    |> Changeset.change(changes)
     |> ExOauth2Provider.repo.update!()
   end
 

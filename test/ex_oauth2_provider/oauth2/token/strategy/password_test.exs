@@ -82,8 +82,8 @@ defmodule ExOauth2Provider.Token.Strategy.PasswordTest do
   end
 
   test "#grant/1 returns access token when only client_id required", %{user: user, application: application} do
-    changeset = Ecto.Changeset.change application, secret: ""
-    ExOauth2Provider.repo.update! changeset
+    QueryHelpers.change!(application, secret: "")
+
     params = Map.delete(@valid_request, "client_secret")
 
     assert {:ok, body} = Token.grant(params)

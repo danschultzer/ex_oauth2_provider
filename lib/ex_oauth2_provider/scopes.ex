@@ -3,6 +3,8 @@ defmodule ExOauth2Provider.Scopes do
   Functions for dealing with scopes.
   """
 
+  alias ExOauth2Provider.Config
+
   @doc """
   Check if required scopes exists in the scopes list
   """
@@ -25,13 +27,13 @@ defmodule ExOauth2Provider.Scopes do
   Default scopes for server
   """
   @spec default_server_scopes() :: [binary()]
-  def default_server_scopes, do: ExOauth2Provider.Config.default_scopes()
+  def default_server_scopes, do: Config.default_scopes()
 
   @doc """
   All scopes for server
   """
   @spec server_scopes() :: [binary()]
-  def server_scopes, do: ExOauth2Provider.Config.server_scopes()
+  def server_scopes, do: Config.server_scopes()
 
   @doc """
   Filter defaults scopes from scopes list
@@ -45,7 +47,7 @@ defmodule ExOauth2Provider.Scopes do
   Will default to server scopes if no scopes supplied
   """
   @spec filter_default_scopes([binary()]) :: [binary()]
-  def default_to_server_scopes([]), do: ExOauth2Provider.Config.server_scopes()
+  def default_to_server_scopes([]), do: Config.server_scopes()
   def default_to_server_scopes(server_scopes), do: server_scopes
 
   @doc """

@@ -1,6 +1,6 @@
 defmodule ExOauth2Provider.Mixin.Scopes do
   @moduledoc false
-  alias ExOauth2Provider.Scopes
+  alias ExOauth2Provider.{Config, Scopes}
   alias Ecto.Changeset
 
   defmacro __using__(_) do
@@ -51,7 +51,7 @@ defmodule ExOauth2Provider.Mixin.Scopes do
         |> can_use_scopes?(server_scopes)
       end
       defp can_use_scopes?(scopes, server_scopes) when is_binary(server_scopes) do
-        can_use_scopes?(scopes, server_scopes |> Scopes.to_list)
+        can_use_scopes?(scopes, Scopes.to_list(server_scopes))
       end
       defp can_use_scopes?(scopes, server_scopes) do
         server_scopes
@@ -60,7 +60,7 @@ defmodule ExOauth2Provider.Mixin.Scopes do
       end
 
       defp permitted_scopes(nil),
-        do: ExOauth2Provider.Config.server_scopes()
+        do: Config.server_scopes()
       defp permitted_scopes(server_scopes),
         do: server_scopes
     end

@@ -24,6 +24,7 @@ defmodule ExOauth2Provider.Plug.VerifyHeader do
   """
 
   alias Plug.Conn
+  alias ExOauth2Provider.Plug
 
   @doc false
   @spec init(Keyword.t()) :: map()
@@ -57,12 +58,12 @@ defmodule ExOauth2Provider.Plug.VerifyHeader do
   defp verify_token("", conn, _), do: conn
   defp verify_token(token, conn, key) do
     access_token = ExOauth2Provider.authenticate_token(token)
-    ExOauth2Provider.Plug.set_current_access_token(conn, access_token, key)
+    Plug.set_current_access_token(conn, access_token, key)
   end
 
   @doc false
   defp fetch_token(conn, opts) do
-    fetch_token(conn, opts, Plug.Conn.get_req_header(conn, "authorization"))
+    fetch_token(conn, opts, Conn.get_req_header(conn, "authorization"))
   end
 
   @doc false
