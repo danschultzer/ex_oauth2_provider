@@ -96,13 +96,13 @@ defmodule Mix.Tasks.ExOauth2Provider.InstallTest do
   test "doesn't make duplicate oauth migrations" do
     run @options
     run @options
-    assert [], File.ls!(@migrations_path)
+    assert [_one] = File.ls!(@migrations_path)
   end
 
   test "doesn't make duplicate timestamp migrations" do
     Mix.Tasks.Ecto.Gen.Migration.run ["test"] ++ @options
     run @options
-    assert [test_migration, name] = File.ls!(@migrations_path)
+    assert [test_migration, name] = Enum.sort(File.ls!(@migrations_path))
     date1 = Regex.run(~r/^(\d{14})_.*\.exs$/, test_migration)
     date2 = Regex.run(~r/^(\d{14})_create_oauth_tables\.exs$/, name)
     assert date1 < date2
