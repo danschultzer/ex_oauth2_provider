@@ -24,7 +24,7 @@ defmodule ExOauth2Provider.Token.RefreshToken do
       {:ok, access_token}
       {:error, %{error: error, error_description: description}, http_status}
   """
-  @spec grant(Map.t) :: {:ok, Map.t} | {:error, Map.t, atom}
+  @spec grant(map()) :: {:ok, map()} | {:error, map(), atom()}
   def grant(%{"grant_type" => "refresh_token"} = request) do
     %{request: request}
     |> Utils.load_client()

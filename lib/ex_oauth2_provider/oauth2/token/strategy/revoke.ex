@@ -33,7 +33,7 @@ defmodule ExOauth2Provider.Token.Revoke do
   ## Response
       {:ok, %{}}
   """
-  @spec revoke(Map.t) :: {:ok, Map.t} | {:error, Map.t, atom}
+  @spec revoke(map()) :: {:ok, map()} | {:error, map(), atom()}
   def revoke(request) do
     %{request: request}
     |> load_client_if_presented()

@@ -2,12 +2,12 @@ defmodule ExOauth2Provider.Token.Utils.Response do
   @moduledoc false
 
   @doc false
-  @spec response(Map.t) :: {:ok, Map.t} | {:error, Map.t, atom}
+  @spec response(map()) :: {:ok, map()} | {:error, map(), atom()}
   def response(%{access_token: token}), do: build_response(%{access_token: token})
   def response(%{error: _} = params), do: build_response(params)
 
   @doc false
-  @spec revocation_response(Map.t) :: {:ok, Map.t} | {:error, Map.t, atom}
+  @spec revocation_response(map()) :: {:ok, map()} | {:error, map(), atom()}
   def revocation_response(%{error: _, should_return_error: true} = params),
     do: response(params)
   def revocation_response(_), do: {:ok, %{}}

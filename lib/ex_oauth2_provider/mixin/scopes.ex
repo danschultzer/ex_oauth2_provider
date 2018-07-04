@@ -1,10 +1,11 @@
 defmodule ExOauth2Provider.Mixin.Scopes do
   @moduledoc false
   alias ExOauth2Provider.Scopes
+  alias Ecto.Changeset
 
   defmacro __using__(_) do
     quote location: :keep do
-      @spec put_scopes(Ecto.Changeset.t) :: Ecto.Changeset.t
+      @spec put_scopes(Changeset.t()) :: Changeset.t()
       def put_scopes(%{} = changeset), do: put_scopes(changeset, nil)
       def put_scopes(%{} = changeset, ""), do: put_scopes(changeset, nil)
       def put_scopes(%{} = changeset, default_server_scopes) do
@@ -14,7 +15,7 @@ defmodule ExOauth2Provider.Mixin.Scopes do
         end
       end
 
-      @spec validate_scopes(Ecto.Changeset.t) :: Ecto.Changeset.t
+      @spec validate_scopes(Changeset.t()) :: Changeset.t()
       def validate_scopes(%{} = changeset), do: validate_scopes(changeset, nil)
       def validate_scopes(%{} = changeset, ""), do: validate_scopes(changeset, nil)
       def validate_scopes(%{} = changeset, server_scopes) do

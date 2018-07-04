@@ -46,8 +46,7 @@ defmodule ExOauth2Provider do
       {:ok, access_token}
       {:error, reason}
   """
-  @spec authenticate_token(String.t) :: {:ok, map} |
-                                        {:error, any}
+  @spec authenticate_token(binary()) :: {:ok, map()} | {:error, any()}
   def authenticate_token(nil), do: {:error, :token_inaccessible}
   def authenticate_token(token) do
     token
@@ -92,12 +91,12 @@ defmodule ExOauth2Provider do
   end
 
   @doc false
-  @spec config() :: Keyword.t
+  @spec config() :: Keyword.t()
   def config do
     Application.get_env(:ex_oauth2_provider, ExOauth2Provider, Application.get_env(:phoenix_oauth2_provider, PhoenixOauth2Provider, []))
   end
 
   @doc false
-  @spec repo() :: Ecto.Repo.t
+  @spec repo() :: Ecto.Repo.t()
   def repo, do: Keyword.get(config(), :repo)
 end

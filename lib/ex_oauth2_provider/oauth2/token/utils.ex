@@ -5,7 +5,7 @@ defmodule ExOauth2Provider.Token.Utils do
   alias ExOauth2Provider.Utils.Error
 
   @doc false
-  @spec load_client(Map.t) :: Map.t
+  @spec load_client(map()) :: map()
   def load_client(%{request: request = %{"client_id" => client_id}} = params) do
     client_secret = Map.get(request, "client_secret", "")
 

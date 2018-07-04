@@ -23,7 +23,7 @@ defmodule ExOauth2Provider.Token.Password do
       {:ok, access_token}
       {:error, %{error: error, error_description: description}, http_status}
   """
-  @spec grant(Map.t) :: {:ok, Map.t} | {:error, Map.t, atom}
+  @spec grant(map()) :: {:ok, map()} | {:error, map(), atom()}
   def grant(%{"grant_type" => "password"} = request) do
     %{request: request}
     |> get_password_auth_method(ExOauth2Provider.Config.password_auth)

@@ -25,7 +25,7 @@ defmodule ExOauth2Provider.Token.AuthorizationCode do
       {:ok, access_token}
       {:error, %{error: error, error_description: description}, http_status}
   """
-  @spec grant(Map.t) :: {:ok, Map.t} | {:error, Map.t, atom}
+  @spec grant(map()) :: {:ok, map()} | {:error, map(), atom()}
   def grant(%{"grant_type" => "authorization_code"} = request) do
     %{request: request}
     |> Utils.load_client()

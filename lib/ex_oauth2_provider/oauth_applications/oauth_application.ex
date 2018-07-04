@@ -1,6 +1,8 @@
 defmodule ExOauth2Provider.OauthApplications.OauthApplication do
   @moduledoc false
 
+  @type t :: %__MODULE__{}
+
   use ExOauth2Provider.Schema
   require Logger
   alias ExOauth2Provider.Config

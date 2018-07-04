@@ -22,7 +22,7 @@ defmodule ExOauth2Provider.OauthAccessGrants do
       ** nil
 
   """
-  @spec get_active_grant_for(%OauthApplication{}, String.t) :: %OauthAccessGrant{} | nil
+  @spec get_active_grant_for(OauthApplication.t(), binary()) :: OauthAccessGrant.t() | nil
   def get_active_grant_for(application, token) do
     clauses = OauthAccessGrant
     |> ExOauth2Provider.Utils.belongs_to_clause(:application, application)
@@ -46,7 +46,7 @@ defmodule ExOauth2Provider.OauthAccessGrants do
       {:error, %Ecto.Changeset{}}
 
   """
-  @spec create_grant(Ecto.Schema.t, %OauthApplication{}, Map.t) :: {:ok, %OauthAccessGrant{}} | {:error, term}
+  @spec create_grant(Ecto.Schema.t(), OauthApplication.t(), map()) :: {:ok, OauthAccessGrant.t()} | {:error, term()}
   def create_grant(resource_owner, application, attrs) do
     %OauthAccessGrant{resource_owner: resource_owner, application: application}
     |> new_grant_changeset(attrs)
