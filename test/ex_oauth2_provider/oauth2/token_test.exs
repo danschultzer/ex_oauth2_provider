@@ -1,14 +1,14 @@
 defmodule ExOauth2Provider.TokenTest do
   use ExOauth2Provider.TestCase
 
-  import ExOauth2Provider.Token
-  import ExOauth2Provider.Test.Fixture
+  alias ExOauth2Provider.Test.Fixtures
+  alias ExOauth2Provider.Token
 
   @client_id          "Jf5rM8hQBc"
   @client_secret      "secret"
 
   setup do
-    application = fixture(:application, fixture(:user), %{})
+    application = Fixtures.application(Fixtures.resource_owner(), %{})
     {:ok, %{application: application}}
   end
 
@@ -17,9 +17,9 @@ defmodule ExOauth2Provider.TokenTest do
                                              "client_secret" => @client_secret,
                                              "grant_type" => "client_credentials"},
                                            %{"grant_type" => "invalid"})
-    assert {:error, error, :unprocessable_entity} = grant(request_invalid_grant_type)
-    assert error == %{error: :unsupported_grant_type,
-                      error_description: "The authorization grant type is not supported by the authorization server."
-                    }
+    expected_error = %{error: :unsupported_grant_type,
+                       error_description: "The authorization grant type is not supported by the authorization server."}
+
+    assert Token.grant(request_invalid_grant_type) == {:error, expected_error, :unprocessable_entity}
   end
 end

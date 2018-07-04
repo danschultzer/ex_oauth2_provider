@@ -1,13 +1,15 @@
 defmodule ExOauth2Provider.Token.Utils.Response do
   @moduledoc false
 
+  alias ExOauth2Provider.Config
+
   @doc false
-  @spec response(Map.t) :: {:ok, Map.t} | {:error, Map.t, atom}
+  @spec response(map()) :: {:ok, map()} | {:error, map(), atom()}
   def response(%{access_token: token}), do: build_response(%{access_token: token})
   def response(%{error: _} = params), do: build_response(params)
 
   @doc false
-  @spec revocation_response(Map.t) :: {:ok, Map.t} | {:error, Map.t, atom}
+  @spec revocation_response(map()) :: {:ok, map()} | {:error, map(), atom()}
   def revocation_response(%{error: _, should_return_error: true} = params),
     do: response(params)
   def revocation_response(_), do: {:ok, %{}}
@@ -33,7 +35,7 @@ defmodule ExOauth2Provider.Token.Utils.Response do
   end
 
   defp customize_access_token_response(response_body, access_token) do
-    case ExOauth2Provider.Config.access_token_response_body_handler() do
+    case Config.access_token_response_body_handler() do
       {module, method} -> apply(module, method, [response_body, access_token])
       _                -> response_body
     end

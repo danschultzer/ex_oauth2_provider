@@ -55,15 +55,17 @@ defmodule ExOauth2Provider.Authorization.Code do
   end
   ```
   """
-  alias ExOauth2Provider.OauthAccessTokens
-  alias ExOauth2Provider.OauthAccessGrants
-  alias ExOauth2Provider.RedirectURI
-  alias ExOauth2Provider.Authorization.Utils.Response
-  alias ExOauth2Provider.Utils.Error
-  alias ExOauth2Provider.Authorization.Utils
-  alias ExOauth2Provider.Authorization.Utils.Response
-  alias ExOauth2Provider.Scopes
-  alias ExOauth2Provider.OauthApplications.OauthApplication
+  alias ExOauth2Provider.{Config,
+                          OauthAccessTokens,
+                          OauthAccessGrants,
+                          RedirectURI,
+                          Authorization.Utils.Response,
+                          Utils.Error,
+                          Authorization.Utils,
+                          Authorization.Utils.Response,
+                          Scopes,
+                          OauthApplications.OauthApplication}
+  alias Ecto.Schema
 
   @doc """
   Validates an authorization code flow request.
@@ -83,10 +85,10 @@ defmodule ExOauth2Provider.Authorization.Code do
       {:redirect, redirect_uri}                                     # Redirect
       {:native_redirect, %{code: code}}                             # Redirect to :show page
   """
-  @spec preauthorize(Ecto.Schema.t, Map.t) :: {:ok, %OauthApplication{}, [String.t]} |
-                                              {:error, Map.t, integer} |
-                                              {:redirect, String.t} |
-                                              {:native_redirect, %{code: String.t}}
+  @spec preauthorize(Schema.t(), map()) :: {:ok, OauthApplication.t(), [binary()]} |
+                                              {:error, map(), integer()} |
+                                              {:redirect, binary()} |
+                                              {:native_redirect, %{code: binary()}}
   def preauthorize(resource_owner, %{} = request) do
     resource_owner
     |> Utils.prehandle_request(request)
@@ -129,10 +131,10 @@ defmodule ExOauth2Provider.Authorization.Code do
       {:redirect, redirect_uri}                                    # Redirect
       {:native_redirect, %{code: code}}                            # Redirect to :show page
   """
-  @spec authorize(Ecto.Schema.t, Map.t) :: {:ok, String.t} |
-                                           {:error, Map.t, integer} |
-                                           {:redirect, String.t} |
-                                           {:native_redirect, %{code: String.t}}
+  @spec authorize(Schema.t(), map()) :: {:ok, binary()} |
+                                        {:error, map(), integer()} |
+                                        {:redirect, binary()} |
+                                        {:native_redirect, %{code: binary()}}
   def authorize(resource_owner, request) do
     resource_owner
     |> Utils.prehandle_request(request)
@@ -151,14 +153,13 @@ defmodule ExOauth2Provider.Authorization.Code do
            _       -> {String.to_atom(k), v}
          end
        end)
-    |> Map.put(:expires_in, ExOauth2Provider.Config.authorization_code_expires_in())
+    |> Map.put(:expires_in, Config.authorization_code_expires_in())
 
     case OauthAccessGrants.create_grant(resource_owner, application, grant_params) do
       {:ok, grant}    -> Map.put(params, :grant, grant)
       {:error, error} -> Error.add_error(params, error)
     end
   end
-
 
   @doc """
   Rejects an authorization code flow request.
@@ -175,8 +176,7 @@ defmodule ExOauth2Provider.Authorization.Code do
       {:error, %{error: error, error_description: _}, http_status} # Error occurred
       {:redirect, redirect_uri}                                    # Redirect
   """
-  @spec deny(Ecto.Schema.t, Map.t) :: {:error, Map.t, integer} |
-                                      {:redirect, String.t}
+  @spec deny(Schema.t(), map()) :: {:error, map(), integer()} | {:redirect, binary()}
   def deny(resource_owner, request) do
     resource_owner
     |> Utils.prehandle_request(request)

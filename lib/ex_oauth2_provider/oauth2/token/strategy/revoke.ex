@@ -33,7 +33,7 @@ defmodule ExOauth2Provider.Token.Revoke do
   ## Response
       {:ok, %{}}
   """
-  @spec revoke(Map.t) :: {:ok, Map.t} | {:error, Map.t, atom}
+  @spec revoke(map()) :: {:ok, map()} | {:error, map(), atom()}
   def revoke(request) do
     %{request: request}
     |> load_client_if_presented()
@@ -108,22 +108,13 @@ defmodule ExOauth2Provider.Token.Revoke do
   # https://tools.ietf.org/html/rfc6749#section-2.1
   # https://tools.ietf.org/html/rfc7009
   defp validate_permissions(%{error: _} = params), do: params
-  defp validate_permissions(%{access_token: access_token} = params) do
-    case is_nil(access_token.application_id) do
-      # Client is public, authentication unnecessary
-      true -> Map.put(params, :revoke, true)
+  # Client is public, authentication unnecessary
+  defp validate_permissions(%{access_token: %{application_id: nil}} = params), do: params
+  # Client is confidential, therefore client authentication & authorization is required
+  defp validate_permissions(%{access_token: %{application_id: _id}} = params), do: validate_ownership(params)
 
-      # Client is confidential, therefore client authentication & authorization is required
-      false -> validate_ownership(params)
-    end
-  end
-
-  defp validate_ownership(%{access_token: access_token, client: client} = params) do
-    case access_token.application_id == client.id do
-      true   -> Map.put(params, :revoke, true)
-      false  -> params
-    end
-  end
+  defp validate_ownership(%{access_token: %{application_id: application_id}, client: %{id: client_id}} = params) when application_id == client_id, do: params
+  defp validate_ownership(params), do: Error.add_error(params, Error.invalid_request())
 
   defp validate_accessible(%{error: _} = params), do: params
   defp validate_accessible(%{access_token: access_token} = params) do

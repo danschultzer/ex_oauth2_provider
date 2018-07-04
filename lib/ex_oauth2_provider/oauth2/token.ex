@@ -2,8 +2,10 @@ defmodule ExOauth2Provider.Token do
   @moduledoc """
   Handler for dealing with generating access tokens.
   """
-  alias ExOauth2Provider.Token.Revoke
-  alias ExOauth2Provider.Utils.Error
+  alias ExOauth2Provider.{Config,
+                          Token.Revoke,
+                          Utils.Error}
+  alias Ecto.Schema
 
   @doc """
   Grants an access token based on grant_type strategy.
@@ -17,7 +19,7 @@ defmodule ExOauth2Provider.Token do
   ## Response
       {:error, %{error: error, error_description: description}, http_status}
   """
-  @spec grant(Map.t) :: {:ok, Ecto.Schema.t} | {:error, Map.t, term}
+  @spec grant(map()) :: {:ok, Schema.t()} | {:error, map(), term}
   def grant(request) do
     case validate_grant_type(request) do
       {:error, :invalid_grant_type} -> Error.unsupported_grant_type()
@@ -39,11 +41,11 @@ defmodule ExOauth2Provider.Token do
   ## Response
       {:ok, %{}}
   """
-  @spec revoke(Map.t) :: {:ok, Ecto.Schema.t} | {:error, Map.t, term}
+  @spec revoke(map()) :: {:ok, Schema.t()} | {:error, map(), term()}
   def revoke(request), do: Revoke.revoke(request)
 
   defp validate_grant_type(%{"grant_type" => grant_type}) do
-    ExOauth2Provider.Config.calculate_token_grant_types()
+    Config.calculate_token_grant_types()
     |> Keyword.fetch(String.to_atom(grant_type))
     |> case do
       {:ok, token_module} -> {:ok, token_module}

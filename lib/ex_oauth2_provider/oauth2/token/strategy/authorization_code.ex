@@ -2,10 +2,13 @@ defmodule ExOauth2Provider.Token.AuthorizationCode do
   @moduledoc """
   Functions for dealing with authorization code strategy.
   """
-  alias ExOauth2Provider.OauthAccessGrants
-  alias ExOauth2Provider.Token.Utils
-  alias ExOauth2Provider.Token.Utils.Response
-  alias ExOauth2Provider.Utils.Error
+  alias ExOauth2Provider.{Config,
+                          OauthAccessGrants,
+                          OauthAccessGrants.OauthAccessGrant,
+                          Token.Utils,
+                          Token.Utils.Response,
+                          Utils.Error,
+                          OauthAccessTokens}
 
   @doc """
   Will grant access token by client credentials.
@@ -23,7 +26,7 @@ defmodule ExOauth2Provider.Token.AuthorizationCode do
       {:ok, access_token}
       {:error, %{error: error, error_description: description}, http_status}
   """
-  @spec grant(Map.t) :: {:ok, Map.t} | {:error, Map.t, atom}
+  @spec grant(map()) :: {:ok, map()} | {:error, map(), atom()}
   def grant(%{"grant_type" => "authorization_code"} = request) do
     %{request: request}
     |> Utils.load_client()
@@ -35,14 +38,12 @@ defmodule ExOauth2Provider.Token.AuthorizationCode do
 
   defp issue_access_token_by_grant(%{error: _} = params), do: params
   defp issue_access_token_by_grant(%{access_grant: access_grant, request: _} = params) do
-    token_params = %{scopes: access_grant.scopes,
-                     application: access_grant.application,
-                     use_refresh_token: ExOauth2Provider.Config.use_refresh_token?()}
+    token_params = %{use_refresh_token: Config.use_refresh_token?()}
 
     result = ExOauth2Provider.repo.transaction(fn ->
       access_grant
       |> revoke_grant()
-      |> Utils.find_or_create_access_token(token_params)
+      |> maybe_create_access_token(token_params)
     end)
 
     case result do
@@ -52,8 +53,12 @@ defmodule ExOauth2Provider.Token.AuthorizationCode do
     end
   end
 
-  defp revoke_grant(%OauthAccessGrants.OauthAccessGrant{revoked_at: nil} = access_grant),
+  defp revoke_grant(%OauthAccessGrant{revoked_at: nil} = access_grant),
     do: OauthAccessGrants.revoke(access_grant)
+
+  defp maybe_create_access_token({:error, _} = error, _token_params), do: error
+  defp maybe_create_access_token({:ok, %OauthAccessGrant{} = access_grant}, token_params),
+    do: OauthAccessTokens.get_or_create_token(access_grant.resource_owner, access_grant.application, access_grant.scopes, token_params)
 
   defp load_active_access_grant(%{client: client, request: %{"code" => code}} = params) do
     client

@@ -2,12 +2,12 @@ defmodule ExOauth2Provider.TestCase do
   @moduledoc false
 
   use ExUnit.CaseTemplate
-  import ExOauth2Provider.ConfigHelpers
-  alias ExOauth2Provider.Test.Repo
+  alias ExOauth2Provider.Test.{ConfigHelpers, Repo}
+  alias Ecto.Adapters.SQL.Sandbox
 
   setup do
-    reset_config()
-    :ok = Ecto.Adapters.SQL.Sandbox.checkout(Repo)
-    Ecto.Adapters.SQL.Sandbox.mode(Repo, {:shared, self()})
+    ConfigHelpers.reset_config()
+    :ok = Sandbox.checkout(Repo)
+    Sandbox.mode(Repo, {:shared, self()})
   end
 end

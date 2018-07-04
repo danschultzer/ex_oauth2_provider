@@ -1,6 +1,8 @@
 defmodule ExOauth2Provider.OauthAccessTokens.OauthAccessToken do
   @moduledoc false
 
+  @type t :: %__MODULE__{}
+
   use ExOauth2Provider.Schema
   alias ExOauth2Provider.OauthApplications.OauthApplication
   alias ExOauth2Provider.Config

@@ -1,4 +1,4 @@
-defmodule ExOauth2Provider.PlugHelpers do
+defmodule ExOauth2Provider.Test.PlugHelpers do
   @moduledoc false
 
   @doc """

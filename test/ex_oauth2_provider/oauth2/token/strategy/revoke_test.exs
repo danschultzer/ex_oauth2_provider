@@ -1,11 +1,8 @@
 defmodule ExOauth2Provider.Token.Strategy.RevokeTest do
   use ExOauth2Provider.TestCase
 
-  import ExOauth2Provider.Token
-  import ExOauth2Provider.Test.Fixture
-  import ExOauth2Provider.Test.QueryHelper
-
-  alias ExOauth2Provider.OauthAccessTokens
+  alias ExOauth2Provider.Test.{Fixtures, QueryHelpers}
+  alias ExOauth2Provider.{OauthAccessTokens, Token, OauthAccessTokens.OauthAccessToken}
 
   @client_id            "Jf5rM8hQBc"
   @client_secret        "secret"
@@ -14,9 +11,9 @@ defmodule ExOauth2Provider.Token.Strategy.RevokeTest do
                          }
 
   setup do
-    user = fixture(:user)
-    application = fixture(:application, user, %{uid: @client_id, secret: @client_secret, scopes: "app:read app:write"})
-    access_token = fixture(:access_token, user, %{application: application, use_refresh_token: true, scopes: "app:read"})
+    user = Fixtures.resource_owner()
+    application = Fixtures.application(user, %{uid: @client_id, secret: @client_secret, scopes: "app:read app:write"})
+    access_token = Fixtures.access_token(user, %{application: application, use_refresh_token: true, scopes: "app:read"})
 
     valid_request = %{"client_id" => @client_id,
                       "client_secret" => @client_secret,
@@ -25,44 +22,50 @@ defmodule ExOauth2Provider.Token.Strategy.RevokeTest do
   end
 
   test "#revoke/1 error when invalid client", %{valid_request: valid_request} do
-    assert {:error, error, :unprocessable_entity} = revoke(Map.merge(valid_request, %{"client_id" => "invalid"}))
-    assert error == @invalid_client_error
+    params = Map.merge(valid_request, %{"client_id" => "invalid"})
+
+    assert Token.revoke(params) == {:error, @invalid_client_error, :unprocessable_entity}
   end
 
   test "#revoke/1 error when invalid secret", %{valid_request: valid_request} do
-    assert {:error, error, :unprocessable_entity} = revoke(Map.merge(valid_request, %{"client_secret" => "invalid"}))
-    assert error == @invalid_client_error
+    params = Map.merge(valid_request, %{"client_secret" => "invalid"})
+
+    assert Token.revoke(params) == {:error, @invalid_client_error, :unprocessable_entity}
   end
 
   test "#revoke/1 when missing token", %{valid_request: valid_request} do
-    assert {:ok, %{}} == revoke(Map.delete(valid_request, "token"))
-    refute OauthAccessTokens.is_revoked?(get_last_access_token())
+    params = Map.delete(valid_request, "token")
+
+    assert Token.revoke(params) == {:ok, %{}}
+    refute OauthAccessTokens.is_revoked?(QueryHelpers.get_latest_inserted(OauthAccessToken))
   end
 
   test "#revoke/1 when invalid token", %{valid_request: valid_request} do
-    assert {:ok, %{}} == revoke(Map.merge(valid_request, %{"token" => "invalid"}))
-    refute OauthAccessTokens.is_revoked?(get_last_access_token())
+    params = Map.merge(valid_request, %{"token" => "invalid"})
+
+    assert Token.revoke(params) == {:ok, %{}}
+    refute OauthAccessTokens.is_revoked?(QueryHelpers.get_latest_inserted(OauthAccessToken))
   end
 
   test "#revoke/1 when access token owned by another client", %{valid_request: valid_request, access_token: access_token} do
-    new_application = fixture(:application, fixture(:user), %{uid: "new_app"})
-    changeset = Ecto.Changeset.change access_token, application_id: new_application.id
-    ExOauth2Provider.repo.update! changeset
+    new_application = Fixtures.application(Fixtures.resource_owner(), %{uid: "new_app", client_secret: "new"})
+    QueryHelpers.change!(access_token, application_id: new_application.id)
 
-    assert {:error, error, :unprocessable_entity} = revoke(Map.merge(valid_request, %{"client_secret" => "invalid"}))
-    assert error == @invalid_client_error
+    assert Token.revoke(valid_request) == {:ok, %{}}
+    refute OauthAccessTokens.is_revoked?(QueryHelpers.get_latest_inserted(OauthAccessToken))
   end
 
   test "#revoke/1 when access token not owned by a client", %{access_token: access_token} do
-    changeset = Ecto.Changeset.change access_token, application_id: nil
-    ExOauth2Provider.repo.update! changeset
+    QueryHelpers.change!(access_token, application_id: nil)
 
-    assert {:ok, %{}} == revoke(%{"token" => access_token.token})
-    assert OauthAccessTokens.is_revoked?(get_last_access_token())
+    params = %{"token" => access_token.token}
+
+    assert Token.revoke(params) == {:ok, %{}}
+    assert OauthAccessTokens.is_revoked?(QueryHelpers.get_latest_inserted(OauthAccessToken))
   end
 
   test "#revoke/1", %{valid_request: valid_request} do
-    assert {:ok, %{}} == revoke(valid_request)
-    assert OauthAccessTokens.is_revoked?(get_last_access_token())
+    assert Token.revoke(valid_request) == {:ok, %{}}
+    assert OauthAccessTokens.is_revoked?(QueryHelpers.get_latest_inserted(OauthAccessToken))
   end
 end

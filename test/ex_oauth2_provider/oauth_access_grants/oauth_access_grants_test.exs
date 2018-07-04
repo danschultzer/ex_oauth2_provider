@@ -1,23 +1,24 @@
 defmodule ExOauth2Provider.OauthAccessGrantTest do
   use ExOauth2Provider.TestCase
 
-  import ExOauth2Provider.Test.QueryHelper
-  import ExOauth2Provider.Test.Fixture
+  alias ExOauth2Provider.Test.Fixtures
+  alias ExOauth2Provider.{OauthAccessGrants, OauthAccessGrants.OauthAccessGrant}
 
-  alias ExOauth2Provider.OauthAccessGrants
-  alias ExOauth2Provider.OauthAccessGrants.OauthAccessGrant
-
-  @valid_attrs    %{expires_in: 600, redirect_uri: "https://example.org/endpoint"}
+  @valid_attrs %{expires_in: 600, redirect_uri: "https://example.org/endpoint"}
 
   setup do
-    user = fixture(:user)
-    {:ok, %{user: user, application: fixture(:application, user, %{scopes: "public read"})}}
+    user = Fixtures.resource_owner()
+    {:ok, %{user: user, application: Fixtures.application(user, %{scopes: "public read"})}}
   end
 
-  test "get_grant/1", %{user: user, application: application} do
+  test "get_valid_grant/2", %{user: user, application: application} do
     {:ok, grant} = OauthAccessGrants.create_grant(user, application, @valid_attrs)
-    assert %OauthAccessGrants.OauthAccessGrant{id: id} = get_access_grant_by_code(grant.token)
-    assert grant.id == id
+
+    assert %OauthAccessGrants.OauthAccessGrant{id: id} = OauthAccessGrants.get_active_grant_for(application, grant.token)
+    assert id == grant.id
+
+    different_application = Fixtures.application(user, %{uid: "2"})
+    refute OauthAccessGrants.get_active_grant_for(different_application, grant.token)
   end
 
   test "create_grant/3 with valid attributes", %{user: user, application: application} do
@@ -35,17 +36,23 @@ defmodule ExOauth2Provider.OauthAccessGrantTest do
 
   test "create_grant/2 with missing expires_in", %{application: application, user: user} do
     attrs = Map.merge(@valid_attrs, %{expires_in: nil})
-    assert {:error, %Ecto.Changeset{errors: [expires_in: _]}} = OauthAccessGrants.create_grant(user, application, attrs)
+
+    assert {:error, changeset} = OauthAccessGrants.create_grant(user, application, attrs)
+    assert changeset.errors[:expires_in] == {"can't be blank", [validation: :required]}
   end
 
   test "create_grant/2 with missing redirect_uri", %{application: application, user: user} do
     attrs = Map.merge(@valid_attrs, %{redirect_uri: nil})
-    assert {:error, %Ecto.Changeset{errors: [redirect_uri: _]}} = OauthAccessGrants.create_grant(user, application, attrs)
+
+    assert {:error, changeset} = OauthAccessGrants.create_grant(user, application, attrs)
+    assert changeset.errors[:redirect_uri] == {"can't be blank", [validation: :required]}
   end
 
   test "create_token/2 with invalid scopes", %{application: application, user: user} do
     attrs = Map.merge(@valid_attrs, %{scopes: "write"})
-    assert {:error, %Ecto.Changeset{}} = OauthAccessGrants.create_grant(user, application, attrs)
+
+    assert {:error, changeset} = OauthAccessGrants.create_grant(user, application, attrs)
+    assert changeset.errors[:scopes] == {"not in permitted scopes list: \"public read\"", []}
   end
 
   describe "with no application scopes" do
@@ -56,12 +63,15 @@ defmodule ExOauth2Provider.OauthAccessGrantTest do
 
     test "create_token/2 with invalid scopes", %{application: application, user: user} do
       attrs = Map.merge(@valid_attrs, %{scopes: "invalid"})
-      assert {:error, %Ecto.Changeset{}} = OauthAccessGrants.create_grant(user, application, attrs)
+
+      assert {:error, changeset} = OauthAccessGrants.create_grant(user, application, attrs)
+      assert changeset.errors[:scopes] == {"not in permitted scopes list: [\"public\", \"read\", \"write\"]", []}
     end
 
     test "create_token/2", %{application: application, user: user} do
       attrs = Map.merge(@valid_attrs, %{scopes: "write"})
-      assert {:ok, %OauthAccessGrant{} = grant} = OauthAccessGrants.create_grant(user, application, attrs)
+
+      assert {:ok, grant} = OauthAccessGrants.create_grant(user, application, attrs)
       assert grant.scopes == "write"
     end
   end

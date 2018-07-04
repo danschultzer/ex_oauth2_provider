@@ -23,8 +23,11 @@ defmodule ExOauth2Provider.Plug.VerifyHeader do
       # Authorization: <token>
   """
 
+  alias Plug.Conn
+  alias ExOauth2Provider.Plug
+
   @doc false
-  @spec init(Keyword.t) :: Map.t
+  @spec init(Keyword.t()) :: map()
   def init(opts \\ []) do
     opts
     |> Enum.into(%{})
@@ -41,7 +44,7 @@ defmodule ExOauth2Provider.Plug.VerifyHeader do
   defp set_realm_option(opts), do: opts
 
   @doc false
-  @spec call(Plug.Conn.t, Map.t) :: Plug.Conn.t
+  @spec call(Conn.t(), map()) :: Conn.t()
   def call(conn, opts) do
     key = Map.get(opts, :key, :default)
 
@@ -55,12 +58,12 @@ defmodule ExOauth2Provider.Plug.VerifyHeader do
   defp verify_token("", conn, _), do: conn
   defp verify_token(token, conn, key) do
     access_token = ExOauth2Provider.authenticate_token(token)
-    ExOauth2Provider.Plug.set_current_access_token(conn, access_token, key)
+    Plug.set_current_access_token(conn, access_token, key)
   end
 
   @doc false
   defp fetch_token(conn, opts) do
-    fetch_token(conn, opts, Plug.Conn.get_req_header(conn, "authorization"))
+    fetch_token(conn, opts, Conn.get_req_header(conn, "authorization"))
   end
 
   @doc false

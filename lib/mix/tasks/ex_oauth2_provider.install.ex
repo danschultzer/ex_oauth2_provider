@@ -5,6 +5,8 @@ defmodule Mix.Tasks.ExOauth2Provider.Install do
   import Mix.Generator
   import Mix.Ecto
 
+  alias Mix.Project
+
   @shortdoc "Generates a new migration for the repo"
 
   @config_file         "config/config.exs"
@@ -43,14 +45,14 @@ defmodule Mix.Tasks.ExOauth2Provider.Install do
 
   defp parse_options_to_config(args) do
     repos = parse_repo(args)
-    Enum.each repos, &Mix.Ecto.ensure_repo(&1, args)
+    Enum.each repos, &ensure_repo(&1, args)
     {opts, _, _} = OptionParser.parse(args, switches: @switches)
     uuid_opts = parse_uuid(Keyword.get(opts, :uuid, ""))
 
     %{
       config: Keyword.get(opts, :config, true),
       config_file: Keyword.get(opts, :config_file, @config_file),
-      app_path: Mix.Project.app_path,
+      app_path: Project.app_path(),
       repos: repos,
       resource_owner: Keyword.get(opts, :resource_owner, "MyApp.User"),
       migrations: Keyword.get(opts, :migrations, true),
@@ -103,7 +105,10 @@ defmodule Mix.Tasks.ExOauth2Provider.Install do
   defp create_migration_file(repo, existing_migrations, name, path, template, uuid) do
     unless String.match? existing_migrations, ~r/\d{14}_#{name}\.exs/ do
       file = Path.join(path, "#{next_migration_number(existing_migrations)}_#{name}.exs")
-      create_file file, EEx.eval_string(template, [mod: Module.concat([repo, Migrations, camelize(name)]), uuid: uuid])
+      module = Module.concat([repo, Migrations, camelize(name)])
+      string = EEx.eval_string(template, [mod: module, uuid: uuid])
+
+      create_file file, string
       Mix.shell.info "Migration file #{file} has been added."
     end
   end

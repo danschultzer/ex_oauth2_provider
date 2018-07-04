@@ -2,17 +2,19 @@ defmodule ExOauth2Provider.Authorization do
   @moduledoc """
   Handler for dealing with generating access grants.
   """
-  alias ExOauth2Provider.Utils.Error
-  alias ExOauth2Provider.Authorization.Utils
-  alias ExOauth2Provider.Authorization.Utils.Response
+  alias ExOauth2Provider.{Config,
+                          Utils.Error,
+                          Authorization.Utils,
+                          Authorization.Utils.Response}
+  alias Ecto.Schema
 
   @doc """
   Check ExOauth2Provider.Authorization.Code for usage.
   """
-  @spec preauthorize(Ecto.Schema.t, Map.t) :: {:ok, Ecto.Schema.t, [String.t]} |
-                                              {:error, Map.t, integer} |
-                                              {:redirect, String.t} |
-                                              {:native_redirect, %{code: String.t}}
+  @spec preauthorize(Schema.t(), map()) :: {:ok, Schema.t(), [binary()]} |
+                                              {:error, map(), integer()} |
+                                              {:redirect, binary()} |
+                                              {:native_redirect, %{code: binary()}}
   def preauthorize(resource_owner, request) do
     case validate_response_type(request) do
       {:error, :invalid_response_type} -> unsupported_response_type(resource_owner, request)
@@ -24,10 +26,10 @@ defmodule ExOauth2Provider.Authorization do
   @doc """
   Check ExOauth2Provider.Authorization.Code for usage.
   """
-  @spec authorize(Ecto.Schema.t, Map.t) :: {:ok, String.t} |
-                                           {:error, Map.t, integer} |
-                                           {:redirect, String.t} |
-                                           {:native_redirect, %{code: String.t}}
+  @spec authorize(Schema.t(), map()) :: {:ok, binary()} |
+                                           {:error, map(), integer()} |
+                                           {:redirect, binary()} |
+                                           {:native_redirect, %{code: binary()}}
   def authorize(resource_owner, request) do
     case validate_response_type(request) do
       {:error, :invalid_response_type} -> unsupported_response_type(resource_owner, request)
@@ -39,8 +41,8 @@ defmodule ExOauth2Provider.Authorization do
   @doc """
   Check ExOauth2Provider.Authorization.Code for usage.
   """
-  @spec deny(Ecto.Schema.t, Map.t) :: {:error, Map.t, integer} |
-                                      {:redirect, String.t}
+  @spec deny(Schema.t(), map()) :: {:error, map(), integer()} |
+                                      {:redirect, binary()}
   def deny(resource_owner, request) do
     case validate_response_type(request) do
       {:error, :invalid_response_type} -> unsupported_response_type(resource_owner, request)
@@ -63,7 +65,7 @@ defmodule ExOauth2Provider.Authorization do
   end
 
   defp validate_response_type(%{"response_type" => response_type}) do
-    ExOauth2Provider.Config.calculate_authorization_response_types()
+    Config.calculate_authorization_response_types()
     |> Keyword.fetch(String.to_atom(response_type))
     |> case do
       {:ok, authorization_module} -> {:ok, authorization_module}

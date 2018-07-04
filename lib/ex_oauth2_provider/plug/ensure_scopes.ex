@@ -30,7 +30,7 @@ defmodule ExOauth2Provider.Plug.EnsureScopes do
   alias ExOauth2Provider.{Plug, Scopes}
 
   @doc false
-  @spec init(Keyword.t) :: Map.t
+  @spec init(Keyword.t()) :: map()
   def init(opts) do
     opts = Enum.into(opts, %{})
     key = Map.get(opts, :key, :default)
@@ -47,7 +47,7 @@ defmodule ExOauth2Provider.Plug.EnsureScopes do
   defp scopes_sets(_), do: nil
 
   @doc false
-  @spec call(Conn.t, Map.t) :: Map.t
+  @spec call(Conn.t(), map()) :: map()
   def call(conn, opts) do
     conn
     |> Plug.current_access_token(Map.get(opts, :key))

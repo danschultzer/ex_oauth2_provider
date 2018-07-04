@@ -3,11 +3,12 @@ defmodule ExOauth2Provider.Token.RefreshToken do
   Functions for dealing with refresh token strategy.
   """
 
-  alias ExOauth2Provider.Utils.Error
-  alias ExOauth2Provider.Token.Utils
-  alias ExOauth2Provider.Token.Utils.Response
-  alias ExOauth2Provider.OauthAccessTokens
-  alias ExOauth2Provider.OauthAccessTokens.OauthAccessToken
+  alias ExOauth2Provider.{Config,
+                          Utils.Error,
+                          Token.Utils,
+                          Token.Utils.Response,
+                          OauthAccessTokens,
+                          OauthAccessTokens.OauthAccessToken}
 
   @doc """
   Will grant access token by refresh token.
@@ -24,7 +25,7 @@ defmodule ExOauth2Provider.Token.RefreshToken do
       {:ok, access_token}
       {:error, %{error: error, error_description: description}, http_status}
   """
-  @spec grant(Map.t) :: {:ok, Map.t} | {:error, Map.t, atom}
+  @spec grant(map()) :: {:ok, map()} | {:error, map(), atom()}
   def grant(%{"grant_type" => "refresh_token"} = request) do
     %{request: request}
     |> Utils.load_client()
@@ -51,7 +52,7 @@ defmodule ExOauth2Provider.Token.RefreshToken do
     result = ExOauth2Provider.repo.transaction(fn ->
       token_params = %{application: refresh_token.application,
                        scopes: refresh_token.scopes,
-                       expires_in: ExOauth2Provider.Config.access_token_expires_in,
+                       expires_in: Config.access_token_expires_in,
                        use_refresh_token: true}
                      |> add_previous_refresh_token(refresh_token)
 
@@ -68,7 +69,7 @@ defmodule ExOauth2Provider.Token.RefreshToken do
   end
 
   defp add_previous_refresh_token(params, refresh_token) do
-    case ExOauth2Provider.Config.refresh_token_revoked_on_use? do
+    case Config.refresh_token_revoked_on_use? do
       true  -> Map.put(params, :previous_refresh_token, refresh_token)
       false -> params
     end
@@ -76,7 +77,7 @@ defmodule ExOauth2Provider.Token.RefreshToken do
 
   defp revoke_access_token(%OauthAccessToken{} = refresh_token) do
     cond do
-      not ExOauth2Provider.Config.refresh_token_revoked_on_use? ->
+      not Config.refresh_token_revoked_on_use? ->
         {:ok, refresh_token}
 
       OauthAccessTokens.is_revoked?(refresh_token) ->

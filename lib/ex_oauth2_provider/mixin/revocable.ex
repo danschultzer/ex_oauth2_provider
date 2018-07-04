@@ -1,6 +1,8 @@
 defmodule ExOauth2Provider.Mixin.Revocable do
   @moduledoc false
 
+  alias Ecto.{Changeset, Schema}
+
   defmacro __using__(_) do
     quote location: :keep do
       @doc """
@@ -14,7 +16,7 @@ defmodule ExOauth2Provider.Mixin.Revocable do
           iex> revoke(invalid_data)
           {:error, %Ecto.Changeset{}}
       """
-      @spec revoke(Ecto.Schema.t) :: {:ok, Ecto.Schema.t} | {:error, Ecto.Changeset.t}
+      @spec revoke(Schema.t()) :: {:ok, Schema.t()} | {:error, Changeset.t()}
       def revoke(data) do
         data
         |> revoke_query()
@@ -27,7 +29,7 @@ defmodule ExOauth2Provider.Mixin.Revocable do
       @doc """
       Same as `revoke/1` but raises error.
       """
-      @spec revoke!(Ecto.Schema.t) :: Ecto.Schema.t | no_return
+      @spec revoke!(Schema.t()) :: Schema.t() | no_return
       def revoke!(data) do
         data
         |> revoke_query()
@@ -38,7 +40,7 @@ defmodule ExOauth2Provider.Mixin.Revocable do
       end
 
       defp revoke_query(%{revoked_at: nil} = data) do
-        Ecto.Changeset.change(data, revoked_at: NaiveDateTime.utc_now)
+        Changeset.change(data, revoked_at: NaiveDateTime.utc_now())
       end
       defp revoke_query(_data), do: nil
 
@@ -53,7 +55,7 @@ defmodule ExOauth2Provider.Mixin.Revocable do
           iex> filter_revoked(%Data{revoked_at: ~N[2017-04-04 19:21:22.292762], ...}}
           nil
       """
-      @spec filter_revoked(Ecto.Schema.t) :: Ecto.Schema.t | nil
+      @spec filter_revoked(Schema.t()) :: Schema.t() | nil
       def filter_revoked(data) do
         case is_revoked?(data) do
           true  -> nil
@@ -72,7 +74,7 @@ defmodule ExOauth2Provider.Mixin.Revocable do
           iex> is_revoked?(%Data{revoked_at: ~N[2017-04-04 19:21:22.292762], ...}}
           true
       """
-      @spec is_revoked?(Ecto.Schema.t) :: boolean
+      @spec is_revoked?(Schema.t()) :: boolean()
       def is_revoked?(%{revoked_at: nil}), do: false
       def is_revoked?(_), do: true
     end

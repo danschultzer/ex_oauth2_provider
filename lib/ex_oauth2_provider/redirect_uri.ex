@@ -2,12 +2,13 @@ defmodule ExOauth2Provider.RedirectURI do
   @moduledoc """
   Functions for dealing with redirect uri.
   """
-  import ExOauth2Provider.Utils
+  alias ExOauth2Provider.Utils
+  alias ExOauth2Provider.Config
 
   @doc """
   Validates if a url can be used as a redirect_uri
   """
-  @spec validate(String.t | nil) :: {:ok, String.t} | {:errror, String.t}
+  @spec validate(binary() | nil) :: {:ok, binary()} | {:errror, binary()}
   def validate(nil), do: validate("")
   def validate(url) do
     case String.trim(url) do
@@ -39,11 +40,11 @@ defmodule ExOauth2Provider.RedirectURI do
   @doc """
   Check if uri matches client uri
   """
-  @spec matches?(String.t, String.t) :: boolean
-  @spec matches?(%URI{}, %URI{}) :: boolean
+  @spec matches?(binary(), binary()) :: boolean()
   def matches?(uri, client_uri) when is_binary(uri) and is_binary(client_uri) do
     matches?(URI.parse(uri), URI.parse(client_uri))
   end
+  @spec matches?(URI.t(), URI.t()) :: boolean()
   def matches?(%URI{} = uri, %URI{} = client_uri) do
     uri = Map.merge(uri, %{query: nil})
 
@@ -53,7 +54,7 @@ defmodule ExOauth2Provider.RedirectURI do
   @doc """
   Check if a url matches a client redirect_uri
   """
-  @spec valid_for_authorization?(String.t, String.t) :: boolean
+  @spec valid_for_authorization?(binary(), binary()) :: boolean()
   def valid_for_authorization?(url, client_url) do
     case validate(url) do
       {:error, _} ->
@@ -69,15 +70,15 @@ defmodule ExOauth2Provider.RedirectURI do
   @doc """
   Check if a url is native
   """
-  @spec native_redirect_uri?(String.t) :: boolean
+  @spec native_redirect_uri?(binary()) :: boolean()
   def native_redirect_uri?(url) do
-    ExOauth2Provider.Config.native_redirect_uri == url
+    Config.native_redirect_uri == url
   end
 
   @doc """
   Adds query parameters to uri
   """
-  @spec uri_with_query(String.t | URI.t, String.t) :: URI.t
+  @spec uri_with_query(binary() | URI.t(), binary()) :: URI.t()
   def uri_with_query(uri, query) when is_binary(uri),
     do: uri_with_query(URI.parse(uri), query)
   def uri_with_query(%URI{} = uri, query) do
@@ -89,11 +90,11 @@ defmodule ExOauth2Provider.RedirectURI do
   defp add_query_params(query, attrs) do
     (query || "")
     |> URI.decode_query(attrs)
-    |> remove_empty_values()
+    |> Utils.remove_empty_values()
     |> URI.encode_query()
   end
 
   defp invalid_ssl_uri?(uri) do
-    ExOauth2Provider.Config.force_ssl_in_redirect_uri?() and uri.scheme == "http"
+    Config.force_ssl_in_redirect_uri?() and uri.scheme == "http"
   end
 end
