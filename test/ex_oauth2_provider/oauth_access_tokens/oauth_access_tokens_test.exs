@@ -193,40 +193,44 @@ defmodule ExOauth2Provider.OauthAccessTokensTest do
   end
 
   test "get_or_create_token/2 gets existing token", %{user: user} do
-    {:ok, token} = OauthAccessTokens.get_or_create_token(user)
+    {:ok, token} = OauthAccessTokens.get_or_create_token(user, nil, nil, %{})
     assert is_nil(token.application_id)
     assert token.resource_owner_id == user.id
 
-    {:ok, token2} = OauthAccessTokens.get_or_create_token(user)
+    {:ok, token2} = OauthAccessTokens.get_or_create_token(user, nil, nil, %{})
     assert token.id == token2.id
 
-    update(token, scopes: "read write")
-    {:ok, token3} = OauthAccessTokens.get_or_create_token(user, %{scopes: "read write"})
+    update(token, scopes: "write read")
+    {:ok, token3} = OauthAccessTokens.get_or_create_token(user, nil, "read write", %{})
     assert token.id == token3.id
   end
 
   test "get_or_create_token/2 with resource owner and application", %{user: user, application: application} do
-    {:ok, token} = OauthAccessTokens.get_or_create_token(user, %{application: application})
+    {:ok, token} = OauthAccessTokens.get_or_create_token(user, application, nil, %{})
     assert token.application_id == application.id
     assert token.resource_owner_id == user.id
 
-    {:ok, token2} = OauthAccessTokens.get_or_create_token(user, %{application: application})
+    {:ok, token2} = OauthAccessTokens.get_or_create_token(user, application, nil, %{})
     assert token.id == token2.id
+
+    update(token, scopes: "read write")
+    {:ok, token3} = OauthAccessTokens.get_or_create_token(user, application, "read write", %{})
+    assert token.id == token3.id
   end
 
   test "get_or_create_token/2 with application", %{application: application} do
-    {:ok, token} = OauthAccessTokens.get_or_create_token(application)
+    {:ok, token} = OauthAccessTokens.get_or_create_token(application, nil, %{})
     assert token.application_id == application.id
     assert is_nil(token.resource_owner_id)
 
-    {:ok, token2} = OauthAccessTokens.get_or_create_token(application)
+    {:ok, token2} = OauthAccessTokens.get_or_create_token(application, nil, %{})
     assert token.id == token2.id
   end
 
   test "get_or_create_token/2 creates token when matching is revoked", %{user: user} do
-    {:ok, token} = OauthAccessTokens.get_or_create_token(user)
+    {:ok, token} = OauthAccessTokens.get_or_create_token(user, nil, nil, %{})
     OauthAccessTokens.revoke(token)
-    {:ok, token2} = OauthAccessTokens.get_or_create_token(user)
+    {:ok, token2} = OauthAccessTokens.get_or_create_token(user, nil, nil, %{})
     assert token.id != token2.id
   end
 
@@ -234,32 +238,34 @@ defmodule ExOauth2Provider.OauthAccessTokensTest do
     {:ok, token1} = OauthAccessTokens.create_token(user, %{expires_in: 1})
     {:ok, token2} = OauthAccessTokens.create_token(user, %{expires_in: 1})
 
-    {:ok, token} = OauthAccessTokens.get_or_create_token(user)
+    {:ok, token} = OauthAccessTokens.get_or_create_token(user, nil, nil, %{})
     assert token.id == token2.id
 
     inserted_at = NaiveDateTime.add(NaiveDateTime.utc_now(), -token.expires_in, :second)
     update(token2, inserted_at: inserted_at)
-    {:ok, token} = OauthAccessTokens.get_or_create_token(user)
+    {:ok, token} = OauthAccessTokens.get_or_create_token(user, nil, nil, %{})
     assert token.id == token1.id
 
     update(token1, inserted_at: inserted_at)
-    {:ok, token} = OauthAccessTokens.get_or_create_token(user)
+    {:ok, token} = OauthAccessTokens.get_or_create_token(user, nil, nil, %{})
     refute token.id in [token1.id, token2.id]
   end
 
   test "get_or_create_token/2 creates token when params are different", %{user: user} do
-    {:ok, token} = OauthAccessTokens.get_or_create_token(user)
+    {:ok, token} = OauthAccessTokens.get_or_create_token(user, nil, nil, %{})
 
-    {:ok, token2} = OauthAccessTokens.get_or_create_token(fixture(:user))
+    {:ok, token2} = OauthAccessTokens.get_or_create_token(fixture(:user), nil, nil, %{})
     assert token.id != token2.id
 
     application_id = (if System.get_env("UUID") == "all", do: "09b58e2b-8fff-4b8d-ba94-18a06dd4fc29", else: 0)
-    Enum.each(%{application_id: application_id,
-                expires_in: 0,
-                scopes: nil}, fn({k, v}) ->
-      {:ok, token2} = OauthAccessTokens.get_or_create_token(user, %{"#{k}": v})
-      assert token.id != token2.id
-    end)
+    {:ok, token3} = OauthAccessTokens.get_or_create_token(user, application_id, nil, %{})
+    assert token.id != token3.id
+
+    {:ok, token4} = OauthAccessTokens.get_or_create_token(user, nil, nil, %{expires_in: 0})
+    assert token.id != token4.id
+
+    {:ok, token5} = OauthAccessTokens.get_or_create_token(user, nil, "read", %{})
+    assert token.id != token5.id
   end
 
   test "revoke/1 revokes token", %{user: user} do

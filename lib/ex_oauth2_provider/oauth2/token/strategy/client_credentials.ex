@@ -5,6 +5,7 @@ defmodule ExOauth2Provider.Token.ClientCredentials do
   alias ExOauth2Provider.Utils.Error
   alias ExOauth2Provider.Token.Utils
   alias ExOauth2Provider.Token.Utils.Response
+  alias ExOauth2Provider.OauthAccessTokens
 
   @doc """
   Will grant access token by client credentials.
@@ -31,11 +32,10 @@ defmodule ExOauth2Provider.Token.ClientCredentials do
 
   defp issue_access_token_by_creds(%{error: _} = params), do: params
   defp issue_access_token_by_creds(%{client: client, request: request} = params) do
-    token_params = %{scopes: request["scope"],
-                     # client_credentials MUST NOT use refresh tokens
+    token_params = %{# client_credentials MUST NOT use refresh tokens
                      use_refresh_token: false}
 
-    case Utils.find_or_create_access_token(client, token_params) do
+    case OauthAccessTokens.get_or_create_token(client, request["scope"], token_params) do
       {:ok, access_token} -> Map.merge(params, %{access_token: access_token})
       {:error, error}     -> Error.add_error(params, error)
     end

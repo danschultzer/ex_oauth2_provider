@@ -6,6 +6,7 @@ defmodule ExOauth2Provider.Token.Password do
   alias ExOauth2Provider.Token.Utils
   alias ExOauth2Provider.Token.Utils.Response
   alias ExOauth2Provider.Scopes
+  alias ExOauth2Provider.OauthAccessTokens
 
   @doc """
   Will grant access token by password authentication.
@@ -55,11 +56,9 @@ defmodule ExOauth2Provider.Token.Password do
 
   defp issue_access_token(%{error: _} = params), do: params
   defp issue_access_token(%{client: client, resource_owner: resource_owner, request: request} = params) do
-    token_params = %{application: client,
-                     scopes: request["scope"],
-                     use_refresh_token: ExOauth2Provider.Config.use_refresh_token?()}
+    token_params = %{use_refresh_token: ExOauth2Provider.Config.use_refresh_token?()}
 
-    case Utils.find_or_create_access_token(resource_owner, token_params) do
+    case OauthAccessTokens.get_or_create_token(resource_owner, client, request["scope"], token_params) do
       {:ok, access_token} -> Map.merge(params, %{access_token: access_token})
       {:error, error}     -> Error.add_error(params, error)
     end

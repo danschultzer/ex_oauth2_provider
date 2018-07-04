@@ -69,25 +69,41 @@ defmodule ExOauth2Provider.OauthAccessTokens do
 
   ## Examples
 
-      iex> get_matching_token_for(user, application, "read write")
+      iex> get_matching_token_for(resource_owner, application, "read write")
       %OauthAccessToken{}
 
-      iex> get_matching_token_for(user, application, "read invalid")
+      iex> get_matching_token_for(resource_owner, application, "read invalid")
       nil
 
   """
-  @spec get_matching_token_for(Ecto.Schema.t, %OauthApplication{}, String.t) :: %OauthAccessToken{} | nil
-  def get_matching_token_for(resource_owner, application, scopes) do
-    application_clause = ExOauth2Provider.Utils.belongs_to_clause(OauthAccessToken, :application, application)
-    resource_owner_clause = ExOauth2Provider.Utils.belongs_to_clause(OauthAccessToken, :resource_owner, resource_owner)
+  @spec get_matching_token_for(nil, %OauthApplication{}, String.t) :: %OauthAccessToken{} | nil
+  def get_matching_token_for(nil, %OauthApplication{} = application, scopes) do
+    %{owner_key: resource_owner_key} = ExOauth2Provider.Utils.schema_association(OauthAccessToken, :resource_owner)
+    %{owner_key: application_key} = ExOauth2Provider.Utils.schema_association(OauthAccessToken, :application)
 
     OauthAccessToken
-    |> where(^application_clause)
+    |> scope_belongs_to(resource_owner_key, nil)
+    |> scope_belongs_to(application_key, application)
+    |> load_matching_token_for(scopes)
+  end
+
+  @spec get_matching_token_for(Ecto.Schema.t, %OauthApplication{} | nil, String.t) :: %OauthAccessToken{} | nil
+  def get_matching_token_for(resource_owner, application, scopes) do
+    resource_owner_clause = ExOauth2Provider.Utils.belongs_to_clause(OauthAccessToken, :resource_owner, resource_owner)
+    %{owner_key: application_key} = ExOauth2Provider.Utils.schema_association(OauthAccessToken, :application)
+
+    OauthAccessToken
     |> where(^resource_owner_clause)
+    |> scope_belongs_to(application_key, application)
+    |> load_matching_token_for(scopes)
+  end
+
+  defp load_matching_token_for(queryable, scopes) do
+    queryable
     |> where([x], is_nil(x.revoked_at))
     |> order_by([x], desc: x.inserted_at)
     |> ExOauth2Provider.repo.all()
-    |> filter_accessible()
+    |> Enum.filter(&is_accessible?/1)
     |> check_matching_scopes(scopes)
   end
 
@@ -173,99 +189,42 @@ defmodule ExOauth2Provider.OauthAccessTokens do
 
   ## Examples
 
-      iex> get_or_create_token(application, attrs)
+      iex> get_or_create_token(application, scopes, attrs)
       {:ok, %OauthAccessToken{}}
 
-      iex> get_or_create_token(user attrs)
+      iex> get_or_create_token(user, application, scopes, attrs)
       {:ok, %OauthAccessToken{}}
 
-      iex> get_or_create_token(user attrs)
+      iex> get_or_create_token(user, application, scopes, attrs)
       {:error, %Ecto.Changeset{}}
 
   """
-  @spec get_or_create_token(Ecto.Schema.t, Map.t) :: {:ok, %OauthAccessToken{}} | {:error, Ecto.Changeset.t}
-  def get_or_create_token(owner, attrs \\ %{})
-  def get_or_create_token(%OauthApplication{} = application, attrs) do
-    attrs
-    |> Map.put(:application, application)
-    |> find_accessible_token_by_attrs()
-    |> create_or_return_token(application, attrs)
+
+  @spec get_or_create_token(%OauthApplication{}, binary() | nil,  Map.t) :: {:ok, %OauthAccessToken{}} | {:error, Ecto.Changeset.t}
+  def get_or_create_token(%OauthApplication{} = application, scopes, attrs) do
+    get_or_create_token(nil, application, scopes, attrs)
   end
-  def get_or_create_token(resource_owner, %{application: _} = attrs) do
-    attrs
-    |> Map.put(:resource_owner, resource_owner)
-    |> find_accessible_token_by_attrs()
-    |> create_or_return_token(resource_owner, attrs)
-  end
-  def get_or_create_token(resource_owner, attrs) do
-    attrs
-    |> Map.put(:resource_owner, resource_owner)
-    |> find_accessible_token_by_attrs()
-    |> create_or_return_token(resource_owner, attrs)
+  @spec get_or_create_token(Ecto.Schema.t, %OauthApplication{} | nil, binary() | nil, Map.t) :: {:ok, %OauthAccessToken{}} | {:error, Ecto.Changeset.t}
+  def get_or_create_token(resource_owner, application, scopes, attrs) do
+    attrs = Map.merge(%{scopes: scopes, application: application}, attrs)
+
+    resource_owner
+    |> get_matching_token_for(application, maybe_build_scopes(application, scopes))
+    |> maybe_create_token(resource_owner, application, attrs)
   end
 
-  defp find_accessible_token_by_attrs(attrs) do
-    attrs
-    |> tranform_assocations_in_attrs()
-    |> Map.delete(:use_refresh_token)
-    |> build_access_token_by_attrs_query()
-    |> ExOauth2Provider.repo.all()
-    |> Enum.find(nil, &is_accessible?/1)
+  defp maybe_create_token(nil, nil, application, token_params) do
+    maybe_create_token(nil, application, application, token_params)
   end
-
-  defp tranform_assocations_in_attrs(attrs) do
-    attrs
-    |> transform_resource_owner_assocation_in_attrs()
-    |> transform_application_assocation_in_attrs()
+  defp maybe_create_token(nil, resource_owner, _application, token_params) do
+    token_params = Map.merge(%{expires_in: ExOauth2Provider.Config.access_token_expires_in()}, token_params)
+    create_token(resource_owner, token_params)
   end
+  defp maybe_create_token(access_token, _resource_owner, _application, _), do: {:ok, access_token}
 
-  defp transform_resource_owner_assocation_in_attrs(%{resource_owner: resource_owner} = attrs) do
-    resource_owner_clause = OauthAccessToken
-    |> ExOauth2Provider.Utils.belongs_to_clause(:resource_owner, resource_owner)
-    |> Enum.into(%{})
-
-    attrs
-    |> Map.merge(resource_owner_clause)
-    |> Map.delete(:resource_owner)
-  end
-  defp transform_resource_owner_assocation_in_attrs(attrs), do: attrs
-
-  defp transform_application_assocation_in_attrs(%{application: application} = attrs) do
-    application_clause = OauthAccessToken
-    |> ExOauth2Provider.Utils.belongs_to_clause(:application, application)
-    |> Enum.into(%{})
-
-    attrs
-    |> Map.merge(application_clause)
-    |> Map.delete(:application)
-  end
-  defp transform_application_assocation_in_attrs(attrs), do: attrs
-
-  defp build_access_token_by_attrs_query(attrs) do
-    %{owner_key: application_key} = ExOauth2Provider.Utils.schema_association(OauthAccessToken, :application)
-    %{owner_key: resource_owner_key} = ExOauth2Provider.Utils.schema_association(OauthAccessToken, :resource_owner)
-
-    attrs
-    |> Enum.reduce(OauthAccessToken, fn({k, v}, query) ->
-         case Enum.member?([application_key, resource_owner_key, :scopes], k) and is_nil(v) do
-           true  -> where(query, [o], is_nil(field(o, ^k)))
-           false -> where(query, [o], field(o, ^k) == ^v)
-         end
-       end)
-  end
-
-  defp filter_accessible(access_tokens) when is_list(access_tokens) do
-    Enum.filter(access_tokens, &is_accessible?/1)
-  end
-  defp filter_accessible(access_token) do
-    case is_accessible?(access_token) do
-      true  -> access_token
-      false -> nil
-    end
-  end
-
-  defp create_or_return_token(nil, owner, attrs), do: create_token(owner, attrs)
-  defp create_or_return_token(access_token, _, _), do: {:ok, access_token}
+  defp maybe_build_scopes(_application, scopes) when is_binary(scopes), do: scopes
+  defp maybe_build_scopes(%{scopes: server_scopes}, nil), do: parse_default_scope_string(server_scopes)
+  defp maybe_build_scopes(_application, nil), do: parse_default_scope_string(nil)
 
   @doc """
   Checks if an access token can be accessed.
@@ -308,18 +267,21 @@ defmodule ExOauth2Provider.OauthAccessTokens do
     resource_owner_id = Map.get(access_token, resource_owner_key)
 
     OauthAccessToken
-    |> scope_application(application_key, application_id)
+    |> scope_belongs_to(application_key, application_id)
     |> where([x], field(x, ^resource_owner_key) == ^resource_owner_id)
     |> where([x], x.refresh_token == ^previous_refresh_token)
     |> limit(1)
     |> ExOauth2Provider.repo.one()
   end
 
-  defp scope_application(queryable, application_key, nil) do
-    where(queryable, [x], is_nil(field(x, ^application_key)))
+  defp scope_belongs_to(queryable, belongs_to_column, nil) do
+    where(queryable, [x], is_nil(field(x, ^belongs_to_column)))
   end
-  defp scope_application(queryable, application_key, application_id) do
-    where(queryable, [x], field(x, ^application_key) == ^application_id)
+  defp scope_belongs_to(queryable, belongs_to_column, %{id: id}) do
+    scope_belongs_to(queryable, belongs_to_column, id)
+  end
+  defp scope_belongs_to(queryable, belongs_to_column, id) do
+    where(queryable, [x], field(x, ^belongs_to_column) == ^id)
   end
 
   @doc """

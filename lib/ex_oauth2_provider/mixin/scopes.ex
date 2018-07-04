@@ -7,9 +7,9 @@ defmodule ExOauth2Provider.Mixin.Scopes do
       @spec put_scopes(Ecto.Changeset.t) :: Ecto.Changeset.t
       def put_scopes(%{} = changeset), do: put_scopes(changeset, nil)
       def put_scopes(%{} = changeset, ""), do: put_scopes(changeset, nil)
-      def put_scopes(%{} = changeset, server_scopes) do
+      def put_scopes(%{} = changeset, default_server_scopes) do
         case changeset |> get_field(:scopes) |> is_empty do
-          true -> changeset |> change(%{scopes: default_scopes_string(server_scopes)})
+          true -> changeset |> change(%{scopes: parse_default_scope_string(default_server_scopes)})
           _    -> changeset
         end
       end
@@ -30,10 +30,14 @@ defmodule ExOauth2Provider.Mixin.Scopes do
       defp is_empty(nil), do: true
       defp is_empty(_), do: false
 
-      defp default_scopes_string(nil), do: default_scopes_string("")
-      defp default_scopes_string(server_scopes) when is_binary(server_scopes),
-        do: server_scopes |> Scopes.to_list |> default_scopes_string
-      defp default_scopes_string(server_scopes) do
+      @spec parse_default_scope_string(binary() | nil) :: binary()
+      def parse_default_scope_string(nil), do: parse_default_scope_string("")
+      def parse_default_scope_string(server_scopes) when is_binary(server_scopes) do
+        server_scopes
+        |> Scopes.to_list()
+        |> parse_default_scope_string()
+      end
+      def parse_default_scope_string(server_scopes) do
         server_scopes
         |> Scopes.default_to_server_scopes()
         |> Scopes.filter_default_scopes()
