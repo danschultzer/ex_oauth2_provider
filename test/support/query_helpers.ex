@@ -1,4 +1,4 @@
-defmodule ExOauth2Provider.Test.QueryHelper do
+defmodule ExOauth2Provider.Test.QueryHelpers do
   @moduledoc false
 
   import Ecto.Query

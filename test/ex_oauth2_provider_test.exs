@@ -2,7 +2,7 @@ defmodule ExOauth2ProviderTest do
   use ExOauth2Provider.TestCase
   doctest ExOauth2Provider
 
-  alias ExOauth2Provider.Test.{ConfigHelpers, Fixture, QueryHelper}
+  alias ExOauth2Provider.Test.{ConfigHelpers, Fixture, QueryHelpers}
   alias ExOauth2Provider.{OauthAccessTokens, OauthAccessTokens.OauthAccessToken}
 
   test "authenticate_token/1 error when invalid" do
@@ -50,7 +50,7 @@ defmodule ExOauth2ProviderTest do
   test "authenticate_token/1 error when expired token" do
     access_token = :access_token
     |> Fixture.fixture(Fixture.fixture(:user), %{expires_in: 1})
-    |> QueryHelper.update_access_token_inserted_at(-2)
+    |> QueryHelpers.update_access_token_inserted_at(-2)
 
     assert ExOauth2Provider.authenticate_token(access_token.token) == {:error, :token_inaccessible}
   end

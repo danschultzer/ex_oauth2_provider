@@ -1,7 +1,7 @@
 defmodule ExOauth2Provider.Token.Strategy.ClientCredentialsTest do
   use ExOauth2Provider.TestCase
 
-  alias ExOauth2Provider.Test.{Fixture, QueryHelper}
+  alias ExOauth2Provider.Test.{Fixture, QueryHelpers}
   alias ExOauth2Provider.Token
 
   @client_id            "Jf5rM8hQBc"
@@ -33,7 +33,7 @@ defmodule ExOauth2Provider.Token.Strategy.ClientCredentialsTest do
 
   test "#grant/1 returns access token", %{application: application} do
     assert {:ok, body} = Token.grant(@valid_request)
-    access_token = QueryHelper.get_last_access_token()
+    access_token = QueryHelpers.get_last_access_token()
 
     assert body.access_token == access_token.token
     assert is_nil(access_token.resource_owner_id)
