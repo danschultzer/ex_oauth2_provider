@@ -1,4 +1,4 @@
-defmodule ExOauth2Provider.ConfigHelpers do
+defmodule ExOauth2Provider.Test.ConfigHelpers do
   @moduledoc false
 
   @config Application.get_env(:ex_oauth2_provider, ExOauth2Provider)

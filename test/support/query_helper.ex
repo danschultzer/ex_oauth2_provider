@@ -3,8 +3,7 @@ defmodule ExOauth2Provider.Test.QueryHelper do
 
   import Ecto.Query
 
-  alias ExOauth2Provider.OauthAccessGrants.OauthAccessGrant
-  alias ExOauth2Provider.OauthAccessTokens.OauthAccessToken
+  alias ExOauth2Provider.{OauthAccessGrants.OauthAccessGrant, OauthAccessTokens.OauthAccessToken}
 
   def get_access_grant_by_code(code),
     do: ExOauth2Provider.repo.get_by!(OauthAccessGrant, token: code)

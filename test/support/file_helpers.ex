@@ -1,4 +1,4 @@
-defmodule ExOauth2Provider.FileHelpers do
+defmodule ExOauth2Provider.Test.FileHelpers do
   @moduledoc false
 
   import ExUnit.Assertions

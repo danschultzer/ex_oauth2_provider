@@ -1,41 +1,41 @@
 defmodule ExOauth2Provider.ScopesTest do
   use ExUnit.Case
-  import ExOauth2Provider.Scopes
+  alias ExOauth2Provider.Scopes
 
   test "all?#true" do
     scopes = ["read", "write", "profile"]
-    assert all?(scopes, ["read", "profile"])
-    assert all?(scopes, ["write"])
-    assert all?(scopes, [])
+    assert Scopes.all?(scopes, ["read", "profile"])
+    assert Scopes.all?(scopes, ["write"])
+    assert Scopes.all?(scopes, [])
   end
 
   test "all?#false" do
     scopes = ["read", "write", "profile"]
-    refute all?(scopes, ["read", "profile", "another_write"])
-    refute all?(scopes, ["read", "write", "profile", "another_write"])
+    refute Scopes.all?(scopes, ["read", "profile", "another_write"])
+    refute Scopes.all?(scopes, ["read", "write", "profile", "another_write"])
   end
 
   test "equal?#true" do
     scopes = ["read", "write"]
-    assert equal?(scopes, ["read", "write"])
-    assert equal?(scopes, ["write", "read"])
+    assert Scopes.equal?(scopes, ["read", "write"])
+    assert Scopes.equal?(scopes, ["write", "read"])
   end
 
   test "equal?#false" do
     scopes = ["read", "write"]
-    refute equal?(scopes, ["read", "write", "profile"])
-    refute equal?(scopes, ["read"])
-    refute equal?(scopes, [])
+    refute Scopes.equal?(scopes, ["read", "write", "profile"])
+    refute Scopes.equal?(scopes, ["read"])
+    refute Scopes.equal?(scopes, [])
   end
 
   test "to_list" do
     str = "user:read user:write global_write"
-    assert to_list(str) == ["user:read", "user:write", "global_write"]
-    assert to_list(nil) == []
+    assert Scopes.to_list(str) == ["user:read", "user:write", "global_write"]
+    assert Scopes.to_list(nil) == []
   end
 
   test "to_string" do
     list = ["user:read", "user:write", "global_write"]
-    assert ExOauth2Provider.Scopes.to_string(list) == "user:read user:write global_write"
+    assert Scopes.to_string(list) == "user:read user:write global_write"
   end
 end
