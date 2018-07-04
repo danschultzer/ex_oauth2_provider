@@ -2,7 +2,7 @@ defmodule ExOauth2Provider.Token.Strategy.AuthorizationCodeTest do
   use ExOauth2Provider.TestCase
 
   alias ExOauth2Provider.Test.{ConfigHelpers, Fixture, QueryHelpers}
-  alias ExOauth2Provider.{Token, Token.AuthorizationCode}
+  alias ExOauth2Provider.{Token, Token.AuthorizationCode, OauthAccessTokens.OauthAccessToken}
 
   @client_id          "Jf5rM8hQBc"
   @client_secret      "secret"
@@ -34,7 +34,7 @@ defmodule ExOauth2Provider.Token.Strategy.AuthorizationCodeTest do
 
   test "#grant/1 returns access token", %{resource_owner: resource_owner, application: application, access_grant: access_grant} do
     assert {:ok, body} = Token.grant(@valid_request)
-    access_token = QueryHelpers.get_last_access_token()
+    access_token = QueryHelpers.get_latest_inserted(OauthAccessToken)
 
     assert body.access_token == access_token.token
     assert access_token.resource_owner_id == resource_owner.id
@@ -49,7 +49,7 @@ defmodule ExOauth2Provider.Token.Strategy.AuthorizationCodeTest do
     valid_request_no_client_secret = Map.drop(@valid_request, ["client_secret"])
 
     assert {:ok, body} = Token.grant(valid_request_no_client_secret)
-    access_token = QueryHelpers.get_last_access_token()
+    access_token = QueryHelpers.get_latest_inserted(OauthAccessToken)
 
     assert body.access_token == access_token.token
     assert access_token.resource_owner_id == resource_owner.id
@@ -60,7 +60,7 @@ defmodule ExOauth2Provider.Token.Strategy.AuthorizationCodeTest do
     ConfigHelpers.set_config(:access_token_response_body_handler, {__MODULE__, :access_token_response_body_handler})
 
     assert {:ok, body} = AuthorizationCode.grant(@valid_request)
-    access_token = QueryHelpers.get_last_access_token()
+    access_token = QueryHelpers.get_latest_inserted(OauthAccessToken)
 
     assert body.custom_attr == access_token.inserted_at
   end
@@ -69,7 +69,7 @@ defmodule ExOauth2Provider.Token.Strategy.AuthorizationCodeTest do
     ConfigHelpers.set_config(:use_refresh_token, false)
 
     assert {:ok, body} = AuthorizationCode.grant(@valid_request)
-    access_token = QueryHelpers.get_last_access_token()
+    access_token = QueryHelpers.get_latest_inserted(OauthAccessToken)
 
     assert body.access_token == access_token.token
     assert is_nil(access_token.refresh_token)
@@ -109,20 +109,20 @@ defmodule ExOauth2Provider.Token.Strategy.AuthorizationCodeTest do
 
   test "#grant/1 error when grant owned by another client", %{access_grant: access_grant} do
     new_application = Fixture.fixture(:application, Fixture.fixture(:user), %{uid: "new_app"})
-    update_grant!(access_grant, application_id: new_application.id)
+    QueryHelpers.change!(access_grant, application_id: new_application.id)
 
     assert Token.grant(@valid_request) == {:error, @invalid_grant, :unprocessable_entity}
   end
 
   test "#grant/1 error when revoked grant", %{access_grant: access_grant} do
-    update_grant!(access_grant, revoked_at: DateTime.utc_now())
+    QueryHelpers.change!(access_grant, revoked_at: DateTime.utc_now())
 
     assert Token.grant(@valid_request) == {:error, @invalid_grant, :unprocessable_entity}
   end
 
   test "#grant/1 error when grant expired", %{access_grant: access_grant} do
     inserted_at = NaiveDateTime.add(NaiveDateTime.utc_now(), -access_grant.expires_in, :second)
-    update_grant!(access_grant, inserted_at: inserted_at)
+    QueryHelpers.change!(access_grant, inserted_at: inserted_at)
 
     assert Token.grant(@valid_request) == {:error, @invalid_grant, :unprocessable_entity}
   end
@@ -141,11 +141,5 @@ defmodule ExOauth2Provider.Token.Strategy.AuthorizationCodeTest do
 
   def access_token_response_body_handler(body, access_token) do
     Map.merge(body, %{custom_attr: access_token.inserted_at})
-  end
-
-  defp update_grant!(grant, attrs) do
-    grant
-    |> Ecto.Changeset.change(attrs)
-    |> ExOauth2Provider.repo.update!()
   end
 end

@@ -27,7 +27,7 @@ defmodule ExOauth2Provider.AuthorizationTest do
   end
 
   test "#preauthorize/2 redirect when missing response_type", %{resource_owner: resource_owner, application: application} do
-    QueryHelpers.set_application_redirect_uri(application, "#{application.redirect_uri}\nhttps://example.com/path")
+    QueryHelpers.change!(application, redirect_uri: "#{application.redirect_uri}\nhttps://example.com/path")
 
     params = @valid_request
              |> Map.delete("response_type")
@@ -43,7 +43,7 @@ defmodule ExOauth2Provider.AuthorizationTest do
   end
 
   test "#preauthorize/2 redirect when unsupported response_type", %{resource_owner: resource_owner, application: application} do
-    QueryHelpers.set_application_redirect_uri(application, "#{application.redirect_uri}\nhttps://example.com/path")
+    QueryHelpers.change!(application, redirect_uri: "#{application.redirect_uri}\nhttps://example.com/path")
 
     params = @valid_request
              |> Map.merge(%{"response_type" => "invalid"})

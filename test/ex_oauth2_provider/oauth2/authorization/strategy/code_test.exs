@@ -2,7 +2,7 @@ defmodule ExOauth2Provider.Authorization.CodeTest do
   use ExOauth2Provider.TestCase
 
   alias ExOauth2Provider.Test.{Fixture, QueryHelpers}
-  alias ExOauth2Provider.{Authorization, Config, Scopes}
+  alias ExOauth2Provider.{Authorization, Config, Scopes, OauthAccessGrants.OauthAccessGrant}
 
   @client_id                "Jf5rM8hQBc"
   @valid_request            %{"client_id" => @client_id, "response_type" => "code", "scope" => "app:read app:write"}
@@ -56,7 +56,7 @@ defmodule ExOauth2Provider.Authorization.CodeTest do
 
     assert Authorization.preauthorize(resource_owner, @valid_request) == {:ok, application, expected_scopes}
 
-    QueryHelpers.set_access_token_scopes(access_token, "app:read app:write")
+    QueryHelpers.change!(access_token, scopes: "app:read app:write")
     request = Map.merge(@valid_request, %{"scope" => "app:read"})
     expected_scopes = Scopes.to_list(request["scope"])
 
@@ -77,7 +77,7 @@ defmodule ExOauth2Provider.Authorization.CodeTest do
 
   describe "#preauthorize/2 when application has no scope" do
     setup %{resource_owner: resource_owner, application: application} do
-      application = QueryHelpers.set_application_scopes(application, "")
+      application = QueryHelpers.change!(application, scopes: "")
 
       %{resource_owner: resource_owner, application: application}
     end
@@ -99,7 +99,7 @@ defmodule ExOauth2Provider.Authorization.CodeTest do
     Fixture.fixture(:access_token, resource_owner, %{application: application, scopes: @valid_request["scope"]})
 
     assert {:native_redirect, %{code: code}} = Authorization.preauthorize(resource_owner, @valid_request)
-    access_grant = QueryHelpers.get_last_access_grant()
+    access_grant = QueryHelpers.get_latest_inserted(OauthAccessGrant)
 
     assert code == access_grant.token
   end
@@ -128,7 +128,7 @@ defmodule ExOauth2Provider.Authorization.CodeTest do
 
   describe "#authorize/2 when application has no scope" do
     setup %{resource_owner: resource_owner, application: application} do
-      application = QueryHelpers.set_application_scopes(application, "")
+      application = QueryHelpers.change!(application, scopes: "")
 
       %{resource_owner: resource_owner, application: application}
     end
@@ -142,7 +142,7 @@ defmodule ExOauth2Provider.Authorization.CodeTest do
       request = Map.merge(@valid_request, %{"scope" => "public"})
       assert {:native_redirect, %{code: code}} = Authorization.authorize(resource_owner, request)
 
-      access_grant = QueryHelpers.get_access_grant_by_code(code)
+      access_grant = QueryHelpers.get_by(OauthAccessGrant, token: code)
       assert access_grant.resource_owner_id == resource_owner.id
     end
   end
@@ -155,7 +155,7 @@ defmodule ExOauth2Provider.Authorization.CodeTest do
 
   test "#authorize/2 generates grant", %{resource_owner: resource_owner} do
     assert {:native_redirect, %{code: code}} = Authorization.authorize(resource_owner, @valid_request)
-    access_grant = QueryHelpers.get_access_grant_by_code(code)
+    access_grant = QueryHelpers.get_by(OauthAccessGrant, token: code)
 
     assert access_grant.resource_owner_id == resource_owner.id
     assert access_grant.expires_in == Config.authorization_code_expires_in()
@@ -163,12 +163,12 @@ defmodule ExOauth2Provider.Authorization.CodeTest do
   end
 
   test "#authorize/2 generates grant with redirect uri", %{resource_owner: resource_owner, application: application} do
-    QueryHelpers.set_application_redirect_uri(application, "#{application.redirect_uri}\nhttps://example.com/path")
+    QueryHelpers.change!(application, redirect_uri: "#{application.redirect_uri}\nhttps://example.com/path")
 
     request = Map.merge(@valid_request, %{"redirect_uri" => "https://example.com/path?param=1", "state" => 40_612})
 
     assert {:redirect, redirect_uri} = Authorization.authorize(resource_owner, request)
-    access_grant = QueryHelpers.get_last_access_grant()
+    access_grant = QueryHelpers.get_latest_inserted(OauthAccessGrant)
 
     assert redirect_uri == "https://example.com/path?code=#{access_grant.token}&param=1&state=40612"
   end
@@ -194,7 +194,7 @@ defmodule ExOauth2Provider.Authorization.CodeTest do
   end
 
   test "#deny/2 with redirection uri", %{application: application, resource_owner: resource_owner} do
-    QueryHelpers.set_application_redirect_uri(application, "#{application.redirect_uri}\nhttps://example.com/path")
+    QueryHelpers.change!(application, redirect_uri: "#{application.redirect_uri}\nhttps://example.com/path")
     request = Map.merge(@valid_request, %{"redirect_uri" => "https://example.com/path?param=1", "state" => 40_612})
 
     assert Authorization.deny(resource_owner, request) == {:redirect, "https://example.com/path?error=access_denied&error_description=The+resource+owner+or+authorization+server+denied+the+request.&param=1&state=40612"}

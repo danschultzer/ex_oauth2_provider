@@ -2,7 +2,7 @@ defmodule ExOauth2Provider.Token.Strategy.PasswordTest do
   use ExOauth2Provider.TestCase
 
   alias ExOauth2Provider.Test.{ConfigHelpers, Fixture, QueryHelpers}
-  alias ExOauth2Provider.{Config, Token, Token.Password}
+  alias ExOauth2Provider.{Config, Token, Token.Password, OauthAccessTokens.OauthAccessToken}
 
   @client_id            "Jf5rM8hQBc"
   @client_secret        "secret"
@@ -71,7 +71,7 @@ defmodule ExOauth2Provider.Token.Strategy.PasswordTest do
 
   test "#grant/1 returns access token", %{user: user, application: application} do
     assert {:ok, body} = Token.grant(@valid_request)
-    access_token = QueryHelpers.get_last_access_token()
+    access_token = QueryHelpers.get_latest_inserted(OauthAccessToken)
 
     assert body.access_token == access_token.token
     assert access_token.resource_owner_id == user.id
@@ -87,7 +87,7 @@ defmodule ExOauth2Provider.Token.Strategy.PasswordTest do
     params = Map.delete(@valid_request, "client_secret")
 
     assert {:ok, body} = Token.grant(params)
-    access_token = QueryHelpers.get_last_access_token()
+    access_token = QueryHelpers.get_latest_inserted(OauthAccessToken)
 
     assert body.access_token == access_token.token
     assert access_token.resource_owner_id == user.id
@@ -97,7 +97,7 @@ defmodule ExOauth2Provider.Token.Strategy.PasswordTest do
   test "#grant/1 returns access token with custom response handler" do
     ConfigHelpers.set_config(:access_token_response_body_handler, {__MODULE__, :access_token_response_body_handler})
     assert {:ok, body} = Password.grant(@valid_request)
-    access_token = QueryHelpers.get_last_access_token()
+    access_token = QueryHelpers.get_latest_inserted(OauthAccessToken)
 
     assert body.custom_attr == access_token.inserted_at
   end
@@ -105,7 +105,7 @@ defmodule ExOauth2Provider.Token.Strategy.PasswordTest do
   test "#grant/1 doesn't set refresh_token when ExOauth2Provider.Config.use_refresh_token? == false" do
     ConfigHelpers.set_config(:use_refresh_token, false)
     assert {:ok, body} = Password.grant(@valid_request)
-    access_token = QueryHelpers.get_last_access_token()
+    access_token = QueryHelpers.get_latest_inserted(OauthAccessToken)
 
     assert body.access_token == access_token.token
     assert is_nil(access_token.refresh_token)
@@ -114,7 +114,7 @@ defmodule ExOauth2Provider.Token.Strategy.PasswordTest do
   test "#grant/1 returns access token with limited scope" do
     params = Map.merge(@valid_request, %{"scope" => "app:read"})
     assert {:ok, _} = Token.grant(params)
-    access_token = QueryHelpers.get_last_access_token()
+    access_token = QueryHelpers.get_latest_inserted(OauthAccessToken)
 
     assert access_token.scopes == "app:read"
   end

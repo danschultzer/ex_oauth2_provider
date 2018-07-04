@@ -21,15 +21,15 @@ defmodule ExOauth2ProviderTest do
     access_token2 = Fixture.fixture(:access_token, user, %{use_refresh_token: true, previous_refresh_token: access_token})
 
     assert {:ok, access_token} = ExOauth2Provider.authenticate_token(access_token.token)
-    access_token = ExOauth2Provider.repo.get_by(OauthAccessToken, token: access_token.token)
+    access_token = QueryHelpers.get_by(OauthAccessToken, token: access_token.token)
     refute OauthAccessTokens.is_revoked?(access_token)
-    access_token2 = ExOauth2Provider.repo.get_by(OauthAccessToken, token: access_token2.token)
+    access_token2 = QueryHelpers.get_by(OauthAccessToken, token: access_token2.token)
     refute "" == access_token2.previous_refresh_token
 
     assert {:ok, access_token2} = ExOauth2Provider.authenticate_token(access_token2.token)
-    access_token = ExOauth2Provider.repo.get_by(OauthAccessToken, token: access_token.token)
+    access_token = QueryHelpers.get_by(OauthAccessToken, token: access_token.token)
     assert OauthAccessTokens.is_revoked?(access_token)
-    access_token2 = ExOauth2Provider.repo.get_by(OauthAccessToken, token: access_token2.token)
+    access_token2 = QueryHelpers.get_by(OauthAccessToken, token: access_token2.token)
     assert "" == access_token2.previous_refresh_token
   end
 
@@ -41,16 +41,14 @@ defmodule ExOauth2ProviderTest do
     access_token2 = Fixture.fixture(:access_token, user, %{use_refresh_token: true, previous_refresh_token: access_token})
 
     assert {:ok, access_token2} = ExOauth2Provider.authenticate_token(access_token2.token)
-    access_token = ExOauth2Provider.repo.get_by(OauthAccessToken, token: access_token.token)
+    access_token = QueryHelpers.get_by(OauthAccessToken, token: access_token.token)
     refute OauthAccessTokens.is_revoked?(access_token)
-    access_token2 = ExOauth2Provider.repo.get_by(OauthAccessToken, token: access_token2.token)
+    access_token2 = QueryHelpers.get_by(OauthAccessToken, token: access_token2.token)
     refute "" == access_token2.previous_refresh_token
   end
 
   test "authenticate_token/1 error when expired token" do
-    access_token = :access_token
-    |> Fixture.fixture(Fixture.fixture(:user), %{expires_in: 1})
-    |> QueryHelpers.update_access_token_inserted_at(-2)
+    access_token = Fixture.fixture(:access_token, Fixture.fixture(:user), %{expires_in: -1})
 
     assert ExOauth2Provider.authenticate_token(access_token.token) == {:error, :token_inaccessible}
   end
