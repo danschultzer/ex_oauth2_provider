@@ -49,8 +49,8 @@ defmodule ExOauth2Provider.Token.Strategy.RevokeTest do
     changeset = Ecto.Changeset.change access_token, application_id: new_application.id
     ExOauth2Provider.repo.update! changeset
 
-    assert {:error, error, :unprocessable_entity} = revoke(Map.merge(valid_request, %{"client_secret" => "invalid"}))
-    assert error == @invalid_client_error
+    assert {:ok, %{}} == revoke(Map.merge(valid_request, %{"token" => "invalid"}))
+    refute OauthAccessTokens.is_revoked?(get_last_access_token())
   end
 
   test "#revoke/1 when access token not owned by a client", %{access_token: access_token} do
