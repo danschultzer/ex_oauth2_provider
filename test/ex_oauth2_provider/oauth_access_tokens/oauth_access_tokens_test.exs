@@ -1,7 +1,7 @@
 defmodule ExOauth2Provider.OauthAccessTokensTest do
   use ExOauth2Provider.TestCase
 
-  alias ExOauth2Provider.Test.{ConfigHelpers, Fixtures}
+  alias ExOauth2Provider.Test.{ConfigHelpers, Fixtures, QueryHelpers}
   alias ExOauth2Provider.{OauthAccessTokens, OauthAccessTokens.OauthAccessToken}
 
   setup do
@@ -66,7 +66,7 @@ defmodule ExOauth2Provider.OauthAccessTokensTest do
     assert %OauthAccessToken{id: id} = OauthAccessTokens.get_matching_token_for(user, application, "public")
     assert id == access_token2.id
 
-    update(access_token1, inserted_at: NaiveDateTime.add(NaiveDateTime.utc_now(), 1, :second))
+    QueryHelpers.change!(access_token1, inserted_at: NaiveDateTime.add(NaiveDateTime.utc_now(), 1, :second))
 
     assert %OauthAccessToken{id: id} = OauthAccessTokens.get_matching_token_for(user, application, "public")
     assert id == access_token1.id
@@ -96,7 +96,7 @@ defmodule ExOauth2Provider.OauthAccessTokensTest do
 
     refute OauthAccessTokens.get_matching_token_for(user, application, "public")
 
-    update(access_token, expires_in: 1)
+    QueryHelpers.change!(access_token, expires_in: 1)
 
     assert %OauthAccessToken{id: id} = OauthAccessTokens.get_matching_token_for(user, application, "public")
     assert id == access_token.id
@@ -108,7 +108,7 @@ defmodule ExOauth2Provider.OauthAccessTokensTest do
     assert [%OauthAccessToken{id: id}] = OauthAccessTokens.get_authorized_tokens_for(user)
     assert id == access_token.id
 
-    update(access_token, expires_in: -1)
+    QueryHelpers.change!(access_token, expires_in: -1)
 
     assert [%OauthAccessToken{id: id}] = OauthAccessTokens.get_authorized_tokens_for(user)
     assert id == access_token.id
@@ -215,7 +215,7 @@ defmodule ExOauth2Provider.OauthAccessTokensTest do
     {:ok, access_token2} = OauthAccessTokens.get_or_create_token(user, nil, nil, %{})
     assert access_token.id == access_token2.id
 
-    update(access_token, scopes: "write read")
+    QueryHelpers.change!(access_token, scopes: "write read")
     {:ok, access_token3} = OauthAccessTokens.get_or_create_token(user, nil, "read write", %{})
     assert access_token.id == access_token3.id
   end
@@ -228,7 +228,7 @@ defmodule ExOauth2Provider.OauthAccessTokensTest do
     {:ok, access_token2} = OauthAccessTokens.get_or_create_token(user, application, nil, %{})
     assert access_token2.id == access_token.id
 
-    update(access_token, scopes: "read write")
+    QueryHelpers.change!(access_token, scopes: "read write")
     {:ok, access_token3} = OauthAccessTokens.get_or_create_token(user, application, "read write", %{})
     assert access_token3.id == access_token.id
   end
@@ -257,12 +257,12 @@ defmodule ExOauth2Provider.OauthAccessTokensTest do
     assert access_token.id == access_token2.id
 
     inserted_at = NaiveDateTime.add(NaiveDateTime.utc_now(), -access_token.expires_in, :second)
-    update(access_token2, inserted_at: inserted_at)
+    QueryHelpers.change!(access_token2, inserted_at: inserted_at)
 
     {:ok, access_token} = OauthAccessTokens.get_or_create_token(user, nil, nil, %{})
     assert access_token.id == access_token1.id
 
-    update(access_token1, inserted_at: inserted_at)
+    QueryHelpers.change!(access_token1, inserted_at: inserted_at)
 
     {:ok, access_token} = OauthAccessTokens.get_or_create_token(user, nil, nil, %{})
     refute access_token.id in [access_token1.id, access_token2.id]
@@ -334,12 +334,6 @@ defmodule ExOauth2Provider.OauthAccessTokensTest do
 
   test "is_accessible?/1#false when nil" do
     refute OauthAccessTokens.is_accessible?(nil)
-  end
-
-  defp update(token, changes) do
-    token
-    |> Ecto.Changeset.change(changes)
-    |> ExOauth2Provider.repo.update()
   end
 
   def access_token_generator(values) do
