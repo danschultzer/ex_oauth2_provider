@@ -1,8 +1,7 @@
 defmodule ExOauth2Provider.Token.Utils do
   @moduledoc false
 
-  alias ExOauth2Provider.OauthApplications
-  alias ExOauth2Provider.Utils.Error
+  alias ExOauth2Provider.{OauthApplications, Utils.Error}
 
   @doc false
   @spec load_client(map()) :: map()

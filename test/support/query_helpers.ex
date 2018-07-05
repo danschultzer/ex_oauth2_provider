@@ -15,7 +15,9 @@ defmodule ExOauth2Provider.Test.QueryHelpers do
   end
 
   def get_latest_inserted(module) do
-    ExOauth2Provider.repo.one(from x in module,
-      order_by: [desc: x.id], limit: 1)
+    module
+    |> order_by([x], desc: x.id)
+    |> limit(1)
+    |> ExOauth2Provider.repo.one()
   end
 end

@@ -4,8 +4,7 @@ defmodule ExOauth2Provider.OauthAccessGrants.OauthAccessGrant do
   @type t :: %__MODULE__{}
 
   use ExOauth2Provider.Schema
-  alias ExOauth2Provider.OauthApplications.OauthApplication
-  alias ExOauth2Provider.Config
+  alias ExOauth2Provider.{Config, OauthApplications.OauthApplication}
 
   schema "oauth_access_grants" do
     belongs_to :resource_owner, Config.resource_owner_struct(:module), type: Config.resource_owner_struct(:foreign_key_type)

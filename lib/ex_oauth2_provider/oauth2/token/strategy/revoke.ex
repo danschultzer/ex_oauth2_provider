@@ -2,10 +2,10 @@ defmodule ExOauth2Provider.Token.Revoke do
   @moduledoc """
   Functions for dealing with revocation.
   """
-  alias ExOauth2Provider.Utils.Error
-  alias ExOauth2Provider.Token.Utils
-  alias ExOauth2Provider.Token.Utils.Response
-  alias ExOauth2Provider.OauthAccessTokens
+  alias ExOauth2Provider.{Token.Utils,
+                          Token.Utils.Response,
+                          Utils.Error,
+                          OauthAccessTokens}
 
   @doc """
   Revokes access token.

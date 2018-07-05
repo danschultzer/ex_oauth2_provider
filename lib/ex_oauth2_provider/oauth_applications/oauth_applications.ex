@@ -3,7 +3,7 @@ defmodule ExOauth2Provider.OauthApplications do
   The boundary for the OauthApplications system.
   """
 
-  import Ecto.Query, warn: false
+  import Ecto.Query
   alias Ecto.{Changeset, Schema}
   alias ExOauth2Provider.{OauthApplications.OauthApplication,
                           OauthAccessTokens,

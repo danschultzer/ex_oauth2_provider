@@ -2,8 +2,7 @@ defmodule ExOauth2Provider.RedirectURI do
   @moduledoc """
   Functions for dealing with redirect uri.
   """
-  alias ExOauth2Provider.Utils
-  alias ExOauth2Provider.Config
+  alias ExOauth2Provider.{Config, Utils}
 
   @doc """
   Validates if a url can be used as a redirect_uri
