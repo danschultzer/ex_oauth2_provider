@@ -16,7 +16,7 @@ defmodule ExOauth2Provider.Plug.ErrorHandlerTest do
 
     {status, headers, body} = conn
                               |> ErrorHandler.unauthenticated(%{})
-                              |> sent_resp
+                              |> sent_resp()
 
     assert status == 401
     assert content_type(headers) == "text/plain"
@@ -28,7 +28,7 @@ defmodule ExOauth2Provider.Plug.ErrorHandlerTest do
 
     {status, headers, body} = conn
                               |> ErrorHandler.unauthenticated(%{})
-                              |> sent_resp
+                              |> sent_resp()
 
     assert status == 401
     assert content_type(headers) == "application/json"
@@ -38,7 +38,7 @@ defmodule ExOauth2Provider.Plug.ErrorHandlerTest do
   test "unauthenticated/2 when no accept header", %{conn: conn} do
     {status, headers, body} = conn
                               |> ErrorHandler.unauthenticated(%{})
-                              |> sent_resp
+                              |> sent_resp()
 
     assert status == 401
     assert content_type(headers) == "text/plain"
@@ -50,7 +50,7 @@ defmodule ExOauth2Provider.Plug.ErrorHandlerTest do
 
     {status, headers, body} = conn
                               |> ErrorHandler.unauthorized(%{})
-                              |> sent_resp
+                              |> sent_resp()
 
     assert status == 403
     assert content_type(headers) == "text/plain"
@@ -62,7 +62,7 @@ defmodule ExOauth2Provider.Plug.ErrorHandlerTest do
 
     {status, headers, body} = conn
                               |> ErrorHandler.unauthorized(%{})
-                              |> sent_resp
+                              |> sent_resp()
 
     assert status == 403
     assert content_type(headers) == "application/json"
@@ -72,7 +72,7 @@ defmodule ExOauth2Provider.Plug.ErrorHandlerTest do
   test "unauthorized/2 sends 403 resp when no accept header", %{conn: conn} do
     {status, headers, body} = conn
                               |> ErrorHandler.unauthorized(%{})
-                              |> sent_resp
+                              |> sent_resp()
 
     assert status == 403
     assert content_type(headers) == "text/plain"
@@ -80,14 +80,14 @@ defmodule ExOauth2Provider.Plug.ErrorHandlerTest do
   end
 
   test "already_authenticated/2 halt the conn", %{conn: conn} do
-    conn = conn |> ErrorHandler.already_authenticated(%{})
+    conn = ErrorHandler.already_authenticated(conn, %{})
     assert conn.halted
   end
 
   defp content_type(headers) do
     {:ok, type, subtype, _params} = headers
                                     |> header_value("content-type")
-                                    |> Utils.content_type
+                                    |> Utils.content_type()
     "#{type}/#{subtype}"
   end
 

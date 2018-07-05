@@ -9,8 +9,11 @@ defmodule ExOauth2Provider.Mixin.Scopes do
       def put_scopes(%{} = changeset), do: put_scopes(changeset, nil)
       def put_scopes(%{} = changeset, ""), do: put_scopes(changeset, nil)
       def put_scopes(%{} = changeset, default_server_scopes) do
-        case changeset |> get_field(:scopes) |> is_empty do
-          true -> changeset |> change(%{scopes: parse_default_scope_string(default_server_scopes)})
+        changeset
+        |> Changeset.get_field(:scopes)
+        |> is_empty()
+        |> case do
+          true -> Changeset.change(changeset, %{scopes: parse_default_scope_string(default_server_scopes)})
           _    -> changeset
         end
       end
@@ -19,11 +22,14 @@ defmodule ExOauth2Provider.Mixin.Scopes do
       def validate_scopes(%{} = changeset), do: validate_scopes(changeset, nil)
       def validate_scopes(%{} = changeset, ""), do: validate_scopes(changeset, nil)
       def validate_scopes(%{} = changeset, server_scopes) do
-        server_scopes = server_scopes |> permitted_scopes
+        server_scopes = permitted_scopes(server_scopes)
 
-        case can_use_scopes?(get_field(changeset, :scopes), server_scopes) do
+        changeset
+        |> Changeset.get_field(:scopes)
+        |> can_use_scopes?(server_scopes)
+        |> case do
           true -> changeset
-          _    -> add_error(changeset, :scopes, "not in permitted scopes list: #{inspect(server_scopes)}")
+          _    -> Changeset.add_error(changeset, :scopes, "not in permitted scopes list: #{inspect(server_scopes)}")
         end
       end
 

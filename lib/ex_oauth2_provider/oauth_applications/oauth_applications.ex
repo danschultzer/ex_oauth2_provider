@@ -3,7 +3,7 @@ defmodule ExOauth2Provider.OauthApplications do
   The boundary for the OauthApplications system.
   """
 
-  import Ecto.{Query, Changeset}, warn: false
+  import Ecto.Query, warn: false
   alias Ecto.{Changeset, Schema}
   alias ExOauth2Provider.{OauthApplications.OauthApplication,
                           OauthAccessTokens,
@@ -220,35 +220,35 @@ defmodule ExOauth2Provider.OauthApplications do
 
   defp application_changeset(%OauthApplication{} = application, params) do
     application
-    |> cast(params, [:name, :secret, :redirect_uri, :scopes])
-    |> validate_required([:name, :uid, :redirect_uri])
+    |> Changeset.cast(params, [:name, :secret, :redirect_uri, :scopes])
+    |> Changeset.validate_required([:name, :uid, :redirect_uri])
     |> validate_secret_not_nil()
     |> validate_scopes()
     |> validate_redirect_uri()
-    |> unique_constraint(:uid)
+    |> Changeset.unique_constraint(:uid)
   end
 
   defp validate_secret_not_nil(changeset) do
-    case get_field(changeset, :secret) do
-      nil -> add_error(changeset, :secret, "can't be blank")
-      _ -> changeset
+    case Changeset.get_field(changeset, :secret) do
+      nil -> Changeset.add_error(changeset, :secret, "can't be blank")
+      _   -> changeset
     end
   end
 
   defp new_application_changeset(%OauthApplication{} = application, owner, params) do
     application
-    |> cast(params, [:uid, :secret])
+    |> Changeset.cast(params, [:uid, :secret])
     |> put_uid()
     |> put_secret()
     |> put_scopes()
-    |> put_assoc(:owner, owner)
-    |> assoc_constraint(:owner)
-    |> apply_changes()
+    |> Changeset.put_assoc(:owner, owner)
+    |> Changeset.assoc_constraint(:owner)
+    |> Changeset.apply_changes()
     |> application_changeset(params)
   end
 
   defp validate_redirect_uri(changeset) do
-    url = get_field(changeset, :redirect_uri) || ""
+    url = Changeset.get_field(changeset, :redirect_uri) || ""
 
     url
     |> String.split()
@@ -259,18 +259,18 @@ defmodule ExOauth2Provider.OauthApplications do
     url
     |> RedirectURI.validate
     |> case do
-       {:error, error} -> add_error(changeset, :redirect_uri, error)
+       {:error, error} -> Changeset.add_error(changeset, :redirect_uri, error)
        {:ok, _}        -> changeset
      end
   end
 
   defp put_uid(%{changes: %{uid: _}} = changeset), do: changeset
   defp put_uid(%{} = changeset) do
-    change(changeset, %{uid: Utils.generate_token()})
+    Changeset.change(changeset, %{uid: Utils.generate_token()})
   end
 
   defp put_secret(%{changes: %{secret: _}} = changeset), do: changeset
   defp put_secret(%{} = changeset) do
-    change(changeset, %{secret: Utils.generate_token()})
+    Changeset.change(changeset, %{secret: Utils.generate_token()})
   end
 end

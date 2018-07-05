@@ -2,7 +2,7 @@ defmodule Dummy.User do
   @moduledoc false
 
   use Dummy.Schema
-  import Ecto.Changeset
+  alias Ecto.Changeset
 
   schema "users" do
     field :email, :string
@@ -12,7 +12,6 @@ defmodule Dummy.User do
   end
 
   def changeset(struct, params \\ %{}) do
-    struct
-    |> cast(params, [:email])
+    Changeset.cast(struct, params, [:email])
   end
 end

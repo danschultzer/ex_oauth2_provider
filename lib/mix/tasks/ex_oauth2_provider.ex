@@ -13,8 +13,7 @@ defmodule Mix.Tasks.ExOauth2Provider do
   def run(args) do
     {_opts, args, _} = OptionParser.parse(args)
 
-    args
-    |> validate_args
+    validate_args(args)
   end
   defp validate_args([]), do: general()
   defp validate_args(_), do: Mix.raise "Invalid arguments, expected: mix ex_oauth2_provider"

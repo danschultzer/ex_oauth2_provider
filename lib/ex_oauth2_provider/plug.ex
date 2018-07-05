@@ -12,8 +12,7 @@ defmodule ExOauth2Provider.Plug do
       ExOauth2Provider.Plug.current_resource_owner(conn)
   """
 
-  import ExOauth2Provider.Keys
-  alias ExOauth2Provider.OauthAccessTokens.OauthAccessToken
+  alias ExOauth2Provider.{Keys, OauthAccessTokens.OauthAccessToken}
   alias Plug.Conn
 
   @doc """
@@ -62,7 +61,7 @@ defmodule ExOauth2Provider.Plug do
   @doc false
   @spec get_current_access_token(Conn.t(), atom()) :: {:ok, OauthAccessToken.t()} | {:error, term()}
   def get_current_access_token(conn, the_key \\ :default) do
-    case conn.private[access_token_key(the_key)] do
+    case conn.private[Keys.access_token_key(the_key)] do
       {:ok, access_token} -> {:ok, access_token}
       {:error, error}     -> {:error, error}
       _                   -> {:error, :no_session}
@@ -72,6 +71,6 @@ defmodule ExOauth2Provider.Plug do
   @doc false
   @spec set_current_access_token(Conn.t(), OauthAccessToken.t(), atom()) :: Conn.t()
   def set_current_access_token(conn, access_token, the_key \\ :default) do
-    Conn.put_private(conn, access_token_key(the_key), access_token)
+    Conn.put_private(conn, Keys.access_token_key(the_key), access_token)
   end
 end

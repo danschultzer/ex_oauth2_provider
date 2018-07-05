@@ -67,7 +67,7 @@ defmodule ExOauth2ProviderTest do
     access_token = Fixtures.resource_owner()
                    |> Fixtures.access_token(%{})
                    |> Changeset.change(resource_owner_id: resource_owner_id)
-                   |> ExOauth2Provider.repo.update!
+                   |> ExOauth2Provider.repo.update!()
 
     assert ExOauth2Provider.authenticate_token(access_token.token) == {:error, :no_association_found}
   end

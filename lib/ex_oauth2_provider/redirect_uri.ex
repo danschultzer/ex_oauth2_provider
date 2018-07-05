@@ -83,12 +83,13 @@ defmodule ExOauth2Provider.RedirectURI do
     do: uri_with_query(URI.parse(uri), query)
   def uri_with_query(%URI{} = uri, query) do
     uri
-    |> Map.merge(%{query: add_query_params(uri.query, query)})
+    |> Map.put(:query, add_query_params(uri.query, query))
     |> to_string()
   end
 
   defp add_query_params(query, attrs) do
-    (query || "")
+    query
+    |> Kernel.||("")
     |> URI.decode_query(attrs)
     |> Utils.remove_empty_values()
     |> URI.encode_query()

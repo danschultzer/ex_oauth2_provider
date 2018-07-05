@@ -294,14 +294,15 @@ defmodule ExOauth2Provider.OauthAccessTokensTest do
 
   test "revoke/1 doesn't revoke revoked tokens", %{user: user} do
     {:ok, access_token} = OauthAccessTokens.create_token(user)
-    access_token = Map.merge(access_token, %{revoked_at: NaiveDateTime.utc_now |> NaiveDateTime.add(-86_400, :second)})
+    revoked_at = NaiveDateTime.add(NaiveDateTime.utc_now(), -86_400, :second)
+    access_token = Map.merge(access_token, %{revoked_at: revoked_at})
 
     {:ok, access_token2} = OauthAccessTokens.revoke(access_token)
     assert access_token2.revoked_at == access_token.revoked_at
   end
 
   test "is_revoked?/1#true" do
-    assert OauthAccessTokens.is_revoked?(%OauthAccessToken{revoked_at: NaiveDateTime.utc_now})
+    assert OauthAccessTokens.is_revoked?(%OauthAccessToken{revoked_at: NaiveDateTime.utc_now()})
   end
 
   test "is_revoked?/1#false" do
@@ -309,26 +310,26 @@ defmodule ExOauth2Provider.OauthAccessTokensTest do
   end
 
   test "is_accessible?/1#true" do
-    access_token = %OauthAccessToken{expires_in: 1, revoked_at: nil, inserted_at: NaiveDateTime.utc_now}
+    access_token = %OauthAccessToken{expires_in: 1, revoked_at: nil, inserted_at: NaiveDateTime.utc_now()}
     assert OauthAccessTokens.is_accessible?(access_token)
   end
 
   test "is_accessible?/1#false when revoked" do
-    access_token = %OauthAccessToken{expires_in: 1, revoked_at: NaiveDateTime.utc_now, inserted_at: NaiveDateTime.utc_now}
+    access_token = %OauthAccessToken{expires_in: 1, revoked_at: NaiveDateTime.utc_now(), inserted_at: NaiveDateTime.utc_now()}
     refute OauthAccessTokens.is_accessible?(access_token)
   end
 
   test "is_accessible?/1#false when expired" do
-    access_token = %OauthAccessToken{expires_in: 0, revoked_at: nil, inserted_at: NaiveDateTime.utc_now}
+    access_token = %OauthAccessToken{expires_in: 0, revoked_at: nil, inserted_at: NaiveDateTime.utc_now()}
     refute OauthAccessTokens.is_accessible?(access_token)
 
-    inserted_at = NaiveDateTime.utc_now |> NaiveDateTime.add(-2, :second)
+    inserted_at = NaiveDateTime.add(NaiveDateTime.utc_now(), -2, :second)
     access_token = %OauthAccessToken{expires_in: 1, revoked_at: nil, inserted_at: inserted_at}
     refute OauthAccessTokens.is_accessible?(access_token)
   end
 
   test "is_accessible?/1#false when never expires" do
-    access_token = %OauthAccessToken{expires_in: nil, revoked_at: nil, inserted_at: NaiveDateTime.utc_now}
+    access_token = %OauthAccessToken{expires_in: nil, revoked_at: nil, inserted_at: NaiveDateTime.utc_now()}
     assert OauthAccessTokens.is_accessible?(access_token)
   end
 

@@ -203,8 +203,8 @@ defmodule ExOauth2Provider.Authorization.Code do
 
   defp validate_scopes(%{error: _} = params), do: params
   defp validate_scopes(%{request: %{"scope" => scopes}, client: client} = params) do
-    scopes        = scopes |> Scopes.to_list
-    server_scopes = client.scopes |> Scopes.to_list |> Scopes.default_to_server_scopes
+    scopes        = Scopes.to_list(scopes)
+    server_scopes = client.scopes |> Scopes.to_list() |> Scopes.default_to_server_scopes()
 
     case Scopes.all?(server_scopes, scopes) do
       true  -> params

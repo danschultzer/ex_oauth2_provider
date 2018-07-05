@@ -24,7 +24,6 @@ defmodule ExOauth2Provider.Plug.EnsureScopes do
   """
 
   require Logger
-  import Plug.Conn
 
   alias Plug.Conn
   alias ExOauth2Provider.{Plug, Scopes}
@@ -78,7 +77,9 @@ defmodule ExOauth2Provider.Plug.EnsureScopes do
 
   defp handle_error({:ok, conn, _}), do: conn
   defp handle_error({:error, %Conn{params: params} = conn, opts}) do
-    conn = conn |> assign(:ex_oauth2_provider_failure, :unauthorized) |> halt
+    conn = conn
+           |> Conn.assign(:ex_oauth2_provider_failure, :unauthorized)
+           |> Conn.halt()
     params = Map.merge(params, %{reason: :unauthorized})
     {mod, meth} = Map.get(opts, :handler)
 

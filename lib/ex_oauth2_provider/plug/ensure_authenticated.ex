@@ -18,7 +18,6 @@ defmodule ExOauth2Provider.Plug.EnsureAuthenticated do
   If the handler option is not passed, `ExOauth2Provider.Plug.ErrorHandler` will provide
   the default behavior.
   """
-  import Plug.Conn
   alias Plug.Conn
   alias ExOauth2Provider.Plug
 
@@ -54,7 +53,9 @@ defmodule ExOauth2Provider.Plug.EnsureAuthenticated do
 
   @doc false
   defp handle_error(%Conn{params: params} = conn, reason, opts) do
-    conn = conn |> assign(:ex_oauth2_provider_failure, reason) |> halt
+    conn = conn
+           |> Conn.assign(:ex_oauth2_provider_failure, reason)
+           |> Conn.halt()
     params = Map.merge(params, %{reason: reason})
     {module, method} = Map.get(opts, :handler)
 

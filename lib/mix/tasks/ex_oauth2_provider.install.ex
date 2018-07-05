@@ -1,7 +1,6 @@
 defmodule Mix.Tasks.ExOauth2Provider.Install do
   use Mix.Task
 
-  import Macro, only: [camelize: 1]
   import Mix.Generator
   import Mix.Ecto
 
@@ -38,9 +37,9 @@ defmodule Mix.Tasks.ExOauth2Provider.Install do
     no_umbrella!("ex_oauth2_provider.install")
 
     args
-    |> parse_options_to_config
-    |> add_migrations_files
-    |> update_config
+    |> parse_options_to_config()
+    |> add_migrations_files()
+    |> update_config()
   end
 
   defp parse_options_to_config(args) do
@@ -90,10 +89,10 @@ defmodule Mix.Tasks.ExOauth2Provider.Install do
   defp add_migrations_files(config), do: config
 
   defp next_migration_number(existing_migrations, pad_time \\ 0) do
-    timestamp = NaiveDateTime.utc_now
+    timestamp = NaiveDateTime.utc_now()
                 |> NaiveDateTime.add(pad_time, :second)
-                |> NaiveDateTime.to_erl
-                |> padded_timestamp
+                |> NaiveDateTime.to_erl()
+                |> padded_timestamp()
 
     if String.match? existing_migrations, ~r/#{timestamp}_.*\.exs/ do
       next_migration_number(existing_migrations, pad_time + 1)
@@ -105,7 +104,7 @@ defmodule Mix.Tasks.ExOauth2Provider.Install do
   defp create_migration_file(repo, existing_migrations, name, path, template, uuid) do
     unless String.match? existing_migrations, ~r/\d{14}_#{name}\.exs/ do
       file = Path.join(path, "#{next_migration_number(existing_migrations)}_#{name}.exs")
-      module = Module.concat([repo, Migrations, camelize(name)])
+      module = Module.concat([repo, Migrations, Macro.camelize(name)])
       string = EEx.eval_string(template, [mod: module, uuid: uuid])
 
       create_file file, string
@@ -119,7 +118,7 @@ defmodule Mix.Tasks.ExOauth2Provider.Install do
 
   defp migrations do
     templates_path = :ex_oauth2_provider
-                     |> Application.app_dir
+                     |> Application.app_dir()
                      |> Path.join("priv/templates/migrations")
 
     for filename <- File.ls!(templates_path) do
@@ -129,7 +128,7 @@ defmodule Mix.Tasks.ExOauth2Provider.Install do
 
   defp update_config(%{config: true} = config) do
     config
-    |> update_config_string
+    |> update_config_string()
     |> write_config(config)
   end
   defp update_config(config), do: config

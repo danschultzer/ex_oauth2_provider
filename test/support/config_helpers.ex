@@ -14,6 +14,6 @@ defmodule ExOauth2Provider.Test.ConfigHelpers do
   def set_config(key, value) do
     @config
     |> Keyword.put(key, value)
-    |> set_config
+    |> set_config()
   end
 end

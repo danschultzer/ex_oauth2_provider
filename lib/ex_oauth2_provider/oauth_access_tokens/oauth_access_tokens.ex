@@ -3,7 +3,7 @@ defmodule ExOauth2Provider.OauthAccessTokens do
   Ecto schema for oauth access tokens
   """
 
-  import Ecto.{Query, Changeset}, warn: false
+  import Ecto.Query, warn: false
   use ExOauth2Provider.Mixin.Expirable
   use ExOauth2Provider.Mixin.Revocable
   use ExOauth2Provider.Mixin.Scopes
@@ -299,7 +299,9 @@ defmodule ExOauth2Provider.OauthAccessTokens do
   def revoke_previous_refresh_token(%OauthAccessToken{previous_refresh_token: ""} = access_token), do: access_token
   def revoke_previous_refresh_token(%OauthAccessToken{previous_refresh_token: nil} = access_token), do: access_token
   def revoke_previous_refresh_token(%OauthAccessToken{} = access_token) do
-    access_token |> get_by_previous_refresh_token_for() |> revoke()
+    access_token
+    |> get_by_previous_refresh_token_for()
+    |> revoke()
 
     reset_previous_refresh_token(access_token)
   end
@@ -312,9 +314,9 @@ defmodule ExOauth2Provider.OauthAccessTokens do
 
   defp application_token_changeset(token, params) do
     token
-    |> cast(params, [])
-    |> validate_required([:application])
-    |> assoc_constraint(:application)
+    |> Changeset.cast(params, [])
+    |> Changeset.validate_required([:application])
+    |> Changeset.assoc_constraint(:application)
   end
 
   defp application_owner_token_changeset(token, params) do
@@ -325,20 +327,21 @@ defmodule ExOauth2Provider.OauthAccessTokens do
 
   defp resource_owner_token_changeset(token, params) do
     token
-    |> cast(params, [])
-    |> validate_required([:resource_owner])
-    |> assoc_constraint(:resource_owner)
+    |> Changeset.cast(params, [])
+    |> Changeset.validate_required([:resource_owner])
+    |> Changeset.assoc_constraint(:resource_owner)
   end
 
   defp new_token_changeset(changeset, params) do
-    application = get_field(changeset, :application) || %OauthApplication{scopes: nil}
+    application = Changeset.get_field(changeset, :application) || %{scopes: nil}
+    server_scopes = Map.get(application, :scopes)
 
     changeset
-    |> cast(params, [:expires_in, :scopes])
+    |> Changeset.cast(params, [:expires_in, :scopes])
     |> put_previous_refresh_token(params[:previous_refresh_token])
     |> put_refresh_token(params[:use_refresh_token])
-    |> put_scopes(application.scopes)
-    |> validate_scopes(application.scopes)
+    |> put_scopes(server_scopes)
+    |> validate_scopes(server_scopes)
     |> put_token()
   end
 
@@ -346,10 +349,10 @@ defmodule ExOauth2Provider.OauthAccessTokens do
     {module, method} = Config.access_token_generator() || {Utils, :generate_token}
     %{owner_key: resource_owner_key, related_key: related_key} = Utils.schema_association(OauthAccessToken, :resource_owner)
 
-    {_, resource_owner} = fetch_field(changeset, :resource_owner)
-    {_, scopes}         = fetch_field(changeset, :scopes)
-    {_, application}    = fetch_field(changeset, :application)
-    {_, expires_in}     = fetch_field(changeset, :expires_in)
+    {_, resource_owner} = Changeset.fetch_field(changeset, :resource_owner)
+    {_, scopes}         = Changeset.fetch_field(changeset, :scopes)
+    {_, application}    = Changeset.fetch_field(changeset, :application)
+    {_, expires_in}     = Changeset.fetch_field(changeset, :expires_in)
     created_at          = NaiveDateTime.utc_now
 
     token = apply(module, method, [%{
@@ -360,22 +363,22 @@ defmodule ExOauth2Provider.OauthAccessTokens do
       created_at: created_at}])
 
     changeset
-    |> change(%{token: token})
-    |> validate_required([:token])
-    |> unique_constraint(:token)
+    |> Changeset.change(%{token: token})
+    |> Changeset.validate_required([:token])
+    |> Changeset.unique_constraint(:token)
   end
 
   defp resource_owner_id(nil, _key), do: nil
   defp resource_owner_id(resource_owner, related_key), do: Map.get(resource_owner, related_key)
 
   defp put_previous_refresh_token(%{} = changeset, %OauthAccessToken{} = refresh_token),
-    do: change(changeset, %{previous_refresh_token: refresh_token.refresh_token})
+    do: Changeset.change(changeset, %{previous_refresh_token: refresh_token.refresh_token})
   defp put_previous_refresh_token(%{} = changeset, _), do: changeset
 
   defp put_refresh_token(%{} = changeset, true) do
     changeset
-    |> change(%{refresh_token: Utils.generate_token()})
-    |> validate_required([:refresh_token])
+    |> Changeset.change(%{refresh_token: Utils.generate_token()})
+    |> Changeset.validate_required([:refresh_token])
   end
   defp put_refresh_token(%{} = changeset, _), do: changeset
 end

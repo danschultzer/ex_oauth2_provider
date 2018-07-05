@@ -3,13 +3,12 @@ defmodule ExOauth2Provider.OauthAccessGrants do
   The boundary for the OauthAccessGrants system.
   """
 
-  import Ecto.{Query, Changeset}, warn: false
-  use ExOauth2Provider.Mixin.Expirable
-  use ExOauth2Provider.Mixin.Revocable
-  use ExOauth2Provider.Mixin.Scopes
+  import Ecto.Query, warn: false
+  use ExOauth2Provider.Mixin.{Expirable, Revocable, Scopes}
   alias ExOauth2Provider.{OauthApplications.OauthApplication,
                           OauthAccessGrants.OauthAccessGrant,
                           Utils}
+  alias Ecto.Changeset
 
   @doc """
   Gets a single access grant registered with an application.
@@ -56,17 +55,17 @@ defmodule ExOauth2Provider.OauthAccessGrants do
 
   defp new_grant_changeset(%OauthAccessGrant{} = grant, params) do
     grant
-    |> cast(params, [:redirect_uri, :expires_in, :scopes])
-    |> assoc_constraint(:application)
-    |> assoc_constraint(:resource_owner)
+    |> Changeset.cast(params, [:redirect_uri, :expires_in, :scopes])
+    |> Changeset.assoc_constraint(:application)
+    |> Changeset.assoc_constraint(:resource_owner)
     |> put_token()
     |> put_scopes(grant.application.scopes)
     |> validate_scopes(grant.application.scopes)
-    |> validate_required([:redirect_uri, :expires_in, :token, :resource_owner, :application])
-    |> unique_constraint(:token)
+    |> Changeset.validate_required([:redirect_uri, :expires_in, :token, :resource_owner, :application])
+    |> Changeset.unique_constraint(:token)
   end
 
   defp put_token(changeset) do
-    put_change(changeset, :token, Utils.generate_token())
+    Changeset.put_change(changeset, :token, Utils.generate_token())
   end
 end
