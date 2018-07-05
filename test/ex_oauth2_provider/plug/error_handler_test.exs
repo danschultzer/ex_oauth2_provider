@@ -32,7 +32,7 @@ defmodule ExOauth2Provider.Plug.ErrorHandlerTest do
 
     assert status == 401
     assert content_type(headers) == "application/json"
-    assert body ==  Poison.encode!(%{errors: ["Unauthenticated"]})
+    assert body == Jason.encode!(%{errors: ["Unauthenticated"]})
   end
 
   test "unauthenticated/2 when no accept header", %{conn: conn} do
@@ -42,7 +42,7 @@ defmodule ExOauth2Provider.Plug.ErrorHandlerTest do
 
     assert status == 401
     assert content_type(headers) == "text/plain"
-    assert body ==  "Unauthenticated"
+    assert body == "Unauthenticated"
   end
 
   test "unauthorized/2 sends a 403 response when text/html", %{conn: conn} do
@@ -66,7 +66,7 @@ defmodule ExOauth2Provider.Plug.ErrorHandlerTest do
 
     assert status == 403
     assert content_type(headers) == "application/json"
-    assert body ==  Poison.encode!(%{errors: ["Unauthorized"]})
+    assert body == Jason.encode!(%{errors: ["Unauthorized"]})
   end
 
   test "unauthorized/2 sends 403 resp when no accept header", %{conn: conn} do
