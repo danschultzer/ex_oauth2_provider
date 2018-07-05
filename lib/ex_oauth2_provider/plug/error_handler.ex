@@ -35,11 +35,11 @@ defmodule ExOauth2Provider.Plug.ErrorHandler do
     conn
     |> Conn.configure_session(drop: true)
     |> Conn.put_resp_content_type("application/json")
-    |> Conn.send_resp(status, Poison.encode!(%{errors: [msg]}))
+    |> Conn.send_resp(status, Jason.encode!(%{errors: [msg]}))
   rescue ArgumentError ->
     conn
     |> Conn.put_resp_content_type("application/json")
-    |> Conn.send_resp(status, Poison.encode!(%{errors: [msg]}))
+    |> Conn.send_resp(status, Jason.encode!(%{errors: [msg]}))
   end
 
   defp respond(conn, :html, status, msg) do
