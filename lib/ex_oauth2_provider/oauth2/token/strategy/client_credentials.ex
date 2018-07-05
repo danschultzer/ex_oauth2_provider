@@ -2,10 +2,10 @@ defmodule ExOauth2Provider.Token.ClientCredentials do
   @moduledoc """
   Functions for dealing with client credentials strategy.
   """
-  alias ExOauth2Provider.Utils.Error
-  alias ExOauth2Provider.Token.Utils
-  alias ExOauth2Provider.Token.Utils.Response
-  alias ExOauth2Provider.OauthAccessTokens
+  alias ExOauth2Provider.{OauthAccessTokens,
+                          Token.Utils,
+                          Token.Utils.Response,
+                          Utils.Error}
 
   @doc """
   Will grant access token by client credentials.

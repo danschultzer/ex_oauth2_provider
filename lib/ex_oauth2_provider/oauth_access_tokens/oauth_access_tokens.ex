@@ -3,7 +3,7 @@ defmodule ExOauth2Provider.OauthAccessTokens do
   Ecto schema for oauth access tokens
   """
 
-  import Ecto.Query, warn: false
+  import Ecto.Query
   use ExOauth2Provider.Mixin.Expirable
   use ExOauth2Provider.Mixin.Revocable
   use ExOauth2Provider.Mixin.Scopes

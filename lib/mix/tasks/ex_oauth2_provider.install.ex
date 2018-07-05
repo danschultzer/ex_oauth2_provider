@@ -1,9 +1,8 @@
 defmodule Mix.Tasks.ExOauth2Provider.Install do
   use Mix.Task
 
-  import Mix.Generator
-  import Mix.Ecto
-
+  alias Mix.Generator
+  alias Mix.Ecto
   alias Mix.Project
 
   @shortdoc "Generates a new migration for the repo"
@@ -34,7 +33,7 @@ defmodule Mix.Tasks.ExOauth2Provider.Install do
 
   @doc false
   def run(args) do
-    no_umbrella!("ex_oauth2_provider.install")
+    Ecto.no_umbrella!("ex_oauth2_provider.install")
 
     args
     |> parse_options_to_config()
@@ -43,8 +42,8 @@ defmodule Mix.Tasks.ExOauth2Provider.Install do
   end
 
   defp parse_options_to_config(args) do
-    repos = parse_repo(args)
-    Enum.each repos, &ensure_repo(&1, args)
+    repos = Ecto.parse_repo(args)
+    Enum.each(repos, &Ecto.ensure_repo(&1, args))
     {opts, _, _} = OptionParser.parse(args, switches: @switches)
     uuid_opts = parse_uuid(Keyword.get(opts, :uuid, ""))
 
@@ -75,9 +74,9 @@ defmodule Mix.Tasks.ExOauth2Provider.Install do
 
   defp add_migrations_files(%{migrations: true, repos: repos, app_path: app_path, uuid: uuid} = config) do
     Enum.each repos, fn repo ->
-      path = Path.relative_to(migrations_path(repo), app_path)
-      create_directory path
-      existing_migrations = to_string File.ls!(path)
+      path = Path.relative_to(Ecto.migrations_path(repo), app_path)
+      Generator.create_directory(path)
+      existing_migrations = to_string(File.ls!(path))
 
       for {name, template} <- migrations() do
         create_migration_file(repo, existing_migrations, name, path, template, uuid)
@@ -107,7 +106,7 @@ defmodule Mix.Tasks.ExOauth2Provider.Install do
       module = Module.concat([repo, Migrations, Macro.camelize(name)])
       string = EEx.eval_string(template, [mod: module, uuid: uuid])
 
-      create_file file, string
+      Generator.create_file(file, string)
       Mix.shell.info "Migration file #{file} has been added."
     end
   end
