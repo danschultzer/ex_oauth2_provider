@@ -19,7 +19,8 @@ defmodule ExOauth2Provider.Mixfile do
 
      # Docs
      name: "ExOauth2Provider",
-     docs: [source_ref: "v#{@version}", main: "ExOauth2Provider",
+     docs: [source_ref: "v#{@version}",
+            main: "ExOauth2Provider",
             canonical: "http://hexdocs.pm/ex_oauth2_provider",
             source_url: "https://github.com/danschultzer/ex_oauth2_provider",
             extras: ["README.md"]]
@@ -44,7 +45,7 @@ defmodule ExOauth2Provider.Mixfile do
 
      # Dev and test dependencies
      {:credo, "~> 0.10", only: [:dev, :test]},
-     {:ex_doc, ">= 0.0.0", only: :dev, runtime: false}]
+     {:ex_doc, ">= 0.0.0", only: :dev}]
   end
 
   defp package do
