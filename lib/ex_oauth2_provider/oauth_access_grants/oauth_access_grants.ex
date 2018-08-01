@@ -3,7 +3,6 @@ defmodule ExOauth2Provider.OauthAccessGrants do
   The boundary for the OauthAccessGrants system.
   """
 
-  import Ecto.Query
   use ExOauth2Provider.Mixin.{Expirable, Revocable, Scopes}
   alias ExOauth2Provider.{OauthApplications.OauthApplication,
                           OauthAccessGrants.OauthAccessGrant,

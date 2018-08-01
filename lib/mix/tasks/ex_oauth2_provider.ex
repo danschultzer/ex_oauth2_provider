@@ -11,7 +11,7 @@ defmodule Mix.Tasks.ExOauth2Provider do
 
   @doc false
   def run(args) do
-    {_opts, args, _} = OptionParser.parse(args)
+    {_opts, args, _} = OptionParser.parse(args, switches: [])
 
     validate_args(args)
   end
