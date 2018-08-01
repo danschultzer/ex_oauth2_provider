@@ -9,5 +9,7 @@ defmodule ExOauth2Provider.TestCase do
     ConfigHelpers.reset_config()
     :ok = Sandbox.checkout(Repo)
     Sandbox.mode(Repo, {:shared, self()})
+
+    :ok
   end
 end
