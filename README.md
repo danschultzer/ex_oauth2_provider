@@ -12,7 +12,7 @@ Add ExOauth2Provider to your list of dependencies in `mix.exs`:
 def deps do
   [
     # ...
-    {:ex_oauth2_provider, "~> 0.4"}
+    {:ex_oauth2_provider, "~> 0.4.1"}
     # ...
   ]
 end
