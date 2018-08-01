@@ -4,10 +4,24 @@ elixir:
 otp_release:
   - 19.0
 env:
-  -
-  - UUID=resource_owners
-  - UUID=all
+  - MIX_ENV=test
 sudo: false
+matrix:
+  include:
+    - elixir: 1.4
+      otp_release: 19.0
+    - elixir: 1.5
+      otp_release: 19.0
+    - elixir: 1.6
+      otp_release: 20.0
+    - elixir: 1.7
+      otp_release: 20.0
+    - elixir: 1.7
+      otp_release: 20.0
+      env: UUID=resource_owners
+    - elixir: 1.7
+      otp_release: 20.0
+      env: UUID=all
 script:
   - mix test
 after_script:
