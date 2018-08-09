@@ -310,6 +310,15 @@ mix ex_oauth2_provider.install --uuid all
 
 It's also possible to use a completely different setup by adding a custom schema macro, however you'll need to ensure that the schema file is compiled before this library and that you've updated the migration file accordingly.
 
+### 4. If you need to custom `references` or other options on `resource_owner` and `application_owner`.
+
+```elixir
+config :ex_oauth2_provider, ExOauth2Provider,
+  resource_owner: {Dummy.User, [type: :binary_id, references: :primary_key_of_users]}
+```
+
+You can find all options from `Ecto.Schema.belongs_to/3`.
+
 ## Acknowledgement
 
 This library was made thanks to [doorkeeper](https://github.com/doorkeeper-gem/doorkeeper), [guardian](https://github.com/ueberauth/guardian) and [authable](https://github.com/mustafaturan/authable), that gave the conceptual building blocks.
