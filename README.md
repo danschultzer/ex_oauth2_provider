@@ -310,14 +310,14 @@ mix ex_oauth2_provider.install --uuid all
 
 It's also possible to use a completely different setup by adding a custom schema macro, however you'll need to ensure that the schema file is compiled before this library and that you've updated the migration file accordingly.
 
-### 4. If you need to custom `references` or other options on `resource_owner` and `application_owner`.
+### 4. If you need custom `belongs_to` options for resource owner
+
+You can provide a list of `belongs_to` options, by passing a keyword list instead. This is useful when you want to use a `references` value:
 
 ```elixir
 config :ex_oauth2_provider, ExOauth2Provider,
-  resource_owner: {Dummy.User, [type: :binary_id, references: :primary_key_of_users]}
+  resource_owner: {Dummy.User, [type: :binary_id, references: :uuid]}
 ```
-
-You can find all options from `Ecto.Schema.belongs_to/3`.
 
 ## Acknowledgement
 
