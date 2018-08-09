@@ -310,6 +310,15 @@ mix ex_oauth2_provider.install --uuid all
 
 It's also possible to use a completely different setup by adding a custom schema macro, however you'll need to ensure that the schema file is compiled before this library and that you've updated the migration file accordingly.
 
+### 4. If you need custom `belongs_to` options for resource owner
+
+You can provide a list of `belongs_to` options, by passing a keyword list instead. This is useful when you want to use a `references` value:
+
+```elixir
+config :ex_oauth2_provider, ExOauth2Provider,
+  resource_owner: {Dummy.User, [type: :binary_id, references: :uuid]}
+```
+
 ## Acknowledgement
 
 This library was made thanks to [doorkeeper](https://github.com/doorkeeper-gem/doorkeeper), [guardian](https://github.com/ueberauth/guardian) and [authable](https://github.com/mustafaturan/authable), that gave the conceptual building blocks.

@@ -15,7 +15,7 @@ defmodule ExOauth2Provider.OauthApplications.OauthApplication do
   if is_nil(Config.application_owner_struct(:module)), do: Logger.error("You need to set a resource_owner or application_owner in your config and recompile ex_oauth2_provider!")
 
   schema "oauth_applications" do
-    belongs_to :owner, Config.application_owner_struct(:module), type: Config.application_owner_struct(:foreign_key_type)
+    belongs_to :owner, Config.application_owner_struct(:module), Config.application_owner_struct(:options)
 
     field :name,         :string,     null: false
     field :uid,          :string,     null: false

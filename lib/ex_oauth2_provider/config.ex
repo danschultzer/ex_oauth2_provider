@@ -145,8 +145,9 @@ defmodule ExOauth2Provider.Config do
     Enum.member?(grant_flows, grant_type)
   end
 
-  defp parse_owner_struct({_module, foreign_key_type}, :foreign_key_type), do: foreign_key_type
-  defp parse_owner_struct({module, _foreign_key_type}, :module), do: module
+  defp parse_owner_struct({_module, options}, :options) when is_list(options), do: options
+  defp parse_owner_struct({_module, foreign_key_type}, :options), do: [type: foreign_key_type]
+  defp parse_owner_struct({module, _options}, :module), do: module
   defp parse_owner_struct(module, :module), do: module
-  defp parse_owner_struct(_module, :foreign_key_type), do: :id
+  defp parse_owner_struct(_module, :options), do: []
 end
