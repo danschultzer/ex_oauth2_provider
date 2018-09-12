@@ -75,9 +75,9 @@ defmodule ExOauth2Provider do
   defp load_resource({:ok, access_token}) do
     access_token = repo().preload(access_token, :resource_owner)
 
-    case access_token.resource_owner do
-      nil -> {:error, :no_association_found}
-      _   -> {:ok, access_token}
+    case is_nil(access_token.resource_owner_id) || not is_nil(access_token.resource_owner) do
+      true  -> {:ok, access_token}
+      false -> {:error, :no_association_found}
     end
   end
 

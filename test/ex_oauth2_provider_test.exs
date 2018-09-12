@@ -4,7 +4,6 @@ defmodule ExOauth2ProviderTest do
 
   alias ExOauth2Provider.Test.{ConfigHelpers, Fixtures, QueryHelpers}
   alias ExOauth2Provider.{OauthAccessTokens, OauthAccessTokens.OauthAccessToken}
-  alias Ecto.Changeset
 
   test "authenticate_token/1 error when invalid" do
     assert ExOauth2Provider.authenticate_token(nil) == {:error, :token_inaccessible}
@@ -14,6 +13,15 @@ defmodule ExOauth2ProviderTest do
   test "authenticate_token/1 authenticates" do
     access_token = Fixtures.access_token(Fixtures.resource_owner())
     assert ExOauth2Provider.authenticate_token(access_token.token) == {:ok, access_token}
+    assert access_token.resource_owner
+  end
+
+  test "authenticate_token/1 authenticates with application-wide token" do
+    application = Fixtures.application(Fixtures.resource_owner())
+    access_token = Fixtures.access_token(application)
+
+    assert {:ok, access_token} = ExOauth2Provider.authenticate_token(access_token.token)
+    refute access_token.resource_owner
   end
 
   test "authenticate_token/1 revokes previous refresh token" do
@@ -61,13 +69,10 @@ defmodule ExOauth2ProviderTest do
     assert ExOauth2Provider.authenticate_token(access_token.token) == {:error, :token_inaccessible}
   end
 
-  test "authenticate_token/1 error when no resource owner" do
+  test "authenticate_token/1 error when invalid resource owner" do
     resource_owner_id = (if is_nil(System.get_env("UUID")), do: 0, else: "09b58e2b-8fff-4b8d-ba94-18a06dd4fc29")
-
-    access_token = Fixtures.resource_owner()
-                   |> Fixtures.access_token(%{})
-                   |> Changeset.change(resource_owner_id: resource_owner_id)
-                   |> ExOauth2Provider.repo.update!()
+    user = %{Fixtures.resource_owner() | id: resource_owner_id}
+    access_token = Fixtures.access_token(user)
 
     assert ExOauth2Provider.authenticate_token(access_token.token) == {:error, :no_association_found}
   end
