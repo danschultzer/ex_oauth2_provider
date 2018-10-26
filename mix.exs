@@ -39,7 +39,7 @@ defmodule ExOauth2Provider.Mixfile do
 
   defp deps do
     [{:ecto, ">= 2.1.0 or < 2.3.0"},
-     {:plug, ">= 1.0.0 and < 1.7.0"},
+     {:plug, ">= 1.0.0 and < 1.8.0"},
      {:jason, "~> 1.1"},
      {:postgrex, ">= 0.11.1", optional: true},
 
