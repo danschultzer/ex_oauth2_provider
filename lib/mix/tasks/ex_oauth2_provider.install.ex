@@ -74,7 +74,7 @@ defmodule Mix.Tasks.ExOauth2Provider.Install do
 
   defp add_migrations_files(%{migrations: true, repos: repos, app_path: app_path, uuid: uuid} = config) do
     Enum.each repos, fn repo ->
-      path = Path.relative_to(Ecto.migrations_path(repo), app_path)
+      path = Path.relative_to(migrations_path(repo), app_path)
       Generator.create_directory(path)
       existing_migrations = to_string(File.ls!(path))
 
@@ -162,5 +162,13 @@ config :ex_oauth2_provider, ExOauth2Provider,
         File.write!(config_file, source <> "\n" <> string)
         {:ok, "Your config/config.exs file was updated."}
     end
+  end
+
+  defp migrations_path(repo) do
+    mod = if Code.ensure_loaded?(Mix.EctoSQL), do: Mix.EctoSQL, else: Mix.Ecto
+
+    repo
+    |> mod.source_repo_priv()
+    |> Path.join("migrations")
   end
 end

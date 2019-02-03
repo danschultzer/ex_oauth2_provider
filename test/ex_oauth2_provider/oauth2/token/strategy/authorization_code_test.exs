@@ -115,7 +115,7 @@ defmodule ExOauth2Provider.Token.Strategy.AuthorizationCodeTest do
   end
 
   test "#grant/1 error when revoked grant", %{access_grant: access_grant} do
-    QueryHelpers.change!(access_grant, revoked_at: DateTime.utc_now())
+    QueryHelpers.change!(access_grant, revoked_at: NaiveDateTime.utc_now())
 
     assert Token.grant(@valid_request) == {:error, @invalid_grant, :unprocessable_entity}
   end

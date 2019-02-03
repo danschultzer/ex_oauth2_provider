@@ -38,14 +38,16 @@ defmodule ExOauth2Provider.Mixfile do
   defp elixirc_paths(_), do: ["lib"]
 
   defp deps do
-    [{:ecto, ">= 2.1.0 or < 2.3.0"},
+    [{:ecto, "~> 2.1 or ~> 3.0"},
      {:plug, ">= 1.0.0 and < 1.8.0"},
-     {:jason, "~> 1.1"},
-     {:postgrex, ">= 0.11.1", optional: true},
+     {:jason, "~> 1.0"},
 
      # Dev and test dependencies
      {:credo, "~> 0.10", only: [:dev, :test]},
-     {:ex_doc, ">= 0.0.0", only: :dev}]
+     {:ex_doc, ">= 0.0.0", only: :dev},
+     {:ecto_sql, "~> 3.0.0", only: [:test]},
+     {:plug_cowboy, "~> 2.0", only: [:test]},
+     {:postgrex, "~> 0.14", only: :test}]
   end
 
   defp package do
