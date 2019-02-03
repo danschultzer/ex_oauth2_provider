@@ -102,7 +102,7 @@ defmodule Mix.Tasks.ExOauth2Provider.InstallTest do
   end
 
   test "doesn't make duplicate timestamp migrations" do
-    Migration.run(["test"] ++ @options)
+    Migration.run(["test", "-r", to_string(Repo)])
     Install.run(@options)
 
     assert [test_migration, migration_file] = @migrations_path |> File.ls!() |> Enum.sort()

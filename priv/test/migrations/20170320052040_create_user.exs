@@ -7,6 +7,7 @@ defmodule ExOauth2Provider.Test.Repo.Migrations.CreateUser do
         add :id, :uuid, primary_key: true
       end
       add :email, :string
+
       timestamps()
     end
   end

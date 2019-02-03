@@ -40,7 +40,7 @@ defmodule ExOauth2Provider.Mixin.Revocable do
       end
 
       defp revoke_query(%{revoked_at: nil} = data) do
-        Changeset.change(data, revoked_at: NaiveDateTime.utc_now())
+        Changeset.change(data, revoked_at: %{NaiveDateTime.utc_now() | microsecond: {0, 0}})
       end
       defp revoke_query(_data), do: nil
 

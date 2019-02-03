@@ -21,7 +21,6 @@ end
 config :ex_oauth2_provider, ecto_repos: [ExOauth2Provider.Test.Repo]
 
 config :ex_oauth2_provider, ExOauth2Provider.Test.Repo,
-  adapter: Ecto.Adapters.Postgres,
   database: "ex_oauth2_provider_test",
   pool: Ecto.Adapters.SQL.Sandbox,
   priv: "priv/test"

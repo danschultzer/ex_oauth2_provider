@@ -57,7 +57,7 @@ defmodule ExOauth2Provider.Token.Strategy.RefreshTokenTest do
   end
 
   test "#grant/1 error when access token has been revoked", %{valid_request: valid_request, access_token: access_token} do
-    QueryHelpers.change!(access_token, revoked_at: DateTime.utc_now())
+    QueryHelpers.change!(access_token, revoked_at: NaiveDateTime.utc_now())
 
     assert Token.grant(valid_request) == {:error, @invalid_request_error, :bad_request}
   end
