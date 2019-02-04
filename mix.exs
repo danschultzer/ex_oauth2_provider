@@ -1,7 +1,7 @@
 defmodule ExOauth2Provider.Mixfile do
   use Mix.Project
 
-  @version "0.4.3"
+  @version "0.4.4"
 
   def project do
     [app: :ex_oauth2_provider,
@@ -40,7 +40,6 @@ defmodule ExOauth2Provider.Mixfile do
   defp deps do
     [{:ecto, "~> 2.1 or ~> 3.0"},
      {:plug, ">= 1.0.0 and < 1.8.0"},
-     {:jason, "~> 1.0"},
 
      # Dev and test dependencies
      {:credo, "~> 0.10", only: [:dev, :test]},
