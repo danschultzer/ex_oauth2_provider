@@ -25,7 +25,7 @@ defmodule Mix.Tasks.ExOauth2Provider.Install do
   ## Command line options
     * `-r`, `--repo` - the repo to generate migration for
     * `--config-file` - the configuration file to update
-    * `--resource-owner` - defines the resource owner, default is MyApp.User
+    * `--resource-owner` - defines the resource owner, default is MyApp.Users.User
     * `--no-config` -- Don't append to your `config/config.exs` file.
     * `--no-migrations` -- Don't add migrations.
     * `--uuid` -- Use UUID for the following comma separated tables, use `all` if your database doesn't have auto incremental integer support
@@ -52,7 +52,7 @@ defmodule Mix.Tasks.ExOauth2Provider.Install do
       config_file: Keyword.get(opts, :config_file, @config_file),
       app_path: Project.app_path(),
       repos: repos,
-      resource_owner: Keyword.get(opts, :resource_owner, "MyApp.User"),
+      resource_owner: Keyword.get(opts, :resource_owner, "MyApp.Users.User"),
       migrations: Keyword.get(opts, :migrations, true),
       uuid: uuid_opts
     }
