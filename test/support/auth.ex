@@ -2,7 +2,7 @@ defmodule ExOauth2Provider.Test.Auth do
   @moduledoc false
 
   def auth(username, password) do
-    user = ExOauth2Provider.repo.get_by(Dummy.User, email: username)
+    user = ExOauth2Provider.repo.get_by(Dummy.Users.User, email: username)
 
     cond do
       user == nil                       -> {:error, :no_user_found}

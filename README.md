@@ -110,7 +110,7 @@ Refresh tokens can be enabled in the configuration:
 ```elixir
 config :ex_oauth2_provider, ExOauth2Provider,
   repo: ExOauth2Provider.Test.Repo,
-  resource_owner: Dummy.User,
+  resource_owner: Dummy.Users.User,
   use_refresh_token: true
 ```
 
@@ -163,7 +163,7 @@ Server wide scopes can be defined in the configuration:
 ```elixir
 config :ex_oauth2_provider, ExOauth2Provider,
   repo: ExOauth2Provider.Test.Repo,
-  resource_owner: Dummy.User,
+  resource_owner: Dummy.Users.User,
   default_scopes: ~w(public),
   optional_scopes: ~w(read update)
 ```
@@ -285,7 +285,7 @@ And set the config to use `:binary_id` for `belongs_to` fields:
 
 ```elixir
 config :ex_oauth2_provider, ExOauth2Provider,
-  resource_owner: {Dummy.User, :binary_id}
+  resource_owner: {Dummy.Users.User, :binary_id}
 ```
 
 ### 2. If all structs should use `:uuid`
@@ -296,7 +296,7 @@ Update the `:ex_oauth2_provider` config in `config/config.exs` to use the the [U
 
 ```elixir
 config :ex_oauth2_provider, ExOauth2Provider,
-  resource_owner: {Dummy.User, :binary_id},
+  resource_owner: {Dummy.Users.User, :binary_id},
   app_schema: ExOauth2Provider.Schema.UUID
 ```
 
@@ -316,7 +316,7 @@ You can provide a list of `belongs_to` options, by passing a keyword list instea
 
 ```elixir
 config :ex_oauth2_provider, ExOauth2Provider,
-  resource_owner: {Dummy.User, [type: :binary_id, references: :uuid]}
+  resource_owner: {Dummy.Users.User, [type: :binary_id, references: :uuid]}
 ```
 
 ## Acknowledgement

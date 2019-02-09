@@ -1,4 +1,4 @@
-defmodule Dummy.User do
+defmodule Dummy.Users.User do
   @moduledoc false
 
   use Dummy.Schema
