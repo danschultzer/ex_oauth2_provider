@@ -10,7 +10,7 @@ defmodule ExOauth2Provider.OauthApplications do
                           OauthAccessTokens.OauthAccessToken,
                           RedirectURI,
                           Utils}
-  use ExOauth2Provider.Mixin.Scopes
+  import ExOauth2Provider.Mixin.Scopes
 
   @doc """
   Gets a single application by uid.
@@ -47,9 +47,10 @@ defmodule ExOauth2Provider.OauthApplications do
   """
   @spec get_application_for!(Schema.t(), binary()) :: OauthApplication.t() | no_return
   def get_application_for!(resource_owner, uid) do
-    clauses = OauthApplication
-              |> Utils.belongs_to_clause(:owner, resource_owner)
-              |> Keyword.put(:uid, uid)
+    clauses =
+      OauthApplication
+      |> Utils.belongs_to_clause(:owner, resource_owner)
+      |> Keyword.put(:uid, uid)
 
     ExOauth2Provider.repo.get_by!(OauthApplication, clauses)
   end

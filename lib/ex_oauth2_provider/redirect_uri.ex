@@ -7,7 +7,7 @@ defmodule ExOauth2Provider.RedirectURI do
   @doc """
   Validates if a url can be used as a redirect_uri
   """
-  @spec validate(binary() | nil) :: {:ok, binary()} | {:errror, binary()}
+  @spec validate(binary() | nil) :: {:ok, binary()} | {:error, binary()}
   def validate(nil), do: validate("")
   def validate(url) do
     case String.trim(url) do
@@ -77,7 +77,7 @@ defmodule ExOauth2Provider.RedirectURI do
   @doc """
   Adds query parameters to uri
   """
-  @spec uri_with_query(binary() | URI.t(), binary()) :: URI.t()
+  @spec uri_with_query(binary() | URI.t(), map()) :: binary()
   def uri_with_query(uri, query) when is_binary(uri),
     do: uri_with_query(URI.parse(uri), query)
   def uri_with_query(%URI{} = uri, query) do

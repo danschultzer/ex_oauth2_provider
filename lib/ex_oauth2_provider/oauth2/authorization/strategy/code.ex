@@ -193,7 +193,6 @@ defmodule ExOauth2Provider.Authorization.Code do
     |> validate_scopes()
   end
 
-  defp validate_resource_owner(%{error: _error} = params), do: params
   defp validate_resource_owner(%{resource_owner: resource_owner} = params) do
     case resource_owner do
       %{__struct__: _} -> params

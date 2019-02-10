@@ -57,7 +57,6 @@ defmodule ExOauth2Provider.Token.Revoke do
   end
   defp load_access_token(params), do: Error.add_error(params, Error.invalid_request())
 
-  defp get_access_token(%{error: _} = params), do: params
   defp get_access_token(%{request: %{"token" => token}} = params) do
     token
     |> OauthAccessTokens.get_by_token

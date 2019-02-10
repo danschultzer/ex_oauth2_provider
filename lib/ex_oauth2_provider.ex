@@ -85,8 +85,8 @@ defmodule ExOauth2Provider do
   defp revoke_previous_refresh_token({:ok, _} = params, false), do: params
   defp revoke_previous_refresh_token({:ok, %{} = access_token}, true) do
     case OauthAccessTokens.revoke_previous_refresh_token(access_token) do
-      nil -> {:error, :no_association_found}
-      _   -> {:ok, access_token}
+      {:error, _any}       -> {:error, :no_association_found}
+      {:ok, _access_token} -> {:ok, access_token}
     end
   end
 

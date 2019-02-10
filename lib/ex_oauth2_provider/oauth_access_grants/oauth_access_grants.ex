@@ -3,11 +3,14 @@ defmodule ExOauth2Provider.OauthAccessGrants do
   The boundary for the OauthAccessGrants system.
   """
 
-  use ExOauth2Provider.Mixin.{Expirable, Revocable, Scopes}
+  alias ExOauth2Provider.Mixin.{Expirable, Revocable, Scopes}
   alias ExOauth2Provider.{OauthApplications.OauthApplication,
                           OauthAccessGrants.OauthAccessGrant,
                           Utils}
   alias Ecto.Changeset
+
+  defdelegate revoke!(data), to: Revocable
+  defdelegate revoke(data), to: Revocable
 
   @doc """
   Gets a single access grant registered with an application.
@@ -23,14 +26,15 @@ defmodule ExOauth2Provider.OauthAccessGrants do
   """
   @spec get_active_grant_for(OauthApplication.t(), binary()) :: OauthAccessGrant.t() | nil
   def get_active_grant_for(application, token) do
-    clauses = OauthAccessGrant
-    |> Utils.belongs_to_clause(:application, application)
-    |> Keyword.put(:token, token)
+    clauses =
+      OauthAccessGrant
+      |> Utils.belongs_to_clause(:application, application)
+      |> Keyword.put(:token, token)
 
     OauthAccessGrant
     |> ExOauth2Provider.repo.get_by(clauses)
-    |> filter_expired()
-    |> filter_revoked()
+    |> Expirable.filter_expired()
+    |> Revocable.filter_revoked()
   end
 
   @doc """
@@ -58,8 +62,8 @@ defmodule ExOauth2Provider.OauthAccessGrants do
     |> Changeset.assoc_constraint(:application)
     |> Changeset.assoc_constraint(:resource_owner)
     |> put_token()
-    |> put_scopes(grant.application.scopes)
-    |> validate_scopes(grant.application.scopes)
+    |> Scopes.put_scopes(grant.application.scopes)
+    |> Scopes.validate_scopes(grant.application.scopes)
     |> Changeset.validate_required([:redirect_uri, :expires_in, :token, :resource_owner, :application])
     |> Changeset.unique_constraint(:token)
   end

@@ -46,7 +46,7 @@ defmodule ExOauth2Provider.Scopes do
   @doc """
   Will default to server scopes if no scopes supplied
   """
-  @spec filter_default_scopes([binary()]) :: [binary()]
+  @spec default_to_server_scopes([binary()]) :: [binary()]
   def default_to_server_scopes([]), do: Config.server_scopes()
   def default_to_server_scopes(server_scopes), do: server_scopes
 

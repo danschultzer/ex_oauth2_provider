@@ -37,18 +37,13 @@ defmodule ExOauth2Provider.Plug.EnsureAuthenticated do
     key = Map.get(opts, :key, :default)
 
     conn
-    |> get_authentication(key, opts)
-    |> handle_authentication()
+    |> Plug.get_current_access_token(key)
+    |> handle_authentication(conn, opts)
   end
 
   @doc false
-  @spec get_authentication(Conn.t(), atom(), map()) :: {Conn.t(), {:ok, binary()} | {:error, term()}}
-  defp get_authentication(conn, key, opts),
-    do: {conn, Plug.get_current_access_token(conn, key), opts}
-
-  @doc false
-  defp handle_authentication({conn, {:ok, _}, _}), do: conn
-  defp handle_authentication({conn, {:error, reason}, opts}),
+  defp handle_authentication({:ok, _}, conn, _opts), do: conn
+  defp handle_authentication({:error, reason}, conn, opts),
     do: handle_error(conn, reason, opts)
 
   @doc false
