@@ -1,5 +1,9 @@
-alias ExOauth2Provider.Test.Repo
+Mix.shell(Mix.Shell.Process)
+Logger.configure(level: :warn)
 
+ExUnit.start()
+
+# Set up UUID
 additional_opts = if System.get_env("UUID"), do: ["--uuid", System.get_env("UUID")], else: []
 install_opts = Enum.concat(["--no-config"], additional_opts)
 
@@ -10,13 +14,6 @@ Mix.Task.run "ex_oauth2_provider.install", install_opts
 Mix.Task.run "ecto.create", ~w(--quiet)
 Mix.Task.run "ecto.migrate"
 
-# For tasks/generators testing
-Mix.start()
-Mix.shell(Mix.Shell.Process)
-Logger.configure(level: :info)
 
-ExUnit.start()
-
-{:ok, _pid} = Repo.start_link
-
-Ecto.Adapters.SQL.Sandbox.mode(Repo, :manual)
+{:ok, _pid} = ExOauth2Provider.Test.Repo.start_link
+Ecto.Adapters.SQL.Sandbox.mode(ExOauth2Provider.Test.Repo, :manual)
