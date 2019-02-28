@@ -10,9 +10,7 @@ defmodule ExOauth2Provider.Scopes do
   """
   @spec all?([binary()], [binary()]) :: boolean()
   def all?(scopes, required_scopes) do
-    required_scopes
-    |> Enum.find(&!Enum.member?(scopes, &1))
-    |> is_nil()
+    (required_scopes -- scopes) == []
   end
 
   @doc """
@@ -20,7 +18,7 @@ defmodule ExOauth2Provider.Scopes do
   """
   @spec equal?([binary()], [binary()]) :: boolean()
   def equal?(scopes, other_scopes) do
-    all?(scopes, other_scopes) && all?(other_scopes, scopes)
+    Enum.sort(scopes) == Enum.sort(other_scopes)
   end
 
   @doc """
@@ -40,7 +38,9 @@ defmodule ExOauth2Provider.Scopes do
   """
   @spec filter_default_scopes([binary()]) :: [binary()]
   def filter_default_scopes(scopes) do
-    Enum.filter(scopes, &Enum.member?(default_server_scopes(), &1))
+    default_scopes = default_server_scopes()
+
+    Enum.filter(scopes, &Enum.member?(default_scopes, &1))
   end
 
   @doc """

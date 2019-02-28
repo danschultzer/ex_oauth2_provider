@@ -10,11 +10,12 @@ defmodule ExOauth2Provider.Utils do
   end
 
   @doc false
-  @spec generate_token(map()) :: binary()
-  def generate_token(opts \\ %{}) do
-    token_size = Map.get(opts, :size, 32)
-    string = :crypto.strong_rand_bytes(token_size)
-    Base.encode16(string, case: :lower)
+  @spec generate_token(keyword()) :: binary()
+  def generate_token(opts \\ []) do
+    opts
+    |> Keyword.get(:size, 32)
+    |> :crypto.strong_rand_bytes()
+    |> Base.encode16(case: :lower)
   end
 
   @spec belongs_to_clause(module(), atom(), map()) :: keyword()

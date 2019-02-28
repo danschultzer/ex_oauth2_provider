@@ -358,12 +358,12 @@ defmodule ExOauth2Provider.OauthAccessTokens do
     {_, expires_in}     = Changeset.fetch_field(changeset, :expires_in)
     created_at          = %{NaiveDateTime.utc_now() | microsecond: {0, 0}}
 
-    token = apply(module, method, [%{
-      resource_owner_key => resource_owner_id(resource_owner, related_key),
+    token = apply(module, method, [[
+      {resource_owner_key, resource_owner_id(resource_owner, related_key)},
       scopes: scopes,
       application: application,
       expires_in: expires_in,
-      created_at: created_at}])
+      created_at: created_at]])
 
     changeset
     |> Changeset.change(%{token: token})

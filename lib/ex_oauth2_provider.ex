@@ -41,8 +41,11 @@ defmodule ExOauth2Provider do
   Authenticate an access token.
 
   ## Example
+
       ExOauth2Provider.authenticate_token("Jf5rM8hQBc")
+
   ## Response
+
       {:ok, access_token}
       {:error, reason}
   """
@@ -91,7 +94,7 @@ defmodule ExOauth2Provider do
   end
 
   @doc false
-  @spec config() :: Keyword.t()
+  @spec config() :: keyword()
   def config do
     Application.get_env(:ex_oauth2_provider, ExOauth2Provider, Application.get_env(:phoenix_oauth2_provider, PhoenixOauth2Provider, []))
   end

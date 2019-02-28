@@ -2,10 +2,10 @@ defmodule ExOauth2Provider.Utils.Error do
   @moduledoc false
 
   @doc false
-  @spec add_error(map(), {:error, map(), atom()}) :: map()
-  def add_error(%{error: _} = params, _), do: params
-  def add_error(params, {:error, error, http_status}) do
-    Map.merge(params, %{error: error, error_http_status: http_status})
+  @spec add_error({:ok, map()} | {:error, map()}, {:error, map(), atom()}) :: {:error, map()}
+  def add_error({:error, params}, _), do: {:error, params}
+  def add_error({:ok, params}, {:error, error, http_status}) do
+    {:error, Map.merge(params, %{error: error, error_http_status: http_status})}
   end
 
   @spec server_error() :: {:error, map(), atom()}

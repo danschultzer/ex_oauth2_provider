@@ -21,7 +21,7 @@ defmodule ExOauth2Provider.Plug.VerifyHeaderTest do
   end
 
   test "with no access token at a specified location", context do
-    conn = PlugHelpers.run_plug(context.conn, VerifyHeader, %{key: :secret})
+    conn = PlugHelpers.run_plug(context.conn, VerifyHeader, key: :secret)
     refute Plug.authenticated?(conn, :secret)
     assert Plug.current_access_token(conn, :secret) == nil
   end
@@ -38,7 +38,7 @@ defmodule ExOauth2Provider.Plug.VerifyHeaderTest do
   test "with a valid access token at a specified location", context do
     conn = context.conn
            |> put_req_header("authorization", context.access_token.token)
-           |> PlugHelpers.run_plug(VerifyHeader, %{key: :secret})
+           |> PlugHelpers.run_plug(VerifyHeader, key: :secret)
 
     assert Plug.authenticated?(conn, :secret)
     assert Plug.current_access_token(conn, :secret) == context.access_token

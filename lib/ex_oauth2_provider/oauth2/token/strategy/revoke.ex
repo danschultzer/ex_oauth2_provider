@@ -35,7 +35,7 @@ defmodule ExOauth2Provider.Token.Revoke do
   """
   @spec revoke(map()) :: {:ok, map()} | {:error, map(), atom()}
   def revoke(request) do
-    %{request: request}
+    {:ok, %{request: request}}
     |> load_client_if_presented()
     |> return_error()
     |> load_access_token()
@@ -44,46 +44,47 @@ defmodule ExOauth2Provider.Token.Revoke do
     |> Response.revocation_response()
   end
 
-  defp load_client_if_presented(%{request: %{"client_id" => _}} = params),
-    do: Utils.load_client(params)
-  defp load_client_if_presented(params), do: params
+  defp load_client_if_presented({:ok, %{request: %{"client_id" => _}} = params}),
+    do: Utils.load_client({:ok, params})
+  defp load_client_if_presented({:ok, params}), do: {:ok, params}
 
-  defp load_access_token(%{error: _} = params), do: params
-  defp load_access_token(%{request: %{"token" => _}} = params) do
-    params
+  defp load_access_token({:error, %{error: _} = params}), do: {:error, params}
+  defp load_access_token({:ok, %{request: %{"token" => _}} = params}) do
+    {:ok, params}
     |> get_access_token()
     |> get_refresh_token()
     |> preload_token_associations()
   end
-  defp load_access_token(params), do: Error.add_error(params, Error.invalid_request())
+  defp load_access_token({:ok, params}), do: Error.add_error({:ok, params}, Error.invalid_request())
 
-  defp get_access_token(%{request: %{"token" => token}} = params) do
+  defp get_access_token({:ok, %{request: %{"token" => token}} = params}) do
     token
-    |> OauthAccessTokens.get_by_token
+    |> OauthAccessTokens.get_by_token()
     |> case do
-      nil          -> Error.add_error(params, Error.invalid_request())
-      access_token -> Map.put(params, :access_token, access_token)
+      nil          -> Error.add_error({:ok, params}, Error.invalid_request())
+      access_token -> {:ok, Map.put(params, :access_token, access_token)}
     end
   end
 
-  defp get_refresh_token(%{access_token: _} = params), do: params
-  defp get_refresh_token(%{error: _} = params), do: params
-  defp get_refresh_token(%{request: %{"token" => token}} = params) do
+  defp get_refresh_token({:ok,%{access_token: _} = params}), do: {:ok, params}
+  defp get_refresh_token({:error, %{error: _} = params}), do: {:error, params}
+  defp get_refresh_token({:ok, %{request: %{"token" => token}} = params}) do
     token
     |> OauthAccessTokens.get_by_refresh_token
     |> case do
-      nil          -> Error.add_error(params, Error.invalid_request())
-      access_token -> Map.put(params, :access_token, access_token)
+      nil          -> Error.add_error({:ok, params}, Error.invalid_request())
+      access_token -> {:ok, Map.put(params, :access_token, access_token)}
     end
   end
 
-  defp preload_token_associations(%{error: _} = params), do: params
-  defp preload_token_associations(%{access_token: access_token} = params) do
-    Map.put(params, :acess_token, ExOauth2Provider.repo.preload(access_token, :application))
+  defp preload_token_associations({:error, params}), do: {:error, params}
+  defp preload_token_associations({:ok, %{access_token: access_token} = params}) do
+    {:ok, Map.put(params, :access_token, ExOauth2Provider.repo.preload(access_token, :application))}
   end
 
-  defp validate_request(params) do
-    params
+  defp validate_request({:error, params}), do: {:error, params}
+  defp validate_request({:ok, params}) do
+    {:ok, params}
     |> validate_permissions()
     |> validate_accessible()
   end
@@ -106,31 +107,31 @@ defmodule ExOauth2Provider.Token.Revoke do
   #
   # https://tools.ietf.org/html/rfc6749#section-2.1
   # https://tools.ietf.org/html/rfc7009
-  defp validate_permissions(%{error: _} = params), do: params
+
   # Client is public, authentication unnecessary
-  defp validate_permissions(%{access_token: %{application_id: nil}} = params), do: params
+  defp validate_permissions({:ok, %{access_token: %{application_id: nil}} = params}), do: {:ok, params}
   # Client is confidential, therefore client authentication & authorization is required
-  defp validate_permissions(%{access_token: %{application_id: _id}} = params), do: validate_ownership(params)
+  defp validate_permissions({:ok, %{access_token: %{application_id: _id}} = params}), do: validate_ownership({:ok, params})
 
-  defp validate_ownership(%{access_token: %{application_id: application_id}, client: %{id: client_id}} = params) when application_id == client_id, do: params
-  defp validate_ownership(params), do: Error.add_error(params, Error.invalid_request())
+  defp validate_ownership({:ok, %{access_token: %{application_id: application_id}, client: %{id: client_id}} = params}) when application_id == client_id, do: {:ok, params}
+  defp validate_ownership({:ok, params}), do: Error.add_error({:ok, params}, Error.invalid_request())
 
-  defp validate_accessible(%{error: _} = params), do: params
-  defp validate_accessible(%{access_token: access_token} = params) do
+  defp validate_accessible({:error, params}), do: {:error, params}
+  defp validate_accessible({:ok, %{access_token: access_token} = params}) do
     case OauthAccessTokens.is_accessible?(access_token) do
-      true  -> params
-      false -> Error.add_error(params, Error.invalid_request())
+      true  -> {:ok, params}
+      false -> Error.add_error({:ok, params}, Error.invalid_request())
     end
   end
 
-  defp revoke_token(%{error: _} = params), do: params
-  defp revoke_token(%{access_token: access_token} = params) do
+  defp revoke_token({:error, params}), do: {:error, params}
+  defp revoke_token({:ok, %{access_token: access_token} = params}) do
     case OauthAccessTokens.revoke(access_token) do
-      {:ok, _}    -> params
-      {:error, _} -> Error.add_error(params, Error.invalid_request())
+      {:ok, _}    -> {:ok, params}
+      {:error, _} -> Error.add_error({:ok, params}, Error.invalid_request())
     end
   end
 
-  defp return_error(%{error: _} = params), do: Map.put(params, :should_return_error, true)
-  defp return_error(params), do: params
+  defp return_error({:error, params}), do: {:error, Map.put(params, :should_return_error, true)}
+  defp return_error({:ok, params}), do: {:ok, params}
 end

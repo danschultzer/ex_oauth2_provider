@@ -22,46 +22,27 @@ defmodule ExOauth2Provider.Plug.EnsureAuthenticated do
   alias ExOauth2Provider.Plug
 
   @doc false
-  @spec init(Keyword.t) :: map()
-  def init(opts) do
-    opts = Enum.into(opts, %{})
-    handler = build_handler_tuple(opts)
-
-    %{handler: handler,
-      key: Map.get(opts, :key, :default)}
-  end
+  @spec init(keyword) :: keyword()
+  def init(opts), do: opts
 
   @doc false
-  @spec call(Conn.t(), map()) :: map()
+  @spec call(Conn.t(), keyword()) :: map()
   def call(conn, opts) do
-    key = Map.get(opts, :key, :default)
+    key = Keyword.get(opts, :key, :default)
 
     conn
     |> Plug.get_current_access_token(key)
     |> handle_authentication(conn, opts)
   end
 
-  @doc false
   defp handle_authentication({:ok, _}, conn, _opts), do: conn
-  defp handle_authentication({:error, reason}, conn, opts),
-    do: handle_error(conn, reason, opts)
+  defp handle_authentication({:error, reason}, %{params: params} = conn, opts) do
+    params = Map.put(params, :reason, reason)
+    module = Keyword.get(opts, :handler, ExOauth2Provider.Plug.ErrorHandler)
 
-  @doc false
-  defp handle_error(%Conn{params: params} = conn, reason, opts) do
-    conn = conn
-           |> Conn.assign(:ex_oauth2_provider_failure, reason)
-           |> Conn.halt()
-    params = Map.merge(params, %{reason: reason})
-    {module, method} = Map.get(opts, :handler)
-
-    apply(module, method, [conn, params])
-  end
-
-  @doc false
-  defp build_handler_tuple(%{handler: mod}) do
-    {mod, :unauthenticated}
-  end
-  defp build_handler_tuple(_) do
-    {ExOauth2Provider.Plug.ErrorHandler, :unauthenticated}
+    conn
+    |> Conn.assign(:ex_oauth2_provider_failure, reason)
+    |> Conn.halt()
+    |> module.unauthenticated(params)
   end
 end

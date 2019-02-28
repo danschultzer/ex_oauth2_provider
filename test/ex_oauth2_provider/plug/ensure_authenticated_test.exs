@@ -5,7 +5,7 @@ defmodule ExOauth2Provider.Plug.EnsureAuthenticatedTest do
 
   alias ExOauth2Provider.Test.{Fixtures, PlugHelpers}
   alias Plug.Conn
-  alias ExOauth2Provider.{Plug, Plug.EnsureAuthenticated, Plug.ErrorHandler}
+  alias ExOauth2Provider.{Plug, Plug.EnsureAuthenticated}
 
   defmodule TestHandler do
     @moduledoc false
@@ -25,16 +25,6 @@ defmodule ExOauth2Provider.Plug.EnsureAuthenticatedTest do
       conn: conn(:get, "/foo"),
       access_token: access_token
     }
-  end
-
-  test "init/1 sets the handler option to the module that's passed in" do
-    %{handler: handler_opts} = EnsureAuthenticated.init(handler: TestHandler)
-    assert handler_opts == {TestHandler, :unauthenticated}
-  end
-
-  test "init/1 with default options" do
-    assert %{handler: handler_opts, key: :default} = EnsureAuthenticated.init %{}
-    assert handler_opts == {ErrorHandler, :unauthenticated}
   end
 
   test "doesn't call unauth when valid token for default key", context do

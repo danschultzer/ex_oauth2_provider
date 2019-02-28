@@ -124,11 +124,11 @@ defmodule ExOauth2Provider.Config do
   def calculate_authorization_response_types do
     %{"authorization_code" => {:code, ExOauth2Provider.Authorization.Code}}
     |> Enum.filter(fn({k, _}) -> Enum.member?(grant_flows(), k) end)
-    |> Enum.map(fn({_, v}) -> v end)
+    |> Enum.map(&elem(&1, 1))
   end
 
   @doc false
-  @spec calculate_token_grant_types() :: Keyword.t()
+  @spec calculate_token_grant_types() :: keyword()
   def calculate_token_grant_types do
     [authorization_code: ExOauth2Provider.Token.AuthorizationCode,
      client_credentials: ExOauth2Provider.Token.ClientCredentials,

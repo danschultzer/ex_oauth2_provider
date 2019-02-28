@@ -24,9 +24,9 @@ Run `mix deps.get` to install it, and then run the install script:
 mix ex_oauth2_provider.install
 ```
 
-This will add the necessary Ecto migrations to your app, and set sample configuration in `config/config.exs`.
+This will add the necessary Ecto migrations and schema modules, to your app, and set sample configuration in `config/config.exs`.
 
-You are required to use a resource owner struct that already exists. This could be your `User` struct. If you don't have any `User` struct, you can create a migration with this:
+You are required to use a resource owner struct that already exists. If you don't have any user module struct (`MyApp.Users.User`), you can create a migration with this:
 
 ```bash
 mix ecto.gen.migration create_users --change $'    create table(:users) do\n      add :email, :string\n    end'
@@ -134,7 +134,7 @@ config :ex_oauth2_provider, ExOauth2Provider,
   password_auth: {MyApp.MyModule, :authenticate}
 
 # Module example
-defmodule MyApp.MyModule
+defmodule MyApp.MyModule do
   def authenticate(username, password) do
     user = repo.get_by(User, email: username)
     cond do

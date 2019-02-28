@@ -9,31 +9,35 @@ defmodule ExOauth2Provider.RedirectURI do
   """
   @spec validate(binary() | nil) :: {:ok, binary()} | {:error, binary()}
   def validate(nil), do: validate("")
-  def validate(url) do
-    case String.trim(url) do
-      "" ->
-        {:error, "Redirect URI cannot be blank"}
+  def validate(url) when is_binary(url) do
+    url
+    |> String.trim()
+    |> do_validate()
+  end
 
-      url ->
-        uri = URI.parse(url)
-
-        cond do
-          native_redirect_uri?(url) ->
-            {:ok, url}
-
-          uri.fragment != nil ->
-            {:error, "Redirect URI cannot contain fragments"}
-
-          uri.scheme == nil || uri.host == nil ->
-            {:error, "Redirect URI must be an absolute URI"}
-
-          invalid_ssl_uri?(uri) ->
-            {:error, "Redirect URI must be an HTTPS/SSL URI"}
-
-          true ->
-            {:ok, url}
-        end
+  defp do_validate(""),
+    do: {:error, "Redirect URI cannot be blank"}
+  defp do_validate(url) do
+    if native_redirect_uri?(url) do
+      {:ok, url}
+    else
+      do_validate(url, URI.parse(url))
     end
+  end
+  defp do_validate(_url, %{fragment: fragment}) when not is_nil(fragment),
+    do: {:error, "Redirect URI cannot contain fragments"}
+  defp do_validate(_url, %{scheme: schema, host: host}) when is_nil(schema) or is_nil(host),
+    do: {:error, "Redirect URI must be an absolute URI"}
+  defp do_validate(url, uri) do
+    if invalid_ssl_uri?(uri) do
+      {:error, "Redirect URI must be an HTTPS/SSL URI"}
+    else
+      {:ok, url}
+    end
+  end
+
+  defp invalid_ssl_uri?(uri) do
+    Config.force_ssl_in_redirect_uri?() and uri.scheme == "http"
   end
 
   @doc """
@@ -45,9 +49,7 @@ defmodule ExOauth2Provider.RedirectURI do
   end
   @spec matches?(URI.t(), URI.t()) :: boolean()
   def matches?(%URI{} = uri, %URI{} = client_uri) do
-    uri = Map.merge(uri, %{query: nil})
-
-    client_uri == uri
+    client_uri == %{uri | query: nil}
   end
 
   @doc """
@@ -55,15 +57,16 @@ defmodule ExOauth2Provider.RedirectURI do
   """
   @spec valid_for_authorization?(binary(), binary()) :: boolean()
   def valid_for_authorization?(url, client_url) do
-    case validate(url) do
-      {:error, _} ->
-        false
+    url
+    |> validate()
+    |> do_valid_for_authorization?(client_url)
+  end
 
-      {:ok, _} ->
-        client_url
-        |> String.split()
-        |> Enum.any?(&matches?(url, &1))
-    end
+  defp do_valid_for_authorization?({:error, _error}, _client_url), do: false
+  defp do_valid_for_authorization?({:ok, url}, client_url) do
+    client_url
+    |> String.split()
+    |> Enum.any?(&matches?(url, &1))
   end
 
   @doc """
@@ -71,30 +74,30 @@ defmodule ExOauth2Provider.RedirectURI do
   """
   @spec native_redirect_uri?(binary()) :: boolean()
   def native_redirect_uri?(url) do
-    Config.native_redirect_uri == url
+    Config.native_redirect_uri() == url
   end
 
   @doc """
   Adds query parameters to uri
   """
   @spec uri_with_query(binary() | URI.t(), map()) :: binary()
-  def uri_with_query(uri, query) when is_binary(uri),
-    do: uri_with_query(URI.parse(uri), query)
-  def uri_with_query(%URI{} = uri, query) do
+  def uri_with_query(uri, query) when is_binary(uri) do
     uri
-    |> Map.put(:query, add_query_params(uri.query, query))
+    |> URI.parse()
+    |> uri_with_query(query)
+  end
+  def uri_with_query(%URI{} = uri, query) do
+    query = add_query_params(uri.query || "", query)
+
+    uri
+    |> Map.put(:query, query)
     |> to_string()
   end
 
   defp add_query_params(query, attrs) do
     query
-    |> Kernel.||("")
     |> URI.decode_query(attrs)
     |> Utils.remove_empty_values()
     |> URI.encode_query()
-  end
-
-  defp invalid_ssl_uri?(uri) do
-    Config.force_ssl_in_redirect_uri?() and uri.scheme == "http"
   end
 end

@@ -337,7 +337,7 @@ defmodule ExOauth2Provider.OauthAccessTokensTest do
     refute OauthAccessTokens.is_accessible?(nil)
   end
 
-  def access_token_generator(values) do
-    "custom_generated-#{values.resource_owner_id}"
+  def access_token_generator(opts \\ []) do
+    "custom_generated-#{opts[:resource_owner_id]}"
   end
 end

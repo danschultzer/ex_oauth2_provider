@@ -4,35 +4,29 @@ defmodule ExOauth2Provider.Authorization.Utils.Response do
   alias ExOauth2Provider.{RedirectURI, Scopes, Utils}
   alias Ecto.Schema
 
-  @doc false
-  @spec error_response(map()) :: {:error, map(), integer()} |
-                                 {:redirect, binary()} |
-                                 {:native_redirect, %{code: binary()}}
-  def error_response(%{error: error} = params),
-    do: build_response(params, error)
+  @type native_redirect :: {:native_redirect, %{code: binary()}}
+  @type redirect :: {:redirect, binary()}
+  @type error :: {:error, map(), integer()}
+  @type success :: {:ok, Schema.t(), [binary()]}
 
   @doc false
-  @spec preauthorize_response(map()) :: {:ok, Schema.t(), [binary()]} |
-                                        {:error, map(), integer()} |
-                                        {:redirect, binary()} |
-                                        {:native_redirect, %{code: binary()}}
-  def preauthorize_response(%{grant: grant} = params), do: build_response(params, %{code: grant.token})
-  def preauthorize_response(%{error: error} = params), do: build_response(params, error)
-  def preauthorize_response(%{client: client, request: %{"scope" => scopes}}), do: {:ok, client, Scopes.to_list(scopes)}
+  @spec error_response({:error, map()}) :: error() | redirect() | native_redirect()
+  def error_response({:error, %{error: error} = params}), do: build_response(params, error)
 
   @doc false
-  @spec authorize_response(map()) :: {:ok, Schema.t(), [binary()]} |
-                                     {:error, map(), integer()} |
-                                     {:redirect, binary()} |
-                                     {:native_redirect, %{code: binary()}}
-  def authorize_response(%{grant: grant} = params), do: build_response(params, %{code: grant.token})
-  def authorize_response(%{error: error} = params), do: build_response(params, error)
+  @spec preauthorize_response({:ok, map()} | {:error, map()}) :: success() | error() | redirect() | native_redirect()
+  def preauthorize_response({:ok, %{grant: grant} = params}), do: build_response(params, %{code: grant.token})
+  def preauthorize_response({:ok, %{client: client, request: %{"scope" => scopes}}}), do: {:ok, client, Scopes.to_list(scopes)}
+  def preauthorize_response({:error, %{error: error} = params}), do: build_response(params, error)
 
   @doc false
-  @spec deny_response(map()) :: {:error, map(), integer()} |
-                                {:redirect, binary()} |
-                                {:native_redirect, %{code: binary()}}
-  def deny_response(%{error: error} = params), do: build_response(params, error)
+  @spec authorize_response({:ok, map()} | {:error, map()}) :: success() | error() | redirect() | native_redirect()
+  def authorize_response({:ok, %{grant: grant} = params}), do: build_response(params, %{code: grant.token})
+  def authorize_response({:error, %{error: error} = params}), do: build_response(params, error)
+
+  @doc false
+  @spec deny_response({:error, map()}) :: error() | redirect() | native_redirect()
+  def deny_response({:error, %{error: error} = params}), do: build_response(params, error)
 
   defp build_response(%{request: request} = params, payload) do
     payload = add_state(payload, request)

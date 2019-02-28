@@ -5,7 +5,7 @@ defmodule ExOauth2Provider.Plug.EnsureScopeTest do
 
   alias Plug.Conn
   alias ExOauth2Provider.Test.PlugHelpers
-  alias ExOauth2Provider.{Plug, Plug.EnsureScopes, Plug.ErrorHandler}
+  alias ExOauth2Provider.{Plug, Plug.EnsureScopes}
 
   defmodule TestHandler do
     @moduledoc false
@@ -28,18 +28,6 @@ defmodule ExOauth2Provider.Plug.EnsureScopeTest do
 
     conn = conn(:get, "/foo")
     {:ok, %{conn: conn, access_token: access_token}}
-  end
-
-  test "init/1 sets the handler option to the module that's passed in" do
-    %{handler: handler_opts} = EnsureScopes.init(handler: TestHandler)
-
-    assert handler_opts == {TestHandler, :unauthorized}
-  end
-
-  test "init/1 defaults the handler option to ExOauth2Provider.Plug.ErrorHandler" do
-    %{handler: handler_opts} = EnsureScopes.init(%{})
-
-    assert handler_opts == {ErrorHandler, :unauthorized}
   end
 
   test "is valid when there's no scopes", %{conn: conn, access_token: access_token} do

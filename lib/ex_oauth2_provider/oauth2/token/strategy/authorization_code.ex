@@ -28,16 +28,16 @@ defmodule ExOauth2Provider.Token.AuthorizationCode do
   """
   @spec grant(map()) :: {:ok, map()} | {:error, map(), atom()}
   def grant(%{"grant_type" => "authorization_code"} = request) do
-    %{request: request}
+    {:ok, %{request: request}}
     |> Utils.load_client()
     |> load_active_access_grant()
-    |> validate_request()
+    |> validate_redirect_uri()
     |> issue_access_token_by_grant()
     |> Response.response()
   end
 
-  defp issue_access_token_by_grant(%{error: _} = params), do: params
-  defp issue_access_token_by_grant(%{access_grant: access_grant, request: _} = params) do
+  defp issue_access_token_by_grant({:error, params}), do: {:error, params}
+  defp issue_access_token_by_grant({:ok, %{access_grant: access_grant, request: _} = params}) do
     token_params = %{use_refresh_token: Config.use_refresh_token?()}
 
     result = ExOauth2Provider.repo.transaction(fn ->
@@ -47,9 +47,9 @@ defmodule ExOauth2Provider.Token.AuthorizationCode do
     end)
 
     case result do
-      {:ok, {:error, error}}     -> Error.add_error(params, error)
-      {:ok, {:ok, access_token}} -> Map.put(params, :access_token, access_token)
-      {:error, error}            -> Error.add_error(params, error)
+      {:ok, {:error, error}}     -> Error.add_error({:ok, params}, error)
+      {:ok, {:ok, access_token}} -> {:ok, Map.put(params, :access_token, access_token)}
+      {:error, error}            -> Error.add_error({:ok, params}, error)
     end
   end
 
@@ -60,26 +60,25 @@ defmodule ExOauth2Provider.Token.AuthorizationCode do
   defp maybe_create_access_token({:ok, %OauthAccessGrant{} = access_grant}, token_params),
     do: OauthAccessTokens.get_or_create_token(access_grant.resource_owner, access_grant.application, access_grant.scopes, token_params)
 
-  defp load_active_access_grant(%{client: client, request: %{"code" => code}} = params) do
+  defp load_active_access_grant({:ok, %{client: client, request: %{"code" => code}} = params}) do
     client
     |> OauthAccessGrants.get_active_grant_for(code)
     |> ExOauth2Provider.repo.preload(:resource_owner)
     |> ExOauth2Provider.repo.preload(:application)
     |> case do
-      nil          -> Error.add_error(params, Error.invalid_grant())
-      access_grant -> Map.put(params, :access_grant, access_grant)
+      nil          -> Error.add_error({:ok, params}, Error.invalid_grant())
+      access_grant -> {:ok, Map.put(params, :access_grant, access_grant)}
     end
   end
-  defp load_active_access_grant(params), do: Error.add_error(params, Error.invalid_grant())
+  defp load_active_access_grant({:ok, params}), do: Error.add_error({:ok, params}, Error.invalid_grant())
+  defp load_active_access_grant({:error, error}), do: {:error, error}
 
-  defp validate_request(params), do: validate_redirect_uri(params)
-
-  defp validate_redirect_uri(%{error: _} = params), do: params
-  defp validate_redirect_uri(%{request: %{"redirect_uri" => redirect_uri}, access_grant: grant} = params) do
+  defp validate_redirect_uri({:error, params}), do: {:error, params}
+  defp validate_redirect_uri({:ok, %{request: %{"redirect_uri" => redirect_uri}, access_grant: grant} = params}) do
     case grant.redirect_uri == redirect_uri do
-      true  -> params
-      false -> Error.add_error(params, Error.invalid_grant())
+      true  -> {:ok, params}
+      false -> Error.add_error({:ok, params}, Error.invalid_grant())
     end
   end
-  defp validate_redirect_uri(params), do: Error.add_error(params, Error.invalid_grant())
+  defp validate_redirect_uri({:ok, params}), do: Error.add_error({:ok, params}, Error.invalid_grant())
 end
