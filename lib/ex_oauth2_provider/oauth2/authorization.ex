@@ -57,15 +57,33 @@ defmodule ExOauth2Provider.Authorization do
     |> Response.error_response()
   end
 
-  defp validate_response_type(%{"response_type" => response_type}) do
-    response_type = String.to_atom(response_type)
-
-    Config.calculate_authorization_response_types()
-    |> Keyword.get(response_type)
+  defp validate_response_type(%{"response_type" => type}) do
+    type
+    |> response_type_to_grant_flow()
+    |> fetch_module()
     |> case do
-      nil                  -> {:error, :invalid_response_type}
-      authorization_module -> {:ok, authorization_module}
+      nil -> {:error, :invalid_response_type}
+      mod -> {:ok, mod}
     end
   end
   defp validate_response_type(_), do: {:error, :missing_response_type}
+
+  defp response_type_to_grant_flow("code"), do: "authorization_code"
+  defp response_type_to_grant_flow(_), do: nil
+
+  defp fetch_module(grant_flow) do
+    Config.grant_flows()
+    |> flow_can_be_used?(grant_flow)
+    |> case do
+      true  -> flow_to_mod(grant_flow)
+      false -> nil
+    end
+  end
+
+  defp flow_can_be_used?(grant_flows, grant_flow) do
+    Enum.member?(grant_flows, grant_flow)
+  end
+
+  defp flow_to_mod("authorization_code"), do: ExOauth2Provider.Authorization.Code
+  defp flow_to_mod(_), do: nil
 end

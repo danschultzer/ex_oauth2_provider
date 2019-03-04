@@ -31,17 +31,38 @@ defmodule ExOauth2Provider.Token do
     end
   end
 
-  defp validate_grant_type(%{"grant_type" => grant_type}) do
-    grant_type = String.to_atom(grant_type)
-
-    Config.calculate_token_grant_types()
-    |> Keyword.get(grant_type)
+  defp validate_grant_type(%{"grant_type" => type}) do
+    type
+    |> fetch_module()
     |> case do
-      nil          -> {:error, :invalid_grant_type}
-      token_module -> {:ok, token_module}
+      nil -> {:error, :invalid_grant_type}
+      mod -> {:ok, mod}
     end
   end
   defp validate_grant_type(_), do: {:error, :missing_grant_type}
+
+  defp fetch_module(type) do
+    Config.grant_flows()
+    |> grant_type_can_be_used?(type)
+    |> case do
+      true  -> grant_type_to_mod(type)
+      false -> nil
+    end
+  end
+
+  defp grant_type_can_be_used?(_, "refresh_token"),
+    do: Config.use_refresh_token?()
+  defp grant_type_can_be_used?(_, "password"),
+    do: not is_nil(Config.password_auth())
+  defp grant_type_can_be_used?(grant_flows, grant_type) do
+    Enum.member?(grant_flows, grant_type)
+  end
+
+  defp grant_type_to_mod("authorization_code"), do: ExOauth2Provider.Token.AuthorizationCode
+  defp grant_type_to_mod("client_credentials"), do: ExOauth2Provider.Token.ClientCredentials
+  defp grant_type_to_mod("password"), do: ExOauth2Provider.Token.Password
+  defp grant_type_to_mod("refresh_token"), do: ExOauth2Provider.Token.RefreshToken
+  defp grant_type_to_mod(_), do: nil
 
   @doc """
   Revokes an access token as per http://tools.ietf.org/html/rfc7009

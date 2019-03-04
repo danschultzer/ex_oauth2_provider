@@ -121,32 +121,6 @@ defmodule ExOauth2Provider.Config do
     Keyword.get(config(), :grant_flows, ~w(authorization_code client_credentials))
   end
 
-  @doc false
-  @spec calculate_authorization_response_types() :: [map()]
-  def calculate_authorization_response_types do
-    %{"authorization_code" => {:code, ExOauth2Provider.Authorization.Code}}
-    |> Enum.filter(fn({k, _}) -> Enum.member?(grant_flows(), k) end)
-    |> Enum.map(&elem(&1, 1))
-  end
-
-  @doc false
-  @spec calculate_token_grant_types() :: keyword()
-  def calculate_token_grant_types do
-    [authorization_code: ExOauth2Provider.Token.AuthorizationCode,
-     client_credentials: ExOauth2Provider.Token.ClientCredentials,
-     password: ExOauth2Provider.Token.Password,
-     refresh_token: ExOauth2Provider.Token.RefreshToken]
-    |> Enum.filter(fn({k, _}) -> grant_type_can_be_used?(grant_flows(), to_string(k)) end)
-  end
-
-  defp grant_type_can_be_used?(_, "refresh_token"),
-    do: use_refresh_token?()
-  defp grant_type_can_be_used?(_, "password"),
-    do: not is_nil(password_auth())
-  defp grant_type_can_be_used?(grant_flows, grant_type) do
-    Enum.member?(grant_flows, grant_type)
-  end
-
   defp parse_owner_struct({_module, options}, :options) when is_list(options), do: options
   defp parse_owner_struct({_module, foreign_key_type}, :options), do: [type: foreign_key_type]
   defp parse_owner_struct({module, _options}, :module), do: module
