@@ -12,8 +12,8 @@ defmodule ExOauth2Provider.Token.Strategy.RevokeTest do
 
   setup do
     user = Fixtures.resource_owner()
-    application = Fixtures.application(user, %{uid: @client_id, secret: @client_secret, scopes: "app:read app:write"})
-    access_token = Fixtures.access_token(user, %{application: application, use_refresh_token: true, scopes: "app:read"})
+    application = Fixtures.application(resource_owner: user, uid: @client_id, secret: @client_secret, scopes: "app:read app:write")
+    access_token = Fixtures.access_token(resource_owner: user, application: application, use_refresh_token: true, scopes: "app:read")
 
     valid_request = %{"client_id" => @client_id,
                       "client_secret" => @client_secret,
@@ -48,7 +48,7 @@ defmodule ExOauth2Provider.Token.Strategy.RevokeTest do
   end
 
   test "#revoke/1 when access token owned by another client", %{valid_request: valid_request, access_token: access_token} do
-    new_application = Fixtures.application(Fixtures.resource_owner(), %{uid: "new_app", client_secret: "new"})
+    new_application = Fixtures.application(uid: "new_app", client_secret: "new")
     QueryHelpers.change!(access_token, application_id: new_application.id)
 
     assert Token.revoke(valid_request) == {:ok, %{}}

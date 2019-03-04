@@ -28,7 +28,7 @@ defmodule ExOauth2Provider.Plug.VerifyHeaderTest do
 
   describe "with valid access token" do
     setup context do
-      access_token = Fixtures.access_token(Fixtures.resource_owner(), %{})
+      access_token = Fixtures.access_token()
 
       {:ok, Map.put(context, :access_token, access_token)}
     end
@@ -67,7 +67,7 @@ defmodule ExOauth2Provider.Plug.VerifyHeaderTest do
     end
 
     test "with a realm specified and multiple auth headers", %{conn: conn, access_token: access_token} do
-      another_access_token = Fixtures.access_token(Fixtures.resource_owner(), %{})
+      another_access_token = Fixtures.access_token()
 
       opts = VerifyHeader.init(realm: "Client")
       conn =
@@ -81,7 +81,7 @@ defmodule ExOauth2Provider.Plug.VerifyHeaderTest do
     end
 
     test "pulls different tokens into different locations", %{conn: conn, access_token: access_token} do
-      another_access_token = Fixtures.access_token(Fixtures.resource_owner(), %{})
+      another_access_token = Fixtures.access_token()
 
       req_headers = [
         {"authorization", "Bearer #{access_token.token}"},

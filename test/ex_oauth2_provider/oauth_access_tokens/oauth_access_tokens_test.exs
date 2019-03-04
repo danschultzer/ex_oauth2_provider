@@ -6,7 +6,7 @@ defmodule ExOauth2Provider.OauthAccessTokensTest do
 
   setup do
     user = Fixtures.resource_owner()
-    {:ok, %{user: user, application: Fixtures.application(user, %{})}}
+    {:ok, %{user: user, application: Fixtures.application(resource_owner: user)}}
   end
 
   test "get_by_token/1", %{user: user} do
@@ -49,7 +49,7 @@ defmodule ExOauth2Provider.OauthAccessTokensTest do
     {:ok, new_access_token_different_user} = OauthAccessTokens.create_token(Fixtures.resource_owner(), %{application: application, use_refresh_token: true, previous_refresh_token: old_access_token})
     refute OauthAccessTokens.get_by_previous_refresh_token_for(new_access_token_different_user)
 
-    new_application = Fixtures.application(user, %{uid: "new_app"})
+    new_application = Fixtures.application(resource_owner: user, uid: "new_app")
     {:ok, new_access_token_different_app} = OauthAccessTokens.create_token(user, %{application: new_application, use_refresh_token: true, previous_refresh_token: old_access_token})
 
     refute OauthAccessTokens.get_by_previous_refresh_token_for(new_access_token_different_app)

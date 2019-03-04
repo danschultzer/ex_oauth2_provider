@@ -24,7 +24,7 @@ defmodule ExOauth2Provider.Authorization.CodeTest do
 
   setup do
     resource_owner = Fixtures.resource_owner()
-    application = Fixtures.application(Fixtures.resource_owner(), %{uid: @client_id, scopes: "app:read app:write"})
+    application = Fixtures.application(uid: @client_id, scopes: "app:read app:write")
     {:ok, %{resource_owner: resource_owner, application: application}}
   end
 
@@ -51,7 +51,7 @@ defmodule ExOauth2Provider.Authorization.CodeTest do
   end
 
   test "#preauthorize/2 when previous access token with different application scopes", %{resource_owner: resource_owner, application: application} do
-    access_token = Fixtures.access_token(resource_owner, %{application: application, scopes: "app:read"})
+    access_token = Fixtures.access_token(resource_owner: resource_owner, application: application, scopes: "app:read")
     expected_scopes = Scopes.to_list(@valid_request["scope"])
 
     assert Authorization.preauthorize(resource_owner, @valid_request) == {:ok, application, expected_scopes}
@@ -96,7 +96,7 @@ defmodule ExOauth2Provider.Authorization.CodeTest do
   end
 
   test "#preauthorize/2 when previous access token with same scopes", %{resource_owner: resource_owner, application: application} do
-    Fixtures.access_token(resource_owner, %{application: application, scopes: @valid_request["scope"]})
+    Fixtures.access_token(resource_owner: resource_owner, application: application, scopes: @valid_request["scope"])
 
     assert {:native_redirect, %{code: code}} = Authorization.preauthorize(resource_owner, @valid_request)
     access_grant = QueryHelpers.get_latest_inserted(OauthAccessGrant)

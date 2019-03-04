@@ -23,7 +23,7 @@ defmodule ExOauth2Provider.Token.Strategy.AuthorizationCodeTest do
 
   setup do
     resource_owner = Fixtures.resource_owner()
-    application = Fixtures.application(Fixtures.resource_owner(), %{uid: @client_id, secret: @client_secret})
+    application = Fixtures.application(uid: @client_id, secret: @client_secret)
     {:ok, %{resource_owner: resource_owner, application: application}}
   end
 
@@ -108,7 +108,7 @@ defmodule ExOauth2Provider.Token.Strategy.AuthorizationCodeTest do
   end
 
   test "#grant/1 error when grant owned by another client", %{access_grant: access_grant} do
-    new_application = Fixtures.application(Fixtures.resource_owner(), %{uid: "new_app"})
+    new_application = Fixtures.application(uid: "new_app")
     QueryHelpers.change!(access_grant, application_id: new_application.id)
 
     assert Token.grant(@valid_request) == {:error, @invalid_grant, :unprocessable_entity}

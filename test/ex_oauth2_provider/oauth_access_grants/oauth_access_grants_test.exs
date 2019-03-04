@@ -8,7 +8,7 @@ defmodule ExOauth2Provider.OauthAccessGrantTest do
 
   setup do
     user = Fixtures.resource_owner()
-    {:ok, %{user: user, application: Fixtures.application(user, %{scopes: "public read"})}}
+    {:ok, %{user: user, application: Fixtures.application(resource_owner: user, scopes: "public read")}}
   end
 
   test "get_valid_grant/2", %{user: user, application: application} do
@@ -17,7 +17,7 @@ defmodule ExOauth2Provider.OauthAccessGrantTest do
     assert %OauthAccessGrants.OauthAccessGrant{id: id} = OauthAccessGrants.get_active_grant_for(application, grant.token)
     assert id == grant.id
 
-    different_application = Fixtures.application(user, %{uid: "2"})
+    different_application = Fixtures.application(resource_owner: user, uid: "2")
     refute OauthAccessGrants.get_active_grant_for(different_application, grant.token)
   end
 

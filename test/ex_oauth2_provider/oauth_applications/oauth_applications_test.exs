@@ -45,8 +45,8 @@ defmodule ExOauth2Provider.OauthApplicationsTest do
   end
 
   test "get_authorized_applications_for/1", %{user: user} do
-    application = Fixtures.application(Fixtures.resource_owner(), %{})
-    application2 = Fixtures.application(Fixtures.resource_owner(), %{uid: "newapp"})
+    application = Fixtures.application()
+    application2 = Fixtures.application(uid: "newapp")
     assert {:ok, token} = OauthAccessTokens.create_token(user, %{application: application})
     assert {:ok, _token} = OauthAccessTokens.create_token(user, %{application: application2})
 
@@ -166,7 +166,7 @@ defmodule ExOauth2Provider.OauthApplicationsTest do
   end
 
   test "revoke_all_access_tokens_for/2", %{user: user} do
-    application = Fixtures.application(Fixtures.resource_owner(), %{})
+    application = Fixtures.application()
     {:ok, token} = OauthAccessTokens.create_token(user, %{application: application})
     {:ok, token2} = OauthAccessTokens.create_token(user, %{application: application})
     {:ok, token3} = OauthAccessTokens.create_token(user, %{application: application})

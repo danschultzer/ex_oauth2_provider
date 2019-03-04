@@ -22,8 +22,8 @@ defmodule ExOauth2Provider.Plug.EnsureAuthenticatedTest do
 
   describe "with valid access token doesn't require authentication" do
     setup context do
-      application = Fixtures.application(Fixtures.resource_owner(), %{scopes: "app:read app:write"})
-      access_token = Fixtures.access_token(Fixtures.resource_owner(), %{application: application, scopes: "app:read"})
+      application = Fixtures.application(scopes: "app:read app:write")
+      access_token = Fixtures.access_token(application: application, scopes: "app:read")
 
       {:ok, Map.put(context, :access_token, access_token)}
     end

@@ -8,7 +8,7 @@ defmodule ExOauth2Provider.TokenTest do
   @client_secret      "secret"
 
   setup do
-    application = Fixtures.application(Fixtures.resource_owner(), %{})
+    application = Fixtures.application()
     {:ok, %{application: application}}
   end
 
