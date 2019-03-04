@@ -1,7 +1,7 @@
 defmodule ExOauth2Provider.Token.Strategy.RefreshTokenTest do
   use ExOauth2Provider.TestCase
 
-  alias ExOauth2Provider.Test.{ConfigHelpers, Fixtures, QueryHelpers}
+  alias ExOauth2Provider.Test.{ConfigHelpers, Fixtures, QueryHelpers, Repo}
   alias ExOauth2Provider.{Config, OauthAccessTokens, OauthAccessTokens.OauthAccessToken, Token, Token.RefreshToken}
 
   @client_id            "Jf5rM8hQBc"
@@ -65,8 +65,8 @@ defmodule ExOauth2Provider.Token.Strategy.RefreshTokenTest do
   test "#grant/1 returns access token", %{valid_request: valid_request, access_token: access_token} do
     assert {:ok, new_access_token} = Token.grant(valid_request)
 
-    access_token = QueryHelpers.get_by(OauthAccessToken, id: access_token.id)
-    new_access_token = QueryHelpers.get_by(OauthAccessToken, token: new_access_token.access_token)
+    access_token = Repo.get_by(OauthAccessToken, id: access_token.id)
+    new_access_token = Repo.get_by(OauthAccessToken, token: new_access_token.access_token)
 
     refute new_access_token.token == access_token.token
     assert new_access_token.resource_owner_id == access_token.resource_owner_id
@@ -81,7 +81,7 @@ defmodule ExOauth2Provider.Token.Strategy.RefreshTokenTest do
     ConfigHelpers.set_config(:access_token_response_body_handler, {__MODULE__, :access_token_response_body_handler})
 
     assert {:ok, body} = RefreshToken.grant(valid_request)
-    access_token = QueryHelpers.get_by(OauthAccessToken, token: body.access_token)
+    access_token = Repo.get_by(OauthAccessToken, token: body.access_token)
     assert body.custom_attr == access_token.inserted_at
   end
 
@@ -90,8 +90,8 @@ defmodule ExOauth2Provider.Token.Strategy.RefreshTokenTest do
 
     assert {:ok, new_access_token} = RefreshToken.grant(valid_request)
 
-    access_token = QueryHelpers.get_by(OauthAccessToken, id: access_token.id)
-    new_access_token = QueryHelpers.get_by(OauthAccessToken, token: new_access_token.access_token)
+    access_token = Repo.get_by(OauthAccessToken, id: access_token.id)
+    new_access_token = Repo.get_by(OauthAccessToken, token: new_access_token.access_token)
 
     assert new_access_token.previous_refresh_token == ""
     refute OauthAccessTokens.is_revoked?(access_token)

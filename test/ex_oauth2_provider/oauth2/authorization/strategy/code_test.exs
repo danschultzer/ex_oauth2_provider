@@ -1,7 +1,7 @@
 defmodule ExOauth2Provider.Authorization.CodeTest do
   use ExOauth2Provider.TestCase
 
-  alias ExOauth2Provider.Test.{Fixtures, QueryHelpers}
+  alias ExOauth2Provider.Test.{Fixtures, QueryHelpers, Repo}
   alias ExOauth2Provider.{Authorization, Config, Scopes, OauthAccessGrants.OauthAccessGrant}
 
   @client_id                "Jf5rM8hQBc"
@@ -142,7 +142,7 @@ defmodule ExOauth2Provider.Authorization.CodeTest do
       request = Map.merge(@valid_request, %{"scope" => "public"})
       assert {:native_redirect, %{code: code}} = Authorization.authorize(resource_owner, request)
 
-      access_grant = QueryHelpers.get_by(OauthAccessGrant, token: code)
+      access_grant = Repo.get_by(OauthAccessGrant, token: code)
       assert access_grant.resource_owner_id == resource_owner.id
     end
   end
@@ -155,7 +155,7 @@ defmodule ExOauth2Provider.Authorization.CodeTest do
 
   test "#authorize/2 generates grant", %{resource_owner: resource_owner} do
     assert {:native_redirect, %{code: code}} = Authorization.authorize(resource_owner, @valid_request)
-    access_grant = QueryHelpers.get_by(OauthAccessGrant, token: code)
+    access_grant = Repo.get_by(OauthAccessGrant, token: code)
 
     assert access_grant.resource_owner_id == resource_owner.id
     assert access_grant.expires_in == Config.authorization_code_expires_in()

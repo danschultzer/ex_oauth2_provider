@@ -2,7 +2,7 @@ defmodule ExOauth2ProviderTest do
   use ExOauth2Provider.TestCase
   doctest ExOauth2Provider
 
-  alias ExOauth2Provider.Test.{ConfigHelpers, Fixtures, QueryHelpers}
+  alias ExOauth2Provider.Test.{ConfigHelpers, Fixtures, Repo}
   alias ExOauth2Provider.{OauthAccessTokens, OauthAccessTokens.OauthAccessToken}
 
   describe "authenticate_token/1" do
@@ -31,15 +31,15 @@ defmodule ExOauth2ProviderTest do
       access_token2 = Fixtures.access_token(resource_owner: user, use_refresh_token: true, previous_refresh_token: access_token)
 
       assert {:ok, access_token} = ExOauth2Provider.authenticate_token(access_token.token)
-      access_token = QueryHelpers.get_by(OauthAccessToken, token: access_token.token)
+      access_token = Repo.get_by(OauthAccessToken, token: access_token.token)
       refute OauthAccessTokens.is_revoked?(access_token)
-      access_token2 = QueryHelpers.get_by(OauthAccessToken, token: access_token2.token)
+      access_token2 = Repo.get_by(OauthAccessToken, token: access_token2.token)
       refute "" == access_token2.previous_refresh_token
 
       assert {:ok, access_token2} = ExOauth2Provider.authenticate_token(access_token2.token)
-      access_token = QueryHelpers.get_by(OauthAccessToken, token: access_token.token)
+      access_token = Repo.get_by(OauthAccessToken, token: access_token.token)
       assert OauthAccessTokens.is_revoked?(access_token)
-      access_token2 = QueryHelpers.get_by(OauthAccessToken, token: access_token2.token)
+      access_token2 = Repo.get_by(OauthAccessToken, token: access_token2.token)
       assert "" == access_token2.previous_refresh_token
     end
 
@@ -51,9 +51,9 @@ defmodule ExOauth2ProviderTest do
       access_token2 = Fixtures.access_token(resource_owner: user, use_refresh_token: true, previous_refresh_token: access_token)
 
       assert {:ok, access_token2} = ExOauth2Provider.authenticate_token(access_token2.token)
-      access_token = QueryHelpers.get_by(OauthAccessToken, token: access_token.token)
+      access_token = Repo.get_by(OauthAccessToken, token: access_token.token)
       refute OauthAccessTokens.is_revoked?(access_token)
-      access_token2 = QueryHelpers.get_by(OauthAccessToken, token: access_token2.token)
+      access_token2 = Repo.get_by(OauthAccessToken, token: access_token2.token)
       refute "" == access_token2.previous_refresh_token
     end
 
