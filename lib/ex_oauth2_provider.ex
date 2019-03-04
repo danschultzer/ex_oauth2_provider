@@ -94,12 +94,6 @@ defmodule ExOauth2Provider do
   end
 
   @doc false
-  @spec config() :: keyword()
-  def config do
-    Application.get_env(:ex_oauth2_provider, ExOauth2Provider, Application.get_env(:phoenix_oauth2_provider, PhoenixOauth2Provider, []))
-  end
-
-  @doc false
   @spec repo() :: Ecto.Repo.t()
-  def repo, do: Keyword.get(config(), :repo)
+  def repo, do: Keyword.get(Config.config(), :repo)
 end

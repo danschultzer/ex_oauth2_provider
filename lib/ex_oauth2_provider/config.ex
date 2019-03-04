@@ -1,8 +1,10 @@
 defmodule ExOauth2Provider.Config do
   @moduledoc false
 
-  defp config do
-    ExOauth2Provider.config()
+  @doc false
+  @spec config() :: keyword()
+  def config do
+    Application.get_env(:ex_oauth2_provider, ExOauth2Provider, Application.get_env(:phoenix_oauth2_provider, PhoenixOauth2Provider, []))
   end
 
   @doc false
