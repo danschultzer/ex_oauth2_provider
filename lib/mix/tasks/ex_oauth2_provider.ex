@@ -1,6 +1,5 @@
 defmodule Mix.Tasks.ExOauth2Provider do
   use Mix.Task
-  alias Mix.Tasks.Help
 
   @shortdoc "Prints ExOauth2Provider help information"
 
@@ -22,6 +21,6 @@ defmodule Mix.Tasks.ExOauth2Provider do
     Mix.shell.info "ExOauth2Provider v#{Application.spec(:ex_oauth2_provider, :vsn)}"
     Mix.shell.info Application.spec(:ex_oauth2_provider, :description)
     Mix.shell.info "\nAvailable tasks:\n"
-    Help.run(["--search", "ex_oauth2_provider."])
+    Mix.Tasks.Help.run(["--search", "ex_oauth2_provider."])
   end
 end

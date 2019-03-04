@@ -26,14 +26,12 @@ defmodule Mix.Tasks.ExOauth2Provider.Install do
 
   use Mix.Task
 
-  alias Mix.Ecto
-  alias Mix.Project
+  alias Mix.{Ecto, Project}
   alias Mix.ExOauth2Provider.{Config, Migration}
 
   @config_file "config/config.exs"
   @switches    [resource_owner: :string, config_file: :string,
-                config: :boolean, migrations: :boolean,
-                uuid: :string]
+                config: :boolean, migrations: :boolean, uuid: :string]
 
   @doc false
   def run(args) do

@@ -1,5 +1,5 @@
 defmodule Mix.Tasks.ExOauth2ProviderTest do
-  use ExUnit.Case
+  use ExOauth2Provider.Mix.TestCase
 
   alias Mix.Tasks.ExOauth2Provider
 

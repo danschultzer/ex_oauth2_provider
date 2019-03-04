@@ -3,7 +3,6 @@ defmodule ExOauth2Provider.Plug.ErrorHandlerTest do
   use ExUnit.Case, async: true
   use Plug.Test
 
-  alias Plug.Conn.Utils
   alias ExOauth2Provider.Plug.ErrorHandler
 
   setup do
@@ -11,89 +10,81 @@ defmodule ExOauth2Provider.Plug.ErrorHandlerTest do
     {:ok, %{conn: conn}}
   end
 
-  test "unauthenticated/2 sends a 401 response when text/html", %{conn: conn} do
-    conn = put_req_header(conn, "accept", "text/html")
+  describe "unauthenticated/2" do
+    test "with text/html accept", %{conn: conn} do
+      conn =
+        conn
+        |> put_req_header("accept", "text/html")
+        |> ErrorHandler.unauthenticated(%{})
 
-    {status, headers, body} = conn
-                              |> ErrorHandler.unauthenticated(%{})
-                              |> sent_resp()
+      assert conn.status == 401
+      assert content_type(conn.resp_headers) =~ "text/plain"
+      assert conn.resp_body == "Unauthenticated"
+    end
 
-    assert status == 401
-    assert content_type(headers) == "text/plain"
-    assert body == "Unauthenticated"
+    test "with application/json accept", %{conn: conn} do
+      conn =
+        conn
+        |> put_req_header("accept", "application/json")
+        |> ErrorHandler.unauthenticated(%{})
+
+      assert conn.status == 401
+      assert content_type(conn.resp_headers) =~ "application/json"
+      assert conn.resp_body == Jason.encode!(%{errors: ["Unauthenticated"]})
+    end
+
+    test "with no accept header", %{conn: conn} do
+      conn = ErrorHandler.unauthenticated(conn, %{})
+
+      assert conn.status == 401
+      assert content_type(conn.resp_headers) =~ "text/plain"
+      assert conn.resp_body == "Unauthenticated"
+    end
   end
 
-  test "unauthenticated/2 sends a 401 response when json", %{conn: conn} do
-    conn = put_req_header(conn, "accept", "application/json")
+  describe "unauthorized/2" do
+    test "with text/html accept", %{conn: conn} do
+      conn =
+        conn
+        |> put_req_header("accept", "text/html")
+        |> ErrorHandler.unauthorized(%{})
 
-    {status, headers, body} = conn
-                              |> ErrorHandler.unauthenticated(%{})
-                              |> sent_resp()
+      assert conn.status == 403
+      assert content_type(conn.resp_headers) =~ "text/plain"
+      assert conn.resp_body == "Unauthorized"
+    end
 
-    assert status == 401
-    assert content_type(headers) == "application/json"
-    assert body == Jason.encode!(%{errors: ["Unauthenticated"]})
+    test "with application/json accept", %{conn: conn} do
+      conn =
+        conn
+        |> put_req_header("accept", "application/json")
+        |> ErrorHandler.unauthorized(%{})
+
+      assert conn.status == 403
+      assert content_type(conn.resp_headers) =~ "application/json"
+      assert conn.resp_body == Jason.encode!(%{errors: ["Unauthorized"]})
+    end
+
+    test "with no accept header", %{conn: conn} do
+      conn = ErrorHandler.unauthorized(conn, %{})
+
+      assert conn.status == 403
+      assert content_type(conn.resp_headers) =~ "text/plain"
+      assert conn.resp_body == "Unauthorized"
+    end
   end
 
-  test "unauthenticated/2 when no accept header", %{conn: conn} do
-    {status, headers, body} = conn
-                              |> ErrorHandler.unauthenticated(%{})
-                              |> sent_resp()
+  describe "already_authenticated/2" do
+    test "halts the conn", %{conn: conn} do
+      conn = ErrorHandler.already_authenticated(conn, %{})
 
-    assert status == 401
-    assert content_type(headers) == "text/plain"
-    assert body == "Unauthenticated"
-  end
-
-  test "unauthorized/2 sends a 403 response when text/html", %{conn: conn} do
-    conn = put_req_header(conn, "accept", "text/html")
-
-    {status, headers, body} = conn
-                              |> ErrorHandler.unauthorized(%{})
-                              |> sent_resp()
-
-    assert status == 403
-    assert content_type(headers) == "text/plain"
-    assert body == "Unauthorized"
-  end
-
-  test "unauthorized/2 sends a 403 response when json", %{conn: conn} do
-    conn = put_req_header(conn, "accept", "application/json")
-
-    {status, headers, body} = conn
-                              |> ErrorHandler.unauthorized(%{})
-                              |> sent_resp()
-
-    assert status == 403
-    assert content_type(headers) == "application/json"
-    assert body == Jason.encode!(%{errors: ["Unauthorized"]})
-  end
-
-  test "unauthorized/2 sends 403 resp when no accept header", %{conn: conn} do
-    {status, headers, body} = conn
-                              |> ErrorHandler.unauthorized(%{})
-                              |> sent_resp()
-
-    assert status == 403
-    assert content_type(headers) == "text/plain"
-    assert body == "Unauthorized"
-  end
-
-  test "already_authenticated/2 halt the conn", %{conn: conn} do
-    conn = ErrorHandler.already_authenticated(conn, %{})
-    assert conn.halted
+      assert conn.halted
+    end
   end
 
   defp content_type(headers) do
-    {:ok, type, subtype, _params} = headers
-                                    |> header_value("content-type")
-                                    |> Utils.content_type()
-    "#{type}/#{subtype}"
-  end
-
-  defp header_value(headers, key) do
     headers
-    |> Enum.filter(fn({k, _}) -> k == key end)
+    |> Enum.filter(fn({k, _}) -> k == "content-type" end)
     |> Enum.map(fn({_, v}) -> v end)
     |> List.first()
   end
