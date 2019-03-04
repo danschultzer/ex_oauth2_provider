@@ -42,9 +42,4 @@ defmodule ExOauth2Provider.Test.Fixtures do
                    redirect_uri: redirect_uri})
     |> Repo.insert!()
   end
-
-  @doc false
-  def start_link do
-    Agent.start_link(fn -> Map.new end, name: __MODULE__)
-  end
 end
