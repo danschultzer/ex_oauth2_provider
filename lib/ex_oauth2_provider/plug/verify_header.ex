@@ -27,53 +27,55 @@ defmodule ExOauth2Provider.Plug.VerifyHeader do
   alias ExOauth2Provider.Plug
 
   @doc false
-  @spec init(Keyword.t()) :: map()
+  @spec init(keyword()) :: keyword()
   def init(opts \\ []) do
     opts
-    |> Enum.into(%{})
-    |> set_realm_option()
+    |> Keyword.get(:realm)
+    |> maybe_set_realm_option(opts)
   end
 
-  @doc false
-  defp set_realm_option(%{realm: nil} = opts), do: opts
-  defp set_realm_option(%{realm: realm} = opts) do
+  defp maybe_set_realm_option(nil, opts), do: opts
+  defp maybe_set_realm_option(realm, opts) do
+    realm              = Regex.escape(realm)
     {:ok, realm_regex} = Regex.compile("#{realm}\:?\s+(.*)$", "i")
 
-    Map.put(opts, :realm_regex, realm_regex)
+    Keyword.put(opts, :realm_regex, realm_regex)
   end
-  defp set_realm_option(opts), do: opts
 
   @doc false
-  @spec call(Conn.t(), map()) :: Conn.t()
+  @spec call(Conn.t(), keyword()) :: Conn.t()
   def call(conn, opts) do
-    key = Map.get(opts, :key, :default)
+    key = Keyword.get(opts, :key, :default)
 
     conn
     |> fetch_token(opts)
     |> verify_token(conn, key)
   end
 
-  @doc false
+  defp fetch_token(conn, opts) do
+    auth_header = Conn.get_req_header(conn, "authorization")
+
+    opts
+    |> Keyword.get(:realm_regex)
+    |> do_fetch_token(auth_header)
+  end
+
+  defp do_fetch_token(_realm_regex, []), do: nil
+  defp do_fetch_token(nil, [token | _tail]), do: String.trim(token)
+  defp do_fetch_token(realm_regex, [token | tail]) do
+    trimmed_token = String.trim(token)
+
+    case Regex.run(realm_regex, trimmed_token) do
+      [_, match] -> String.trim(match)
+      _          -> do_fetch_token(realm_regex, tail)
+    end
+  end
+
   defp verify_token(nil, conn, _), do: conn
   defp verify_token("", conn, _), do: conn
   defp verify_token(token, conn, key) do
     access_token = ExOauth2Provider.authenticate_token(token)
+
     Plug.set_current_access_token(conn, access_token, key)
   end
-
-  @doc false
-  defp fetch_token(conn, opts) do
-    fetch_token(conn, opts, Conn.get_req_header(conn, "authorization"))
-  end
-
-  @doc false
-  defp fetch_token(_, _, []), do: nil
-  defp fetch_token(conn, %{realm_regex: realm_regex} = opts, [token|tail]) do
-    trimmed_token = String.trim(token)
-    case Regex.run(realm_regex, trimmed_token) do
-      [_, match] -> String.trim(match)
-      _          -> fetch_token(conn, opts, tail)
-    end
-  end
-  defp fetch_token(_, _, [token|_tail]), do: String.trim(token)
 end

@@ -2,7 +2,7 @@ use Mix.Config
 
 config :ex_oauth2_provider, ExOauth2Provider,
   repo: ExOauth2Provider.Test.Repo,
-  resource_owner: Dummy.User,
+  resource_owner: Dummy.Users.User,
   default_scopes: ~w(public),
   optional_scopes: ~w(read write),
   password_auth: {ExOauth2Provider.Test.Auth, :auth},
@@ -11,7 +11,7 @@ config :ex_oauth2_provider, ExOauth2Provider,
   grant_flows: ~w(authorization_code client_credentials)
 
 if System.get_env("UUID") do
-  config :ex_oauth2_provider, ExOauth2Provider, resource_owner: {Dummy.User, :binary_id}
+  config :ex_oauth2_provider, ExOauth2Provider, resource_owner: {Dummy.Users.User, :binary_id}
 end
 
 if System.get_env("UUID") == "all" do

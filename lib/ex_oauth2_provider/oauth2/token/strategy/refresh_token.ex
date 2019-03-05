@@ -27,34 +27,36 @@ defmodule ExOauth2Provider.Token.RefreshToken do
   """
   @spec grant(map()) :: {:ok, map()} | {:error, map(), atom()}
   def grant(%{"grant_type" => "refresh_token"} = request) do
-    %{request: request}
+    {:ok, %{request: request}}
     |> Utils.load_client()
     |> load_access_token_by_refresh_token()
     |> issue_access_token_by_refresh_token()
     |> Response.response()
   end
 
-  defp load_access_token_by_refresh_token(%{client: client, request: %{"refresh_token" => refresh_token}} = params) do
+  defp load_access_token_by_refresh_token({:ok, %{client: client, request: %{"refresh_token" => refresh_token}} = params}) do
     access_token = client
                    |> OauthAccessTokens.get_by_refresh_token_for(refresh_token)
                    |> ExOauth2Provider.repo.preload(:resource_owner)
                    |> ExOauth2Provider.repo.preload(:application)
 
     case access_token do
-      nil          -> Error.add_error(params, Error.invalid_request())
-      access_token -> Map.put(params, :refresh_token, access_token)
+      nil          -> Error.add_error({:ok, params}, Error.invalid_request())
+      access_token -> {:ok, Map.put(params, :refresh_token, access_token)}
     end
   end
   defp load_access_token_by_refresh_token(params), do: Error.add_error(params, Error.invalid_request())
 
-  defp issue_access_token_by_refresh_token(%{error: _} = params), do: params
-  defp issue_access_token_by_refresh_token(%{refresh_token: refresh_token, request: _} = params) do
+  defp issue_access_token_by_refresh_token({:error, params}), do: {:error, params}
+  defp issue_access_token_by_refresh_token({:ok, %{refresh_token: refresh_token, request: _} = params}) do
     result = ExOauth2Provider.repo.transaction(fn ->
-      token_params = %{application: refresh_token.application,
-                       scopes: refresh_token.scopes,
-                       expires_in: Config.access_token_expires_in,
-                       use_refresh_token: true}
-                     |> add_previous_refresh_token(refresh_token)
+      token_params =
+        add_previous_refresh_token(
+          %{application: refresh_token.application,
+            scopes: refresh_token.scopes,
+            expires_in: Config.access_token_expires_in,
+            use_refresh_token: true},
+          refresh_token)
 
       refresh_token
       |> revoke_access_token()
@@ -62,9 +64,9 @@ defmodule ExOauth2Provider.Token.RefreshToken do
     end)
 
     case result do
-      {:ok, {:error, error}}     -> Error.add_error(params, error)
-      {:ok, {:ok, access_token}} -> Map.merge(params, %{access_token: access_token})
-      {:error, error}            -> Error.add_error(params, error)
+      {:ok, {:error, error}}     -> Error.add_error({:ok, params}, error)
+      {:ok, {:ok, access_token}} -> {:ok, Map.merge(params, %{access_token: access_token})}
+      {:error, error}            -> Error.add_error({:ok, params}, error)
     end
   end
 
@@ -88,7 +90,7 @@ defmodule ExOauth2Provider.Token.RefreshToken do
     end
   end
 
-  defp create_access_token({:error, _} = error, _), do: error
+  defp create_access_token({:error, error}, _), do: {:error, error}
   defp create_access_token({:ok, %OauthAccessToken{} = access_token}, token_params) do
     OauthAccessTokens.create_token(access_token.resource_owner, token_params)
   end

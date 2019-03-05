@@ -23,23 +23,19 @@ defmodule ExOauth2Provider.Token.ClientCredentials do
   """
   @spec grant(map()) :: {:ok, map()} | {:error, map(), atom()}
   def grant(%{"grant_type" => "client_credentials"} = request) do
-    %{request: request}
+    {:ok, %{request: request}}
     |> Utils.load_client()
-    |> validate_request()
     |> issue_access_token_by_creds()
     |> Response.response()
   end
 
-  defp issue_access_token_by_creds(%{error: _} = params), do: params
-  defp issue_access_token_by_creds(%{client: client, request: request} = params) do
-    token_params = %{# client_credentials MUST NOT use refresh tokens
-                     use_refresh_token: false}
+  defp issue_access_token_by_creds({:error, params}), do: {:error, params}
+  defp issue_access_token_by_creds({:ok, %{client: client, request: request} = params}) do
+    token_params = %{use_refresh_token: false} # client_credentials MUST NOT use refresh tokens
 
     case OauthAccessTokens.get_or_create_token(client, request["scope"], token_params) do
-      {:ok, access_token} -> Map.merge(params, %{access_token: access_token})
-      {:error, error}     -> Error.add_error(params, error)
+      {:ok, access_token} -> {:ok, Map.merge(params, %{access_token: access_token})}
+      {:error, error}     -> Error.add_error({:ok, params}, error)
     end
   end
-
-  defp validate_request(params), do: params
 end

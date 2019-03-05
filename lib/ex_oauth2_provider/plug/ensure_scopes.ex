@@ -29,40 +29,36 @@ defmodule ExOauth2Provider.Plug.EnsureScopes do
   alias ExOauth2Provider.{Plug, Scopes}
 
   @doc false
-  @spec init(Keyword.t()) :: map()
-  def init(opts) do
-    opts = Enum.into(opts, %{})
-    key = Map.get(opts, :key, :default)
-    handler = build_handler_tuple(opts)
-
-    %{handler: handler,
-      key: key,
-      scopes_sets: scopes_sets(opts)}
-  end
+  @spec init(keyword()) :: keyword()
+  def init(opts), do: opts
 
   @doc false
-  defp scopes_sets(%{one_of: one_of}), do: one_of
-  defp scopes_sets(%{scopes: single_set}), do: [single_set]
-  defp scopes_sets(_), do: nil
-
-  @doc false
-  @spec call(Conn.t(), map()) :: map()
+  @spec call(Conn.t(), keyword()) :: map()
   def call(conn, opts) do
+    key = Keyword.get(opts, :key, :default)
+
     conn
-    |> Plug.current_access_token(Map.get(opts, :key))
+    |> Plug.current_access_token(key)
     |> check_scopes(conn, opts)
     |> handle_error()
   end
 
   defp check_scopes(nil, conn, opts), do: {:error, conn, opts}
   defp check_scopes(token, conn, opts) do
-    scopes_set = Map.get(opts, :scopes_sets)
+    scopes_set = fetch_scopes(opts)
 
     case matches_any_scopes_set?(token, scopes_set) do
       true  -> {:ok, conn, opts}
       false -> {:error, conn, opts}
     end
   end
+
+  defp fetch_scopes(opts) do
+    fetch_scopes(opts, Keyword.get(opts, :one_of))
+  end
+
+  defp fetch_scopes(opts, nil), do: [Keyword.get(opts, :scopes)]
+  defp fetch_scopes(_opts, scopes), do: scopes
 
   defp matches_any_scopes_set?(_, []), do: true
   defp matches_any_scopes_set?(access_token, scopes_sets) do
@@ -77,15 +73,12 @@ defmodule ExOauth2Provider.Plug.EnsureScopes do
 
   defp handle_error({:ok, conn, _}), do: conn
   defp handle_error({:error, %Conn{params: params} = conn, opts}) do
-    conn = conn
-           |> Conn.assign(:ex_oauth2_provider_failure, :unauthorized)
-           |> Conn.halt()
-    params = Map.merge(params, %{reason: :unauthorized})
-    {mod, meth} = Map.get(opts, :handler)
+    module = Keyword.get(opts, :handler, Plug.ErrorHandler)
+    params = Map.put(params, :reason, :unauthorized)
 
-    apply(mod, meth, [conn, params])
+    conn
+    |> Conn.assign(:ex_oauth2_provider_failure, :unauthorized)
+    |> Conn.halt()
+    |> module.unauthorized(params)
   end
-
-  defp build_handler_tuple(%{handler: mod}), do: {mod, :unauthorized}
-  defp build_handler_tuple(_), do: {Plug.ErrorHandler, :unauthorized}
 end

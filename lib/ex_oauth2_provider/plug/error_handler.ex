@@ -57,7 +57,7 @@ defmodule ExOauth2Provider.Plug.ErrorHandler do
     accept = accept_header(conn)
 
     case Regex.match?(~r/json/, accept) do
-      true -> :json
+      true  -> :json
       false -> :html
     end
   end

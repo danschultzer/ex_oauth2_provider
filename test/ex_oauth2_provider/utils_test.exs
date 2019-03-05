@@ -14,8 +14,8 @@ defmodule ExOauth2Provider.UtilTest do
   end
 
   test "generate_token/1 it generate the token with custom length" do
-    token1 = Utils.generate_token(%{size: 1})
-    token2 = Utils.generate_token(%{size: 2})
+    token1 = Utils.generate_token(size: 1)
+    token2 = Utils.generate_token(size: 2)
 
     assert String.length(token1) < String.length(token2)
   end

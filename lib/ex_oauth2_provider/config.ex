@@ -1,8 +1,10 @@
 defmodule ExOauth2Provider.Config do
   @moduledoc false
 
-  defp config do
-    ExOauth2Provider.config()
+  @doc false
+  @spec config() :: keyword()
+  def config do
+    Application.get_env(:ex_oauth2_provider, ExOauth2Provider, Application.get_env(:phoenix_oauth2_provider, PhoenixOauth2Provider, []))
   end
 
   @doc false
@@ -117,32 +119,6 @@ defmodule ExOauth2Provider.Config do
   @spec grant_flows() :: [binary()]
   def grant_flows do
     Keyword.get(config(), :grant_flows, ~w(authorization_code client_credentials))
-  end
-
-  @doc false
-  @spec calculate_authorization_response_types() :: [map()]
-  def calculate_authorization_response_types do
-    %{"authorization_code" => {:code, ExOauth2Provider.Authorization.Code}}
-    |> Enum.filter(fn({k, _}) -> Enum.member?(grant_flows(), k) end)
-    |> Enum.map(fn({_, v}) -> v end)
-  end
-
-  @doc false
-  @spec calculate_token_grant_types() :: Keyword.t()
-  def calculate_token_grant_types do
-    [authorization_code: ExOauth2Provider.Token.AuthorizationCode,
-     client_credentials: ExOauth2Provider.Token.ClientCredentials,
-     password: ExOauth2Provider.Token.Password,
-     refresh_token: ExOauth2Provider.Token.RefreshToken]
-    |> Enum.filter(fn({k, _}) -> grant_type_can_be_used?(grant_flows(), to_string(k)) end)
-  end
-
-  defp grant_type_can_be_used?(_, "refresh_token"),
-    do: use_refresh_token?()
-  defp grant_type_can_be_used?(_, "password"),
-    do: not is_nil(password_auth())
-  defp grant_type_can_be_used?(grant_flows, grant_type) do
-    Enum.member?(grant_flows, grant_type)
   end
 
   defp parse_owner_struct({_module, options}, :options) when is_list(options), do: options

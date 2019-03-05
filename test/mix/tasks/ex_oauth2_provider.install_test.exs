@@ -1,5 +1,5 @@
 defmodule Mix.Tasks.ExOauth2Provider.InstallTest do
-  use ExUnit.Case, async: true
+  use ExOauth2Provider.Mix.TestCase, async: true
 
   alias Mix.Tasks.ExOauth2Provider.Install
   alias ExOauth2Provider.Test.FileHelpers

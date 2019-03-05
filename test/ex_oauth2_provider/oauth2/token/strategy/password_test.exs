@@ -24,8 +24,8 @@ defmodule ExOauth2Provider.Token.Strategy.PasswordTest do
                          }
 
   setup do
-    user = Fixtures.resource_owner(%{email: @username})
-    application = Fixtures.application(Fixtures.resource_owner(), %{uid: @client_id, secret: @client_secret, scopes: "app:read app:write"})
+    user = Fixtures.resource_owner(email: @username)
+    application = Fixtures.application(uid: @client_id, secret: @client_secret, scopes: "app:read app:write")
     {:ok, %{user: user, application: application}}
   end
 

@@ -11,43 +11,36 @@ defmodule ExOauth2Provider.Authorization do
   @doc """
   Check ExOauth2Provider.Authorization.Code for usage.
   """
-  @spec preauthorize(Schema.t(), map()) :: {:ok, Schema.t(), [binary()]} |
-                                              {:error, map(), integer()} |
-                                              {:redirect, binary()} |
-                                              {:native_redirect, %{code: binary()}}
+  @spec preauthorize(Schema.t(), map()) :: Response.success() | Response.error() | Response.redirect() | Response.native_redirect()
   def preauthorize(resource_owner, request) do
     case validate_response_type(request) do
       {:error, :invalid_response_type} -> unsupported_response_type(resource_owner, request)
       {:error, :missing_response_type} -> invalid_request(resource_owner, request)
-      {:ok, token_module}              -> apply(token_module, :preauthorize, [resource_owner, request])
+      {:ok, token_module}              -> token_module.preauthorize(resource_owner, request)
     end
   end
 
   @doc """
   Check ExOauth2Provider.Authorization.Code for usage.
   """
-  @spec authorize(Schema.t(), map()) :: {:ok, binary()} |
-                                           {:error, map(), integer()} |
-                                           {:redirect, binary()} |
-                                           {:native_redirect, %{code: binary()}}
+  @spec authorize(Schema.t(), map()) :: {:ok, binary()} | Response.error() | Response.redirect() | Response.native_redirect()
   def authorize(resource_owner, request) do
     case validate_response_type(request) do
       {:error, :invalid_response_type} -> unsupported_response_type(resource_owner, request)
       {:error, :missing_response_type} -> invalid_request(resource_owner, request)
-      {:ok, token_module}              -> apply(token_module, :authorize, [resource_owner, request])
+      {:ok, token_module}              -> token_module.authorize(resource_owner, request)
     end
   end
 
   @doc """
   Check ExOauth2Provider.Authorization.Code for usage.
   """
-  @spec deny(Schema.t(), map()) :: {:error, map(), integer()} |
-                                      {:redirect, binary()}
+  @spec deny(Schema.t(), map()) :: Response.error() | Response.redirect()
   def deny(resource_owner, request) do
     case validate_response_type(request) do
       {:error, :invalid_response_type} -> unsupported_response_type(resource_owner, request)
       {:error, :missing_response_type} -> invalid_request(resource_owner, request)
-      {:ok, token_module}              -> apply(token_module, :deny, [resource_owner, request])
+      {:ok, token_module}              -> token_module.deny(resource_owner, request)
     end
   end
 
@@ -64,13 +57,33 @@ defmodule ExOauth2Provider.Authorization do
     |> Response.error_response()
   end
 
-  defp validate_response_type(%{"response_type" => response_type}) do
-    Config.calculate_authorization_response_types()
-    |> Keyword.fetch(String.to_atom(response_type))
+  defp validate_response_type(%{"response_type" => type}) do
+    type
+    |> response_type_to_grant_flow()
+    |> fetch_module()
     |> case do
-      {:ok, authorization_module} -> {:ok, authorization_module}
-      :error                      -> {:error, :invalid_response_type}
+      nil -> {:error, :invalid_response_type}
+      mod -> {:ok, mod}
     end
   end
   defp validate_response_type(_), do: {:error, :missing_response_type}
+
+  defp response_type_to_grant_flow("code"), do: "authorization_code"
+  defp response_type_to_grant_flow(_), do: nil
+
+  defp fetch_module(grant_flow) do
+    Config.grant_flows()
+    |> flow_can_be_used?(grant_flow)
+    |> case do
+      true  -> flow_to_mod(grant_flow)
+      false -> nil
+    end
+  end
+
+  defp flow_can_be_used?(grant_flows, grant_flow) do
+    Enum.member?(grant_flows, grant_flow)
+  end
+
+  defp flow_to_mod("authorization_code"), do: ExOauth2Provider.Authorization.Code
+  defp flow_to_mod(_), do: nil
 end

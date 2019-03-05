@@ -3,108 +3,72 @@ defmodule ExOauth2Provider.Plug.EnsureScopeTest do
   use ExOauth2Provider.TestCase
   use Plug.Test
 
-  alias Plug.Conn
-  alias ExOauth2Provider.Test.PlugHelpers
-  alias ExOauth2Provider.{Plug, Plug.EnsureScopes, Plug.ErrorHandler}
+  alias ExOauth2Provider.{OauthAccessTokens.OauthAccessToken, Plug, Plug.EnsureScopes}
+
+  @default_scopes "read write"
 
   defmodule TestHandler do
     @moduledoc false
 
     def unauthorized(conn, _) do
-      conn
-      |> Conn.assign(:ex_oauth2_provider_spec, :forbidden)
-      |> Conn.send_resp(401, "Unauthorized")
+      assert conn.halted
+
+      :forbidden
     end
   end
 
-  defp build_access_token(attrs) do
-    %ExOauth2Provider.OauthAccessTokens.OauthAccessToken{token: "secret",
-                                                         scopes: "read write"}
-    |> Map.merge(attrs)
-  end
-
   setup do
-    access_token = build_access_token(%{scopes: "read write"})
-
-    conn = conn(:get, "/foo")
-    {:ok, %{conn: conn, access_token: access_token}}
+    {:ok, conn: conn(:get, "/foo")}
   end
 
-  test "init/1 sets the handler option to the module that's passed in" do
-    %{handler: handler_opts} = EnsureScopes.init(handler: TestHandler)
+  test "is valid when there's no scopes", %{conn: conn} do
+    conn = run_plug(conn, @default_scopes, scopes: ~w())
 
-    assert handler_opts == {TestHandler, :unauthorized}
+    refute conn == :forbidden
   end
 
-  test "init/1 defaults the handler option to ExOauth2Provider.Plug.ErrorHandler" do
-    %{handler: handler_opts} = EnsureScopes.init(%{})
+  test "is valid when all scopes are present", %{conn: conn} do
+    conn = run_plug(conn, @default_scopes, scopes: ~w(read write))
 
-    assert handler_opts == {ErrorHandler, :unauthorized}
+    refute conn == :forbidden
   end
 
-  test "is valid when there's no scopes", %{conn: conn, access_token: access_token} do
-    expected_conn = run_ensure_scopes_plug(conn, access_token, scopes: ~w())
+  test "is valid when the scope is present", %{conn: conn} do
+    conn = run_plug(conn, @default_scopes, scopes: ~w(read))
 
-    refute unauthorized?(expected_conn)
-  end
-
-  test "is valid when all scopes are present", %{conn: conn, access_token: access_token} do
-    expected_conn = run_ensure_scopes_plug(conn, access_token, scopes: ~w(read write))
-
-    refute unauthorized?(expected_conn)
-  end
-
-  test "is valid when the scope is present", %{conn: conn, access_token: access_token} do
-    expected_conn = run_ensure_scopes_plug(conn, access_token, scopes: ~w(read))
-
-    refute unauthorized?(expected_conn)
+    refute conn == :forbidden
   end
 
   test "is invalid when all scopes are not present", %{conn: conn} do
-    access_token = build_access_token(%{scopes: "read"})
+    conn = run_plug(conn, "read", scopes: ~w(read write))
 
-    expected_conn = run_ensure_scopes_plug(conn, access_token, scopes: ~w(read write))
-
-    assert unauthorized?(expected_conn)
+    assert conn == :forbidden
   end
 
   test "is invalid when access token doesn't have any required scopes", %{conn: conn} do
-    access_token = build_access_token(%{scopes: "other_read"})
+    conn = run_plug(conn, "other_read", scopes: ~w(read write))
 
-    expected_conn = run_ensure_scopes_plug(conn, access_token, scopes: ~w(read write))
-
-    assert unauthorized?(expected_conn)
+    assert conn == :forbidden
   end
 
   test "is invalid when none of the one_of scopes is present", %{conn: conn} do
-    access_token = build_access_token(%{scopes: "other_read"})
+    conn = run_plug(conn, "other_read", one_of: [~w(other_write), ~w(read write)])
 
-    expected_conn = run_ensure_scopes_plug(conn, access_token, one_of: [~w(other_write), ~w(read write)])
-
-    assert unauthorized?(expected_conn)
+    assert conn == :forbidden
   end
 
   test "is valid when at least one_of the scopes is present", %{conn: conn} do
-    access_token = build_access_token(%{scopes: "other_read"})
-    expected_conn = run_ensure_scopes_plug(conn, access_token, one_of: [~w(other_read), ~w(read write)])
+    conn = run_plug(conn, "other_read", one_of: [~w(other_read), ~w(read write)])
 
-    refute unauthorized?(expected_conn)
+    refute conn == :forbidden
   end
 
-  test "halts the connection", %{conn: conn, access_token: access_token} do
-    expected_conn = run_ensure_scopes_plug(conn, access_token, scopes: ~w(read :write :other_read))
+  defp run_plug(conn, scopes, opts) do
+    access_token = %OauthAccessToken{token: "secret", scopes: scopes}
+    opts         = Keyword.merge([handler: TestHandler], opts)
 
-    assert expected_conn.halted
-  end
-
-  def unauthorized?(conn) do
-    conn.assigns[:ex_oauth2_provider_spec] == :forbidden
-  end
-
-  defp run_ensure_scopes_plug(conn, access_token, args) do
     conn
     |> Plug.set_current_access_token({:ok, access_token})
-    |> Conn.fetch_query_params()
-    |> PlugHelpers.run_plug(EnsureScopes, Keyword.merge([handler: TestHandler], args))
+    |> EnsureScopes.call(opts)
   end
 end

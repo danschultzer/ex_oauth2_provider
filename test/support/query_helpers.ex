@@ -1,6 +1,7 @@
 defmodule ExOauth2Provider.Test.QueryHelpers do
   @moduledoc false
 
+  alias ExOauth2Provider.Test.Repo
   import Ecto.Query
   alias Ecto.Changeset
 
@@ -9,18 +10,7 @@ defmodule ExOauth2Provider.Test.QueryHelpers do
 
     struct
     |> Changeset.change(changes)
-    |> ExOauth2Provider.repo.update!()
-  end
-
-  def get_by(module, attrs) do
-    ExOauth2Provider.repo.get_by(module, attrs)
-  end
-
-  def get_latest_inserted(module) do
-    module
-    |> order_by([x], desc: x.id)
-    |> limit(1)
-    |> ExOauth2Provider.repo.one()
+    |> Repo.update!()
   end
 
   defp convert_timestamps(changes) do
@@ -29,4 +19,11 @@ defmodule ExOauth2Provider.Test.QueryHelpers do
 
   defp convert_timestamp({key, %NaiveDateTime{} = value}), do: {key, %{value | microsecond: {0, 0}}}
   defp convert_timestamp(any), do: any
+
+  def get_latest_inserted(module) do
+    module
+    |> order_by([x], desc: x.id)
+    |> limit(1)
+    |> Repo.one()
+  end
 end

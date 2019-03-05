@@ -1,7 +1,7 @@
 defmodule ExOauth2Provider.Authorization.CodeTest do
   use ExOauth2Provider.TestCase
 
-  alias ExOauth2Provider.Test.{Fixtures, QueryHelpers}
+  alias ExOauth2Provider.Test.{Fixtures, QueryHelpers, Repo}
   alias ExOauth2Provider.{Authorization, Config, Scopes, OauthAccessGrants.OauthAccessGrant}
 
   @client_id                "Jf5rM8hQBc"
@@ -24,7 +24,7 @@ defmodule ExOauth2Provider.Authorization.CodeTest do
 
   setup do
     resource_owner = Fixtures.resource_owner()
-    application = Fixtures.application(Fixtures.resource_owner(), %{uid: @client_id, scopes: "app:read app:write"})
+    application = Fixtures.application(uid: @client_id, scopes: "app:read app:write")
     {:ok, %{resource_owner: resource_owner, application: application}}
   end
 
@@ -51,7 +51,7 @@ defmodule ExOauth2Provider.Authorization.CodeTest do
   end
 
   test "#preauthorize/2 when previous access token with different application scopes", %{resource_owner: resource_owner, application: application} do
-    access_token = Fixtures.access_token(resource_owner, %{application: application, scopes: "app:read"})
+    access_token = Fixtures.access_token(resource_owner: resource_owner, application: application, scopes: "app:read")
     expected_scopes = Scopes.to_list(@valid_request["scope"])
 
     assert Authorization.preauthorize(resource_owner, @valid_request) == {:ok, application, expected_scopes}
@@ -96,7 +96,7 @@ defmodule ExOauth2Provider.Authorization.CodeTest do
   end
 
   test "#preauthorize/2 when previous access token with same scopes", %{resource_owner: resource_owner, application: application} do
-    Fixtures.access_token(resource_owner, %{application: application, scopes: @valid_request["scope"]})
+    Fixtures.access_token(resource_owner: resource_owner, application: application, scopes: @valid_request["scope"])
 
     assert {:native_redirect, %{code: code}} = Authorization.preauthorize(resource_owner, @valid_request)
     access_grant = QueryHelpers.get_latest_inserted(OauthAccessGrant)
@@ -142,7 +142,7 @@ defmodule ExOauth2Provider.Authorization.CodeTest do
       request = Map.merge(@valid_request, %{"scope" => "public"})
       assert {:native_redirect, %{code: code}} = Authorization.authorize(resource_owner, request)
 
-      access_grant = QueryHelpers.get_by(OauthAccessGrant, token: code)
+      access_grant = Repo.get_by(OauthAccessGrant, token: code)
       assert access_grant.resource_owner_id == resource_owner.id
     end
   end
@@ -155,7 +155,7 @@ defmodule ExOauth2Provider.Authorization.CodeTest do
 
   test "#authorize/2 generates grant", %{resource_owner: resource_owner} do
     assert {:native_redirect, %{code: code}} = Authorization.authorize(resource_owner, @valid_request)
-    access_grant = QueryHelpers.get_by(OauthAccessGrant, token: code)
+    access_grant = Repo.get_by(OauthAccessGrant, token: code)
 
     assert access_grant.resource_owner_id == resource_owner.id
     assert access_grant.expires_in == Config.authorization_code_expires_in()

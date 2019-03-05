@@ -16,7 +16,7 @@ defmodule ExOauth2Provider.AuthorizationTest do
 
   setup do
     user = Fixtures.resource_owner()
-    application = Fixtures.application(user, %{uid: @client_id, secret: @client_secret})
+    application = Fixtures.application(resource_owner: user, uid: @client_id, secret: @client_secret)
     {:ok, %{resource_owner: user, application: application}}
   end
 

@@ -18,14 +18,8 @@ defmodule ExOauth2Provider.Plug do
   @doc """
   Check if a request is authenticated
   """
-  @spec authenticated?(Conn.t()) :: boolean()
-  def authenticated?(conn), do: authenticated?(conn, :default)
-
-  @doc """
-  Check if a request is authenticated
-  """
   @spec authenticated?(Conn.t(), atom()) :: boolean()
-  def authenticated?(conn, type) do
+  def authenticated?(conn, type \\ :default) do
     case get_current_access_token(conn, type) do
       {:error, _error}     -> false
       {:ok, _access_token} -> true
@@ -69,7 +63,7 @@ defmodule ExOauth2Provider.Plug do
   end
 
   @doc false
-  @spec set_current_access_token(Conn.t(), OauthAccessToken.t(), atom()) :: Conn.t()
+  @spec set_current_access_token(Conn.t(), {:ok, map()} | {:error, any()}, atom()) :: Conn.t()
   def set_current_access_token(conn, access_token, the_key \\ :default) do
     Conn.put_private(conn, Keys.access_token_key(the_key), access_token)
   end

@@ -5,8 +5,8 @@ defmodule ExOauth2Provider do
   ## Configuration
       config :ex_oauth2_provider, ExOauth2Provider,
         repo: App.Repo,
-        resource_owner: App.User,
-        application_owner: App.User,
+        resource_owner: App.Users.User,
+        application_owner: App.Users.User,
         default_scopes: ~w(public),
         optional_scopes: ~w(write update),
         native_redirect_uri: "urn:ietf:wg:oauth:2.0:oob",
@@ -41,8 +41,11 @@ defmodule ExOauth2Provider do
   Authenticate an access token.
 
   ## Example
+
       ExOauth2Provider.authenticate_token("Jf5rM8hQBc")
+
   ## Response
+
       {:ok, access_token}
       {:error, reason}
   """
@@ -51,7 +54,7 @@ defmodule ExOauth2Provider do
   def authenticate_token(token) do
     token
     |> load_access_token()
-    |> revoke_previous_refresh_token(Config.refresh_token_revoked_on_use?())
+    |> maybe_revoke_previous_refresh_token()
     |> validate_access_token()
     |> load_resource()
   end
@@ -63,7 +66,22 @@ defmodule ExOauth2Provider do
     end
   end
 
-  defp validate_access_token({:error, _} = error), do: error
+  defp maybe_revoke_previous_refresh_token({:error, error}), do: {:error, error}
+  defp maybe_revoke_previous_refresh_token({:ok, access_token}) do
+    case Config.refresh_token_revoked_on_use?() do
+      true  -> revoke_previous_refresh_token(access_token)
+      false -> {:ok, access_token}
+    end
+  end
+
+  defp revoke_previous_refresh_token(access_token) do
+    case OauthAccessTokens.revoke_previous_refresh_token(access_token) do
+      {:error, _any}       -> {:error, :no_association_found}
+      {:ok, _access_token} -> {:ok, access_token}
+    end
+  end
+
+  defp validate_access_token({:error, error}), do: {:error, error}
   defp validate_access_token({:ok, access_token}) do
     case OauthAccessTokens.is_accessible?(access_token) do
       true  -> {:ok, access_token}
@@ -71,32 +89,21 @@ defmodule ExOauth2Provider do
     end
   end
 
-  defp load_resource({:error, _} = error), do: error
+  defp load_resource({:error, error}), do: {:error, error}
   defp load_resource({:ok, access_token}) do
     access_token = repo().preload(access_token, :resource_owner)
 
-    case is_nil(access_token.resource_owner_id) || not is_nil(access_token.resource_owner) do
+    case has_association?(access_token) do
       true  -> {:ok, access_token}
       false -> {:error, :no_association_found}
     end
   end
 
-  defp revoke_previous_refresh_token({:error, _} = error, _), do: error
-  defp revoke_previous_refresh_token({:ok, _} = params, false), do: params
-  defp revoke_previous_refresh_token({:ok, %{} = access_token}, true) do
-    case OauthAccessTokens.revoke_previous_refresh_token(access_token) do
-      nil -> {:error, :no_association_found}
-      _   -> {:ok, access_token}
-    end
-  end
-
-  @doc false
-  @spec config() :: Keyword.t()
-  def config do
-    Application.get_env(:ex_oauth2_provider, ExOauth2Provider, Application.get_env(:phoenix_oauth2_provider, PhoenixOauth2Provider, []))
+  defp has_association?(access_token) do
+    is_nil(access_token.resource_owner_id) || not is_nil(access_token.resource_owner)
   end
 
   @doc false
   @spec repo() :: Ecto.Repo.t()
-  def repo, do: Keyword.get(config(), :repo)
+  def repo, do: Keyword.get(Config.config(), :repo)
 end

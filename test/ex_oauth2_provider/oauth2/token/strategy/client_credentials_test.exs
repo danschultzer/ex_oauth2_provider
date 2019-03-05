@@ -15,7 +15,7 @@ defmodule ExOauth2Provider.Token.Strategy.ClientCredentialsTest do
                         }
 
   setup do
-    application = Fixtures.application(Fixtures.resource_owner(), %{uid: @client_id, secret: @client_secret, scopes: "app:read app:write"})
+    application = Fixtures.application(uid: @client_id, secret: @client_secret, scopes: "app:read app:write")
     {:ok, %{application: application}}
   end
 
