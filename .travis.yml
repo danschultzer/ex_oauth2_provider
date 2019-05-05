@@ -18,10 +18,7 @@ matrix:
       otp_release: 20.0
     - elixir: 1.7
       otp_release: 20.0
-      env: UUID=resource_owners
-    - elixir: 1.7
-      otp_release: 20.0
-      env: UUID=all
+      env: UUID=true
 script:
   - mix test
 after_script:
