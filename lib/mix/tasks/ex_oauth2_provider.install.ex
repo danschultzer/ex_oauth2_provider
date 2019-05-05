@@ -6,92 +6,45 @@ defmodule Mix.Tasks.ExOauth2Provider.Install do
 
         mix ex_oauth2_provider.install
 
-  The repository must be set under `:ecto_repos` in the current app
-  configuration or given via the `-r` option.
-
-  By default, the migration will be generated to the
-  "priv/YOUR_REPO/migrations" directory of the current application but it
-  can be configured to be any subdirectory of `priv` by specifying the
-  `:priv` key under the repository configuration.
-
   ## Arguments
 
-    * `-r`, `--repo` - the repo to generate migration for
-    * `--config-file` - the configuration file to update
-    * `--resource-owner` - defines the resource owner, default is MyApp.Users.User
     * `--no-config` -- Don't append to your `config/config.exs` file
-    * `--no-migrations` -- Don't add migrations
-    * `--uuid` -- Use UUID for the following comma separated tables, use `all` if your database doesn't have auto incremental integer support
+    * `--no-migration` -- Don't add migration file
   """
 
   use Mix.Task
 
-  alias Mix.{Ecto, Project}
-  alias Mix.ExOauth2Provider.{Config, Migration}
+  alias Mix.ExOauth2Provider
+  alias Mix.Tasks.ExOauth2Provider.Gen.{Config, Migration}
 
-  @config_file "config/config.exs"
-  @switches    [resource_owner: :string, config_file: :string,
-                config: :boolean, migrations: :boolean, uuid: :string]
+  @switches [config: :boolean, migration: :boolean]
+  @default_opts [config: true, migration: true]
+  @mix_task "ex_oauth2_provider.install"
 
   @doc false
   def run(args) do
-    no_umbrella!()
+    ExOauth2Provider.no_umbrella!(@mix_task)
 
     args
-    |> parse_options_to_config()
-    |> add_migrations_files(args)
-    |> update_config()
+    |> ExOauth2Provider.parse_options(@switches, @default_opts)
+    |> parse()
+    |> run_migration(args)
+    |> run_config(args)
   end
 
-  defp parse_options_to_config(args) do
-    {opts, _, _} = OptionParser.parse(args, switches: @switches)
-    uuid_opts = parse_uuid_opts(Keyword.get(opts, :uuid, ""))
+  defp parse({config, _parsed, _invalid}), do: config
 
-    %{
-      config: Keyword.get(opts, :config, true),
-      config_file: Keyword.get(opts, :config_file, @config_file),
-      app_path: Project.app_path(),
-      resource_owner: Keyword.get(opts, :resource_owner, "MyApp.Users.User"),
-      migrations: Keyword.get(opts, :migrations, true),
-      uuid: uuid_opts,
-      repos: []
-    }
+  defp run_migration(%{migration: true} = config, args) do
+    Migration.run(args)
+
+    config
   end
+  defp run_migration(config, _args), do: config
 
-  defp parse_uuid_opts(string) when is_binary(string) do
-    string
-    |> String.split(",")
-    |> parse_uuid_opts()
+  defp run_config(%{config: true} = config, args) do
+    Config.run(args)
+
+    config
   end
-  defp parse_uuid_opts(uuid_tables) do
-    [:resource_owners, :oauth_access_grants, :oauth_access_tokens, :oauth_applications]
-    |> Enum.map(&{&1, uuid?(&1, uuid_tables)})
-    |> Enum.into(%{})
-  end
-
-  defp uuid?(_, ["all"]), do: true
-  defp uuid?(table, uuid_tables), do: Enum.member?(uuid_tables, Atom.to_string(table))
-
-  defp add_migrations_files(%{migrations: true} = config, args) do
-    repos =
-      args
-      |> Ecto.parse_repo()
-      |> Enum.map(&Ecto.ensure_repo(&1, args))
-      |> Enum.map(&Map.put(config, :repo, &1))
-      |> Enum.map(&Migration.create/1)
-
-    %{config | repos: repos}
-  end
-  defp add_migrations_files(config, _args), do: config
-
-  defp update_config(%{config: true} = config), do: Config.update(config)
-  defp update_config(config), do: config
-
-  defp no_umbrella! do
-    if Project.umbrella?() do
-      Mix.raise("mix ex_oauth2_provider.install can't be used in umbrella apps")
-    end
-
-    :ok
-  end
+  defp run_config(config, _args), do: config
 end

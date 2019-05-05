@@ -19,7 +19,6 @@ defmodule Mix.Tasks.ExOauth2Provider.InstallTest do
   @migrations_path       Path.join(@root_tmp_path, "migrations")
   @options               ["-r", to_string(Repo), "--no-config"]
   @config_file           Path.join(@root_tmp_path, "config.exs")
-  @options_with_config   ["-r", to_string(Repo), "--config-file", @config_file]
 
   setup do
     File.rm_rf!(@root_tmp_path)
@@ -36,69 +35,39 @@ defmodule Mix.Tasks.ExOauth2Provider.InstallTest do
       assert file =~ "defmodule Mix.Tasks.ExOauth2Provider.InstallTest.Repo.Migrations.CreateOauthTables do"
       assert file =~ "use Ecto.Migration"
       assert file =~ "def change do"
-      assert file =~ "add :owner_id,          :integer, null: false"
-      assert file =~ "add :resource_owner_id,      :integer"
-      refute file =~ "add :owner_id,          :uuid,    null: false"
-      refute file =~ "add :resource_owner_id,      :uuid"
+      assert file =~ "add :owner_id, references(:users)"
+      assert file =~ "add :resource_owner_id, references(:users)"
+      refute file =~ "add :owner_id, references(:users, type: :binary_id)"
+      refute file =~ "add :resource_owner_id, references(:users, type: :binary_id)"
       refute file =~ ":oauth_applications, primary_key: false"
       refute file =~ ":oauth_access_grants, primary_key: false"
       refute file =~ ":oauth_access_tokens, primary_key: false"
-      refute file =~ "add :id,                     :uuid,           primary_key: true"
-      refute file =~ "add :id,                :uuid,    primary_key: true"
-      refute file =~ "add :id,                     :uuid,           primary_key: true"
-      refute file =~ "add :application_id,         references(:oauth_applications, type: :uuid)"
+      refute file =~ "add :id, :binary_id, primary_key: true"
+      refute file =~ "add :application_id, references(:oauth_applications, type: binary_id)"
     end
   end
 
-  test "generates migrations with uuid for resource_owners" do
-    Install.run(@options ++ ~w(--uuid resource_owners))
+  test "generates migrations with binary id" do
+    Install.run(@options ++ ~w(--binary-id))
 
     assert [migration_file] = File.ls!(@migrations_path)
     FileHelpers.assert_file Path.join(@migrations_path, migration_file), fn file ->
-      refute file =~ "add :owner_id,          :integer, null: false"
-      refute file =~ "add :resource_owner_id,      :integer"
-      assert file =~ "add :owner_id,          :uuid,    null: false"
-      assert file =~ "add :resource_owner_id,      :uuid"
-      refute file =~ ":oauth_applications, primary_key: false"
-      refute file =~ ":oauth_access_grants, primary_key: false"
-      refute file =~ ":oauth_access_tokens, primary_key: false"
-      refute file =~ "add :id,                     :uuid,           primary_key: true"
-      refute file =~ "add :id,                :uuid,    primary_key: true"
-      refute file =~ "add :id,                     :uuid,           primary_key: true"
-      refute file =~ "add :application_id,         references(:oauth_applications, type: :uuid)"
-    end
-  end
-
-  test "generates migrations with uuid for all" do
-    Install.run(@options ++ ~w(--uuid all))
-
-    assert [migration_file] = File.ls!(@migrations_path)
-    FileHelpers.assert_file Path.join(@migrations_path, migration_file), fn file ->
-      refute file =~ "add :owner_id,          :integer, null: false"
-      refute file =~ "add :resource_owner_id,      :integer"
-      assert file =~ "add :owner_id,          :uuid,    null: false"
-      assert file =~ "add :resource_owner_id,      :uuid"
+      refute file =~ "add :owner_id, :integer, null: false"
+      refute file =~ "add :resource_owner_id, :integer"
+      assert file =~ "add :owner_id, references(:users, type: :binary_id)"
+      assert file =~ "add :resource_owner_id, references(:users, type: :binary_id)"
       assert file =~ ":oauth_applications, primary_key: false"
       assert file =~ ":oauth_access_grants, primary_key: false"
       assert file =~ ":oauth_access_tokens, primary_key: false"
-      assert file =~ "add :id,                     :uuid,           primary_key: true"
-      assert file =~ "add :id,                :uuid,    primary_key: true"
-      assert file =~ "add :id,                     :uuid,           primary_key: true"
-      assert file =~ "add :application_id,         references(:oauth_applications, type: :uuid)"
+      assert file =~ "add :id, :binary_id, primary_key: true"
+      assert file =~ "add :application_id, references(:oauth_applications, type: :binary_id)"
     end
   end
 
-  test "doesn't generates migrations" do
-    Install.run(@options ++ ~w(--no-migrations))
+  test "doesn't generates migration" do
+    Install.run(@options ++ ~w(--no-migration))
 
     refute File.exists?(@migrations_path)
-  end
-
-  test "doesn't make duplicate oauth migrations" do
-    Install.run(@options)
-    Install.run(@options)
-
-    assert [_one] = File.ls!(@migrations_path)
   end
 
   test "doesn't make duplicate timestamp migrations" do
@@ -116,7 +85,7 @@ defmodule Mix.Tasks.ExOauth2Provider.InstallTest do
 
     original = File.read!(@config_file)
     expected = "config :ex_oauth2_provider, ExOauth2Provider"
-    Install.run @options_with_config
+    Install.run(~w(-r #{to_string(Repo)} --config-file #{@config_file} --no-migration))
     source = File.read!(@config_file)
 
     assert String.starts_with?(source, original)
@@ -127,7 +96,7 @@ defmodule Mix.Tasks.ExOauth2Provider.InstallTest do
     reset_config_file()
 
     original = File.read!(@config_file)
-    Install.run @options_with_config ++ ~w(--no-config)
+    Install.run(~w(--no-config --no-migration))
     source = File.read!(@config_file)
 
     assert source == original
@@ -137,9 +106,9 @@ defmodule Mix.Tasks.ExOauth2Provider.InstallTest do
     reset_config_file()
 
     # Should only append once
-    Install.run(@options_with_config)
+    Install.run(~w(-r #{to_string(Repo)} --config-file #{@config_file} --no-migration))
     source = File.read!(@config_file)
-    Install.run(@options_with_config)
+    Install.run(~w(-r #{to_string(Repo)} --config-file #{@config_file} --no-migration))
     source2 = File.read!(@config_file)
 
     assert source == source2
@@ -149,7 +118,7 @@ defmodule Mix.Tasks.ExOauth2Provider.InstallTest do
     reset_config_file()
 
     expected = "resource_owner: Test.ResourceOwner"
-    Install.run(@options_with_config ++ ["--resource-owner", "Test.ResourceOwner"])
+    Install.run(~w(-r #{to_string(Repo)} --config-file #{@config_file} --no-migration --resource-owner Test.ResourceOwner))
     source = File.read!(@config_file)
 
     assert String.contains?(source, expected)
