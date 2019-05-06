@@ -4,44 +4,58 @@ defmodule ExOauth2Provider.Config do
   @doc false
   @spec config() :: keyword()
   def config do
-    Application.get_env(:ex_oauth2_provider, ExOauth2Provider, Application.get_env(:phoenix_oauth2_provider, PhoenixOauth2Provider, []))
+    app = otp_app()
+
+    app
+    |> Application.get_env(ExOauth2Provider)
+    |> Kernel.||(Application.get_env(app, PhoenixOauth2Provider))
+    |> Kernel.||(Application.get_env(:ex_oauth2_provider, PhoenixOauth2Provider))
+    |> Kernel.||(Application.get_env(:phoenix_oauth2_provider, ExOAuth2Provider))
+    |> Kernel.||([])
   end
 
   @doc false
-  @spec resource_owner_struct(atom()) :: atom()
-  def resource_owner_struct(type) do
+  @spec resource_owner() :: atom()
+  def resource_owner() do
     config()
     |> Keyword.get(:resource_owner)
-    |> parse_owner_struct(type)
+    |> Kernel.||(app_module("Users", "User"))
+  end
+
+  defp app_module(context, module) do
+    Module.concat([app_base(otp_app()), context, module])
   end
 
   @doc false
   @spec access_grant() :: atom()
-  def access_grant() do
-    config()
-    |> Keyword.get(:access_grant)
-    |> Kernel.||(Module.concat([app_base(), "OauthAccessGants", "OauthAccessGant"]))
-  end
+  def access_grant(), do: get_oauth_struct(:access_grant)
 
   @doc false
   @spec access_token() :: atom()
-  def access_token() do
-    config()
-    |> Keyword.get(:access_token)
-    |> Kernel.||(Module.concat([app_base(), "OathAccessTokens", "OauthAccessToken"]))
-  end
+  def access_token(), do: get_oauth_struct(:access_token)
 
   @doc false
   @spec application() :: atom()
-  def application() do
+  def application(), do: get_oauth_struct(:application)
+
+  defp get_oauth_struct(name, namespace \\ "oauth") do
+    context = Macro.camelize("#{namespace}_#{name}s")
+    module  = Macro.camelize("#{namespace}_#{name}")
+
     config()
-    |> Keyword.get(:application)
-    |> Kernel.||(Module.concat([app_base(), "OauthApplications", "OauthApplication"]))
+    |> Keyword.get(name)
+    |> Kernel.||(app_module(context, module))
   end
 
-  defp app_base() do
-    app = Keyword.fetch!(Mix.Project.config(), :app)
+  @doc false
+  @spec otp_app() :: atom()
+  def otp_app(), do: Keyword.fetch!(Mix.Project.config(), :app)
 
+  @doc """
+  Fetches the context base module for the app.
+  """
+  @spec app_base(atom()) :: module()
+  def app_base(app) do
     case Application.get_env(app, :namespace, app) do
       ^app ->
         app
@@ -53,22 +67,6 @@ defmodule ExOauth2Provider.Config do
       mod ->
         mod
     end
-  end
-
-  @doc false
-  @spec app_schema() :: atom()
-  def app_schema do
-    Keyword.get(config(), :app_schema, Ecto.Schema)
-  end
-
-  @doc false
-  @spec application_owner_struct(atom()) :: atom()
-  def application_owner_struct(type) do
-    resource_owner = Keyword.get(config(), :resource_owner)
-
-    config()
-    |> Keyword.get(:application_owner, resource_owner)
-    |> parse_owner_struct(type)
   end
 
   # Define default access token scopes for your provider
@@ -160,10 +158,4 @@ defmodule ExOauth2Provider.Config do
   def grant_flows do
     Keyword.get(config(), :grant_flows, ~w(authorization_code client_credentials))
   end
-
-  defp parse_owner_struct({_module, options}, :options) when is_list(options), do: options
-  defp parse_owner_struct({_module, foreign_key_type}, :options), do: [type: foreign_key_type]
-  defp parse_owner_struct({module, _options}, :module), do: module
-  defp parse_owner_struct(module, :module), do: module
-  defp parse_owner_struct(_module, :options), do: []
 end

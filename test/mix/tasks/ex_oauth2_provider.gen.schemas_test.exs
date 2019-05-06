@@ -4,7 +4,7 @@ defmodule Mix.Tasks.ExOauth2Provider.Gen.SchemasTest do
   alias Mix.Tasks.ExOauth2Provider.Gen.Schemas
 
   @tmp_path Path.join(["tmp", inspect(Schemas)])
-  @options []
+  @options ~w(--context-app test)
   @files ["access_grant", "access_token", "application"]
 
   setup do
@@ -16,7 +16,7 @@ defmodule Mix.Tasks.ExOauth2Provider.Gen.SchemasTest do
 
   test "generates files" do
     File.cd!(@tmp_path, fn ->
-      root_path = Path.join(["lib", "ex_oauth2_provider"])
+      root_path = Path.join(["lib", "test"])
 
       Schemas.run(@options)
 
@@ -25,12 +25,13 @@ defmodule Mix.Tasks.ExOauth2Provider.Gen.SchemasTest do
 
         assert File.exists?(path)
 
-        module  = Module.concat(["ExOauth2Provider", Macro.camelize("oauth_#{file}s"), Macro.camelize("oauth_#{file}")])
+        module  = Module.concat(["Test", Macro.camelize("oauth_#{file}s"), Macro.camelize("oauth_#{file}")])
         macro   = Module.concat(["ExOauth2Provider", Macro.camelize("#{file}s"), Macro.camelize("#{file}")])
         content = File.read!(path)
 
         assert content =~ "defmodule #{inspect module} do"
         assert content =~ "use #{inspect macro}"
+        assert content =~ "schema \"oauth_#{file}s\" do"
         assert content =~ "#{file}_fields()"
       end
     end)

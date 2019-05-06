@@ -18,9 +18,10 @@ defmodule Mix.Tasks.ExOauth2Provider.Gen.Schemas do
   """
   use Mix.Task
 
+  alias ExOauth2Provider.Config
   alias Mix.{Ecto, ExOauth2Provider, ExOauth2Provider.Schema}
 
-  @switches [binary_id: :boolean]
+  @switches [binary_id: :boolean, context_app: :string]
   @default_opts [binary_id: false]
   @mix_task "ex_oauth2_provider.gen.migrations"
 
@@ -51,9 +52,9 @@ defmodule Mix.Tasks.ExOauth2Provider.Gen.Schemas do
     |> Enum.each(&create_schema_files/1)
   end
 
-  defp create_schema_files(%{binary_id: binary_id, schema_namespace: schema_namespace}) do
-    Schema.create_schema_files(context_app(), schema_namespace, binary_id: binary_id)
-  end
+  defp create_schema_files(%{binary_id: binary_id, schema_namespace: schema_namespace} = config) do
+    context_app = Map.get(config, :context_app) || Config.otp_app()
 
-  defp context_app(), do: ExOauth2Provider.app_base(ExOauth2Provider.otp_app())
+    Schema.create_schema_files(context_app, schema_namespace, binary_id: binary_id)
+  end
 end

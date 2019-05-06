@@ -49,28 +49,4 @@ defmodule Mix.ExOauth2Provider do
     do: Map.put(config, :context_app, String.to_atom(context_app))
   defp context_app_to_atom(config),
     do: config
-
-  @doc false
-  @spec otp_app :: atom() | no_return
-  def otp_app do
-    Keyword.fetch!(Mix.Project.config(), :app)
-  end
-
-  @doc """
-  Fetches the context base module for the app.
-  """
-  @spec app_base(atom()) :: atom()
-  def app_base(app) do
-    case Application.get_env(app, :namespace, app) do
-      ^app ->
-        app
-        |> to_string()
-        |> Macro.camelize()
-        |> List.wrap()
-        |> Module.concat()
-
-      mod ->
-        mod
-    end
-  end
 end

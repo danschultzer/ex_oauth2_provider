@@ -2,6 +2,7 @@ defmodule Mix.ExOauth2Provider.Schema do
   @moduledoc false
 
   alias Mix.Generator
+  alias ExOauth2Provider.Config
 
   @template """
   defmodule <%= inspect schema.module %> do
@@ -12,6 +13,7 @@ defmodule Mix.ExOauth2Provider.Schema do
     @foreign_key_type :binary_id<% end %>
     schema <%= inspect schema.table %> do
       <%= schema.macro_fields %>()
+
       timestamps()
     end
   end
@@ -24,16 +26,17 @@ defmodule Mix.ExOauth2Provider.Schema do
   @spec create_schema_files(atom(), binary(), keyword()) :: any()
   def create_schema_files(context_app, namespace, opts) do
     for {table, schema} <- @schemas do
+      app_base     = Config.app_base(context_app)
       table_name   = "#{namespace}_#{table}s"
       context      = Macro.camelize(table_name)
       module       = Macro.camelize("#{namespace}_#{table}")
       file         = "#{Macro.underscore(module)}.ex"
-      module       = Module.concat([context_app, context, module])
+      module       = Module.concat([app_base, context, module])
       binary_id    = Keyword.get(opts, :binary_id, false)
       macro        = schema
       macro_fields = "#{table}_fields"
-      content      = EEx.eval_string(@template, schema: %{module: module, table: table, binary_id: binary_id, macro: macro, macro_fields: macro_fields})
-      dir          = "lib/#{Macro.underscore(context_app)}/#{Macro.underscore(context)}/"
+      content      = EEx.eval_string(@template, schema: %{module: module, table: table_name, binary_id: binary_id, macro: macro, macro_fields: macro_fields})
+      dir          = "lib/#{context_app}/#{Macro.underscore(context)}/"
 
       File.mkdir_p!(dir)
 

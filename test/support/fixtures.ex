@@ -3,15 +3,13 @@ defmodule ExOauth2Provider.Test.Fixtures do
 
   alias ExOauth2Provider.AccessTokens
   alias ExOauth2Provider.Test.Repo
-  alias Dummy.{OauthApplications.OauthApplication, OauthAccessGrants.OauthAccessGrant}
+  alias Dummy.{OauthApplications.OauthApplication, OauthAccessGrants.OauthAccessGrant, Users.User}
   alias Ecto.Changeset
-
-  @resource_owner ExOauth2Provider.Config.resource_owner_struct(:module)
 
   def resource_owner(attrs \\ []) do
     attrs = Keyword.merge([email: "foo@example.com"], attrs)
 
-    @resource_owner
+    User
     |> struct()
     |> Changeset.change(attrs)
     |> Repo.insert!()

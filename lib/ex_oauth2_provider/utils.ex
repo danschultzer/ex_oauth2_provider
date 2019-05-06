@@ -17,17 +17,4 @@ defmodule ExOauth2Provider.Utils do
     |> :crypto.strong_rand_bytes()
     |> Base.encode16(case: :lower)
   end
-
-  @spec belongs_to_clause(module(), atom(), map()) :: keyword()
-  def belongs_to_clause(module, association, struct) do
-    %{owner_key: owner_key, related_key: related_key} = schema_association(module, association)
-    value = Map.get(struct, related_key)
-
-    Keyword.new([{owner_key, value}])
-  end
-
-  @spec schema_association(module(), atom()) :: map()
-  def schema_association(module, association) do
-    module.__schema__(:association, association)
-  end
 end

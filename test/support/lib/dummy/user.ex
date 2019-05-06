@@ -1,17 +1,16 @@
 defmodule Dummy.Users.User do
   @moduledoc false
+  use Ecto.Schema
 
-  use Dummy.Schema
-  alias Ecto.Changeset
+  if System.get_env("UUID") do
+    @primary_key {:id, :binary_id, autogenerate: true}
+    @foreign_key_type :binary_id
+  end
 
   schema "users" do
     field :email, :string
     has_many :tokens, Dummy.OauthAccessTokens.OauthAccessToken, foreign_key: :resource_owner_id
 
     timestamps()
-  end
-
-  def changeset(struct, params \\ %{}) do
-    Changeset.cast(struct, params, [:email])
   end
 end

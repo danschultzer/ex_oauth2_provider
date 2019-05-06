@@ -275,27 +275,10 @@ Remember to change the field type for the `token` column in the `oauth_access_to
 
 ### Generate migration file with binary id
 
-You'll need to create the migration file with the argument `--binary-id`:
+You'll need to create the migration file and schema modules with the argument `--binary-id`:
 
 ```bash
 mix ex_oauth2_provider.install --binary-id
-```
-
-And update the `:ex_oauth2_provider` config in `config/config.exs` to use the the [UUID schema](lib/ex_oauth2_provider/schemas/uuid.ex) macro:
-
-```elixir
-config :ex_oauth2_provider, ExOauth2Provider,
-  resource_owner: {Dummy.Users.User, :binary_id},
-  app_schema: ExOauth2Provider.Schema.UUID
-```
-
-### If you need custom `belongs_to` options for resource owner
-
-You can provide a list of `belongs_to` options, by passing a keyword list instead. This is useful when you want to use a `references` value:
-
-```elixir
-config :ex_oauth2_provider, ExOauth2Provider,
-  resource_owner: {Dummy.Users.User, [type: :binary_id, references: :uuid]}
 ```
 
 ## Acknowledgement

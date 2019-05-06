@@ -5,11 +5,9 @@ defmodule ExOauth2Provider.AccessTokens do
 
   import Ecto.Query
   alias ExOauth2Provider.Mixin.{Expirable, Revocable, Scopes}
-  alias ExOauth2Provider.{Config,
-                          AccessTokens.AccessToken,
-                          Applications.Application,
-                          Utils}
+  alias ExOauth2Provider.{AccessTokens.AccessToken, Applications.Application, Config}
   alias ExOauth2Provider.Scopes, as: ScopesUtils
+  alias ExOauth2Provider.Schema, as: SchemaHelpers
   alias Ecto.{Changeset, Schema}
 
   defdelegate revoke!(token), to: Revocable
@@ -31,7 +29,7 @@ defmodule ExOauth2Provider.AccessTokens do
   """
   @spec get_by_token(binary()) :: AccessToken.t() | nil
   def get_by_token(token) do
-    ExOauth2Provider.repo.get_by(access_token(), token: token)
+    ExOauth2Provider.repo.get_by(Config.access_token(), token: token)
   end
 
   @doc """
@@ -47,7 +45,7 @@ defmodule ExOauth2Provider.AccessTokens do
   """
   @spec get_by_refresh_token(binary()) :: AccessToken.t() | nil
   def get_by_refresh_token(refresh_token) do
-    ExOauth2Provider.repo.get_by(access_token(), refresh_token: refresh_token)
+    ExOauth2Provider.repo.get_by(Config.access_token(), refresh_token: refresh_token)
   end
 
   @doc """
@@ -63,12 +61,7 @@ defmodule ExOauth2Provider.AccessTokens do
   """
   @spec get_by_refresh_token_for(Application.t(), binary()) :: AccessToken.t() | nil
   def get_by_refresh_token_for(application, refresh_token) do
-    clauses =
-      access_token()
-      |> Utils.belongs_to_clause(:application, application)
-      |> Keyword.put(:refresh_token, refresh_token)
-
-    ExOauth2Provider.repo.get_by(access_token(), clauses)
+    ExOauth2Provider.repo.get_by(Config.access_token(), application_id: application.id, refresh_token: refresh_token)
   end
 
   @doc """
@@ -85,28 +78,25 @@ defmodule ExOauth2Provider.AccessTokens do
   """
   @spec get_matching_token_for(Schema.t() | nil, Application.t(), binary()) :: AccessToken.t() | nil
   def get_matching_token_for(nil, application, scopes) do
-    %{owner_key: resource_owner_key} = Utils.schema_association(access_token(), :resource_owner)
-    %{owner_key: application_key} = Utils.schema_association(access_token(), :application)
-
-    access_token()
-    |> scope_belongs_to(resource_owner_key, nil)
-    |> scope_belongs_to(application_key, application)
+    Config.access_token()
+    |> scope_belongs_to(:resource_owner_id, nil)
+    |> scope_belongs_to(:application_id, application)
     |> load_matching_token_for(scopes)
   end
   def get_matching_token_for(resource_owner, application, scopes) do
-    clause = Utils.belongs_to_clause(access_token(), :resource_owner, resource_owner)
-    %{owner_key: application_key} = Utils.schema_association(access_token(), :application)
-
-    access_token()
-    |> where(^clause)
-    |> scope_belongs_to(application_key, application)
+    Config.access_token()
+    |> scope_belongs_to(:resource_owner_id, resource_owner)
+    |> scope_belongs_to(:application_id, application)
     |> load_matching_token_for(scopes)
   end
 
   defp load_matching_token_for(queryable, scopes) do
+    now = SchemaHelpers.__timestamp_for__(Config.access_token(), :inserted_at)
+
     queryable
-    |> where([x], is_nil(x.revoked_at))
-    |> order_by([x], desc: x.inserted_at, desc: x.id)
+    |> where([a], is_nil(a.revoked_at))
+    |> where([a], is_nil(a.expires_in) or datetime_add(a.inserted_at, a.expires_in, "second") > ^now)
+    |> order_by([a], desc: a.inserted_at, desc: :id)
     |> ExOauth2Provider.repo.all()
     |> Enum.filter(&is_accessible?/1)
     |> check_matching_scopes(scopes)
@@ -136,11 +126,9 @@ defmodule ExOauth2Provider.AccessTokens do
   """
   @spec get_authorized_tokens_for(Schema.t()) :: [AccessToken.t()]
   def get_authorized_tokens_for(resource_owner) do
-    resource_owner_clause = Utils.belongs_to_clause(access_token(), :resource_owner, resource_owner)
-
-    access_token()
-    |> where(^resource_owner_clause)
-    |> where([o], is_nil(o.revoked_at))
+    Config.access_token()
+    |> where([a], a.resource_owner_id == ^resource_owner.id)
+    |> where([a], is_nil(a.revoked_at))
     |> ExOauth2Provider.repo.all()
   end
 
@@ -165,7 +153,7 @@ defmodule ExOauth2Provider.AccessTokens do
       |> Map.take([:application])
       |> Map.put(:resource_owner, resource_owner)
 
-    access_token()
+    Config.access_token()
     |> struct(struct)
     |> do_create_token(attrs)
   end
@@ -186,7 +174,7 @@ defmodule ExOauth2Provider.AccessTokens do
   """
   @spec create_application_token(Schema.t() | nil, map()) :: {:ok, AccessToken.t()} | {:error, Changeset.t()}
   def create_application_token(application, attrs \\ %{}) do
-    access_token()
+    Config.access_token()
     |> struct(application: application)
     |> do_create_token(attrs)
   end
@@ -273,17 +261,11 @@ defmodule ExOauth2Provider.AccessTokens do
   @spec get_by_previous_refresh_token_for(AccessToken.t()) :: AccessToken.t() | nil
   def get_by_previous_refresh_token_for(%{previous_refresh_token: nil}), do: nil
   def get_by_previous_refresh_token_for(%{previous_refresh_token: ""}), do: nil
-  def get_by_previous_refresh_token_for(%{previous_refresh_token: previous_refresh_token} = access_token) do
-    %{owner_key: application_key} = Utils.schema_association(access_token(), :application)
-    application_id = Map.get(access_token, application_key)
-
-    %{owner_key: resource_owner_key} = Utils.schema_association(access_token(), :resource_owner)
-    resource_owner_id = Map.get(access_token, resource_owner_key)
-
-    access_token()
-    |> scope_belongs_to(application_key, application_id)
-    |> where([x], field(x, ^resource_owner_key) == ^resource_owner_id)
-    |> where([x], x.refresh_token == ^previous_refresh_token)
+  def get_by_previous_refresh_token_for(%{previous_refresh_token: previous_refresh_token, resource_owner_id: resource_owner_id, application_id: application_id}) do
+    Config.access_token()
+    |> scope_belongs_to(:application_id, application_id)
+    |> where([a], a.resource_owner_id == ^resource_owner_id)
+    |> where([a], a.refresh_token == ^previous_refresh_token)
     |> limit(1)
     |> ExOauth2Provider.repo.one()
   end
@@ -327,6 +309,4 @@ defmodule ExOauth2Provider.AccessTokens do
     |> Changeset.change(previous_refresh_token: "")
     |> ExOauth2Provider.repo.update()
   end
-
-  defp access_token(), do: ExOauth2Provider.Config.access_token()
 end

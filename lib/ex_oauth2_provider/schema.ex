@@ -52,7 +52,7 @@ defmodule ExOauth2Provider.Schema do
   defp table_to_queryable(:access_grants), do: Config.access_grant()
   defp table_to_queryable(:access_tokens), do: Config.access_token()
   defp table_to_queryable(:applications), do: Config.application()
-  defp table_to_queryable(:users), do: Config.resource_owner_struct(:module)
+  defp table_to_queryable(:users), do: Config.resource_owner()
 
     @doc false
     def __timestamp_for__(struct, column) do

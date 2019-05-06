@@ -1,11 +1,9 @@
 use Mix.Config
 
+config :ex_oauth2_provider, namespace: Dummy
 config :ex_oauth2_provider, ExOauth2Provider,
   repo: ExOauth2Provider.Test.Repo,
   resource_owner: Dummy.Users.User,
-  access_grant: Dummy.OauthAccessGrants.OauthAccessGrant,
-  access_token: Dummy.OauthAccessTokens.OauthAccessToken,
-  application: Dummy.OauthApplications.OauthApplication,
   default_scopes: ~w(public),
   optional_scopes: ~w(read write),
   password_auth: {ExOauth2Provider.Test.Auth, :auth},
@@ -13,13 +11,9 @@ config :ex_oauth2_provider, ExOauth2Provider,
   revoke_refresh_token_on_use: true,
   grant_flows: ~w(authorization_code client_credentials)
 
-if System.get_env("UUID") do
-  config :ex_oauth2_provider, ExOauth2Provider, app_schema: ExOauth2Provider.Schema.UUID
-end
-
 config :ex_oauth2_provider, ecto_repos: [ExOauth2Provider.Test.Repo]
 
 config :ex_oauth2_provider, ExOauth2Provider.Test.Repo,
   database: "ex_oauth2_provider_test",
   pool: Ecto.Adapters.SQL.Sandbox,
-  priv: "priv/test"
+  priv: "test/support/priv"

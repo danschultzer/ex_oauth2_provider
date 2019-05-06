@@ -5,9 +5,7 @@ defmodule ExOauth2Provider.Applications do
 
   import Ecto.Query
   alias Ecto.{Changeset, Schema}
-  alias ExOauth2Provider.{Applications.Application,
-                          AccessTokens,
-                          Utils}
+  alias ExOauth2Provider.{AccessTokens, Applications.Application, Config}
 
   @doc """
   Gets a single application by uid.
@@ -25,7 +23,7 @@ defmodule ExOauth2Provider.Applications do
   """
   @spec get_application!(binary()) :: Application.t() | no_return
   def get_application!(uid) do
-    ExOauth2Provider.repo.get_by!(application(), uid: uid)
+    ExOauth2Provider.repo.get_by!(Config.application(), uid: uid)
   end
 
   @doc """
@@ -44,12 +42,7 @@ defmodule ExOauth2Provider.Applications do
   """
   @spec get_application_for!(Schema.t(), binary()) :: Application.t() | no_return
   def get_application_for!(resource_owner, uid) do
-    clauses =
-      application()
-      |> Utils.belongs_to_clause(:owner, resource_owner)
-      |> Keyword.put(:uid, uid)
-
-    ExOauth2Provider.repo.get_by!(application(), clauses)
+    ExOauth2Provider.repo.get_by!(Config.application(), owner_id: resource_owner.id, uid: uid)
   end
 
   @doc """
@@ -66,7 +59,7 @@ defmodule ExOauth2Provider.Applications do
   """
   @spec get_application(binary()) :: Application.t() | nil
   def get_application(uid) do
-    ExOauth2Provider.repo.get_by(application(), uid: uid)
+    ExOauth2Provider.repo.get_by(Config.application(), uid: uid)
   end
 
   @doc """
@@ -83,7 +76,7 @@ defmodule ExOauth2Provider.Applications do
   """
   @spec get_application(binary(), binary()) :: Application.t() | nil
   def get_application(uid, secret) do
-    ExOauth2Provider.repo.get_by(application(), uid: uid, secret: secret)
+    ExOauth2Provider.repo.get_by(Config.application(), uid: uid, secret: secret)
   end
 
   @doc """
@@ -97,10 +90,8 @@ defmodule ExOauth2Provider.Applications do
   """
   @spec get_applications_for(Schema.t()) :: [Application.t()]
   def get_applications_for(resource_owner) do
-    clause = Utils.belongs_to_clause(application(), :owner, resource_owner)
-
-    application()
-    |> where(^clause)
+    Config.application()
+    |> where([a], a.owner_id == ^resource_owner.id)
     |> ExOauth2Provider.repo.all()
   end
 
@@ -119,8 +110,8 @@ defmodule ExOauth2Provider.Applications do
       |> AccessTokens.get_authorized_tokens_for()
       |> Enum.map(&Map.get(&1, :application_id))
 
-    application()
-    |> where([o], field(o, :id) in ^application_ids)
+    Config.application()
+    |> where([a], a.id in ^application_ids)
     |> ExOauth2Provider.repo.all()
   end
 
@@ -138,7 +129,7 @@ defmodule ExOauth2Provider.Applications do
   """
   @spec create_application(Schema.t()) :: {:ok, Application.t()} | {:error, Changeset.t()}
   def create_application(owner, attrs \\ %{}) do
-    application()
+    Config.application()
     |> struct(owner: owner)
     |> Application.changeset(attrs)
     |> ExOauth2Provider.repo.insert()
@@ -176,8 +167,9 @@ defmodule ExOauth2Provider.Applications do
 
   """
   @spec delete_application(Application.t()) :: {:ok, Application.t()} | {:error, Changeset.t()}
-  def delete_application(application),
-    do: ExOauth2Provider.repo.delete(application)
+  def delete_application(application) do
+    ExOauth2Provider.repo.delete(application)
+  end
 
   @doc """
   Revokes all access tokens for an application and resource owner.
@@ -190,20 +182,13 @@ defmodule ExOauth2Provider.Applications do
   """
   @spec revoke_all_access_tokens_for(Application.t(), Schema.t()) :: [AccessToken.t()]
   def revoke_all_access_tokens_for(application, resource_owner) do
-    resource_owner_clause = Utils.belongs_to_clause(access_token(), :resource_owner, resource_owner)
-    application_clause = Utils.belongs_to_clause(access_token(), :application, application)
-
     ExOauth2Provider.repo.transaction fn ->
-      access_token()
-      |> where(^resource_owner_clause)
-      |> where(^application_clause)
+      Config.access_token()
+      |> where([a], a.resource_owner_id == ^resource_owner.id)
+      |> where([a], a.application_id == ^application.id)
       |> where([o], is_nil(o.revoked_at))
       |> ExOauth2Provider.repo.all()
       |> Enum.map(&AccessTokens.revoke!/1)
     end
   end
-
-  defp application(), do: ExOauth2Provider.Config.application()
-
-  defp access_token(), do: ExOauth2Provider.Config.access_token()
 end
