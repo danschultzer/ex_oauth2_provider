@@ -6,7 +6,7 @@ defmodule ExOauth2Provider.Mixfile do
   def project do
     [app: :ex_oauth2_provider,
      version: @version,
-     elixir: "~> 1.4",
+     elixir: "~> 1.8",
      elixirc_paths: elixirc_paths(Mix.env),
      build_embedded: Mix.env == :prod,
      start_permanent: Mix.env == :prod,
