@@ -37,7 +37,7 @@ defmodule ExOauth2Provider.AccessTokens.AccessToken do
   def assocs() do
     [
       {:belongs_to, :resource_owner, :users},
-      {:belongs_to, :application, :applications, on_replace: :nilify}
+      {:belongs_to, :application, :applications}
     ]
   end
 

@@ -70,13 +70,5 @@ defmodule ExOauth2ProviderTest do
 
       assert ExOauth2Provider.authenticate_token(access_token.token) == {:error, :token_inaccessible}
     end
-
-    test "error when invalid resource owner" do
-      resource_owner_id = (if is_nil(System.get_env("UUID")), do: 0, else: "09b58e2b-8fff-4b8d-ba94-18a06dd4fc29")
-      user = %{Fixtures.resource_owner() | id: resource_owner_id}
-      access_token = Fixtures.access_token(resource_owner: user)
-
-      assert ExOauth2Provider.authenticate_token(access_token.token) == {:error, :no_association_found}
-    end
   end
 end

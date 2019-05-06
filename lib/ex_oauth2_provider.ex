@@ -56,7 +56,7 @@ defmodule ExOauth2Provider do
     |> load_access_token()
     |> maybe_revoke_previous_refresh_token()
     |> validate_access_token()
-    |> load_resource()
+    |> load_resource_owner()
   end
 
   defp load_access_token(token) do
@@ -89,18 +89,11 @@ defmodule ExOauth2Provider do
     end
   end
 
-  defp load_resource({:error, error}), do: {:error, error}
-  defp load_resource({:ok, access_token}) do
+  defp load_resource_owner({:error, error}), do: {:error, error}
+  defp load_resource_owner({:ok, access_token}) do
     access_token = repo().preload(access_token, :resource_owner)
 
-    case has_association?(access_token) do
-      true  -> {:ok, access_token}
-      false -> {:error, :no_association_found}
-    end
-  end
-
-  defp has_association?(access_token) do
-    is_nil(access_token.resource_owner_id) || not is_nil(access_token.resource_owner)
+    {:ok, access_token}
   end
 
   @doc false
