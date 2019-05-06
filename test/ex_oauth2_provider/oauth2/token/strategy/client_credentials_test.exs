@@ -2,7 +2,8 @@ defmodule ExOauth2Provider.Token.Strategy.ClientCredentialsTest do
   use ExOauth2Provider.TestCase
 
   alias ExOauth2Provider.Test.{Fixtures, QueryHelpers}
-  alias ExOauth2Provider.{Config, Token, OauthAccessTokens.OauthAccessToken}
+  alias ExOauth2Provider.{Config, Token}
+  alias Dummy.OauthAccessTokens.OauthAccessToken
 
   @client_id            "Jf5rM8hQBc"
   @client_secret        "secret"

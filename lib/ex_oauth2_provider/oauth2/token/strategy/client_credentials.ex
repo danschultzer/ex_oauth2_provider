@@ -2,7 +2,7 @@ defmodule ExOauth2Provider.Token.ClientCredentials do
   @moduledoc """
   Functions for dealing with client credentials strategy.
   """
-  alias ExOauth2Provider.{OauthAccessTokens,
+  alias ExOauth2Provider.{AccessTokens,
                           Token.Utils,
                           Token.Utils.Response,
                           Utils.Error}
@@ -33,7 +33,7 @@ defmodule ExOauth2Provider.Token.ClientCredentials do
   defp issue_access_token_by_creds({:ok, %{client: client, request: request} = params}) do
     token_params = %{use_refresh_token: false} # client_credentials MUST NOT use refresh tokens
 
-    case OauthAccessTokens.get_or_create_token(client, request["scope"], token_params) do
+    case AccessTokens.get_or_create_application_token(client, request["scope"], token_params) do
       {:ok, access_token} -> {:ok, Map.merge(params, %{access_token: access_token})}
       {:error, error}     -> Error.add_error({:ok, params}, error)
     end

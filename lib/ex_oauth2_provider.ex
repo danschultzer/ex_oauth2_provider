@@ -35,7 +35,7 @@ defmodule ExOauth2Provider do
   expire.
   """
 
-  alias ExOauth2Provider.{Config, OauthAccessTokens}
+  alias ExOauth2Provider.{Config, AccessTokens}
 
   @doc """
   Authenticate an access token.
@@ -60,7 +60,7 @@ defmodule ExOauth2Provider do
   end
 
   defp load_access_token(token) do
-    case OauthAccessTokens.get_by_token(token) do
+    case AccessTokens.get_by_token(token) do
       nil          -> {:error, :token_not_found}
       access_token -> {:ok, access_token}
     end
@@ -75,7 +75,7 @@ defmodule ExOauth2Provider do
   end
 
   defp revoke_previous_refresh_token(access_token) do
-    case OauthAccessTokens.revoke_previous_refresh_token(access_token) do
+    case AccessTokens.revoke_previous_refresh_token(access_token) do
       {:error, _any}       -> {:error, :no_association_found}
       {:ok, _access_token} -> {:ok, access_token}
     end
@@ -83,7 +83,7 @@ defmodule ExOauth2Provider do
 
   defp validate_access_token({:error, error}), do: {:error, error}
   defp validate_access_token({:ok, access_token}) do
-    case OauthAccessTokens.is_accessible?(access_token) do
+    case AccessTokens.is_accessible?(access_token) do
       true  -> {:ok, access_token}
       false -> {:error, :token_inaccessible}
     end

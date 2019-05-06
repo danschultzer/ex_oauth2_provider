@@ -15,10 +15,10 @@ defmodule Mix.Tasks.ExOauth2Provider.Install do
   use Mix.Task
 
   alias Mix.ExOauth2Provider
-  alias Mix.Tasks.ExOauth2Provider.Gen.{Config, Migration}
+  alias Mix.Tasks.ExOauth2Provider.Gen.{Config, Migration, Schemas}
 
-  @switches [config: :boolean, migration: :boolean]
-  @default_opts [config: true, migration: true]
+  @switches [config: :boolean, migration: :boolean, schemas: :boolean]
+  @default_opts [config: true, migration: true, schemas: true]
   @mix_task "ex_oauth2_provider.install"
 
   @doc false
@@ -29,6 +29,7 @@ defmodule Mix.Tasks.ExOauth2Provider.Install do
     |> ExOauth2Provider.parse_options(@switches, @default_opts)
     |> parse()
     |> run_migration(args)
+    |> run_schemas(args)
     |> run_config(args)
   end
 
@@ -40,6 +41,13 @@ defmodule Mix.Tasks.ExOauth2Provider.Install do
     config
   end
   defp run_migration(config, _args), do: config
+
+  defp run_schemas(%{schemas: true} = config, args) do
+    Schemas.run(args)
+
+    config
+  end
+  defp run_schemas(config, _args), do: config
 
   defp run_config(%{config: true} = config, args) do
     Config.run(args)

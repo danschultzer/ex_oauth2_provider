@@ -33,10 +33,7 @@ defmodule Mix.Tasks.ExOauth2Provider.Gen.Config do
   end
 
   defp parse({config, _parsed, _invalid}, args) do
-    repos =
-      args
-      |> Ecto.parse_repo()
-      |> Enum.map(&Ecto.ensure_repo(&1, args))
+    repos = Ecto.parse_repo(args)
 
     Map.put(config, :repos, repos)
   end

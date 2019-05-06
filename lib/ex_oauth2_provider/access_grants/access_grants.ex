@@ -1,12 +1,10 @@
-defmodule ExOauth2Provider.OauthAccessGrants do
+defmodule ExOauth2Provider.AccessGrants do
   @moduledoc """
   The boundary for the OauthAccessGrants system.
   """
 
   alias ExOauth2Provider.Mixin.{Expirable, Revocable}
-  alias ExOauth2Provider.{OauthApplications.OauthApplication,
-                          OauthAccessGrants.OauthAccessGrant,
-                          Utils}
+  alias ExOauth2Provider.{Applications.Application, AccessGrants.AccessGrant, Utils}
 
   defdelegate revoke!(data), to: Revocable
   defdelegate revoke(data), to: Revocable
@@ -23,14 +21,14 @@ defmodule ExOauth2Provider.OauthAccessGrants do
       ** nil
 
   """
-  @spec get_active_grant_for(OauthApplication.t(), binary()) :: OauthAccessGrant.t() | nil
+  @spec get_active_grant_for(Application.t(), binary()) :: AccessGrant.t() | nil
   def get_active_grant_for(application, token) do
     clauses =
-      OauthAccessGrant
+      access_grant()
       |> Utils.belongs_to_clause(:application, application)
       |> Keyword.put(:token, token)
 
-    OauthAccessGrant
+    access_grant()
     |> ExOauth2Provider.repo.get_by(clauses)
     |> Expirable.filter_expired()
     |> Revocable.filter_revoked()
@@ -48,10 +46,13 @@ defmodule ExOauth2Provider.OauthAccessGrants do
       {:error, %Ecto.Changeset{}}
 
   """
-  @spec create_grant(Ecto.Schema.t(), OauthApplication.t(), map()) :: {:ok, OauthAccessGrant.t()} | {:error, term()}
+  @spec create_grant(Ecto.Schema.t(), Application.t(), map()) :: {:ok, AccessGrant.t()} | {:error, term()}
   def create_grant(resource_owner, application, attrs) do
-    %OauthAccessGrant{resource_owner: resource_owner, application: application}
-    |> OauthAccessGrant.changeset(attrs)
+    access_grant()
+    |> struct(resource_owner: resource_owner, application: application)
+    |> AccessGrant.changeset(attrs)
     |> ExOauth2Provider.repo.insert()
   end
+
+  defp access_grant(), do: ExOauth2Provider.Config.access_grant()
 end

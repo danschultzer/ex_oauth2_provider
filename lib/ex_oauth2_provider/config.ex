@@ -16,6 +16,46 @@ defmodule ExOauth2Provider.Config do
   end
 
   @doc false
+  @spec access_grant() :: atom()
+  def access_grant() do
+    config()
+    |> Keyword.get(:access_grant)
+    |> Kernel.||(Module.concat([app_base(), "OauthAccessGants", "OauthAccessGant"]))
+  end
+
+  @doc false
+  @spec access_token() :: atom()
+  def access_token() do
+    config()
+    |> Keyword.get(:access_token)
+    |> Kernel.||(Module.concat([app_base(), "OathAccessTokens", "OauthAccessToken"]))
+  end
+
+  @doc false
+  @spec application() :: atom()
+  def application() do
+    config()
+    |> Keyword.get(:application)
+    |> Kernel.||(Module.concat([app_base(), "OauthApplications", "OauthApplication"]))
+  end
+
+  defp app_base() do
+    app = Keyword.fetch!(Mix.Project.config(), :app)
+
+    case Application.get_env(app, :namespace, app) do
+      ^app ->
+        app
+        |> to_string()
+        |> Macro.camelize()
+        |> List.wrap()
+        |> Module.concat()
+
+      mod ->
+        mod
+    end
+  end
+
+  @doc false
   @spec app_schema() :: atom()
   def app_schema do
     Keyword.get(config(), :app_schema, Ecto.Schema)

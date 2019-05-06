@@ -6,8 +6,8 @@ ExUnit.start()
 Mix.Task.run("ecto.drop", ~w(--quiet))
 Mix.shell.cmd("rm priv/test/migrations/*_create_oauth_tables.exs")
 case System.get_env("binary-id") do
-  nil -> Mix.Task.run("ex_oauth2_provider.install", ~w(--no-config --resource-owner Dummy.Users.User))
-  _any -> Mix.Task.run("ex_oauth2_provider.install", ~w(--no-config --binary-id --resource-owner Dummy.Users.User))
+  nil -> Mix.Task.run("ex_oauth2_provider.install", ~w(--no-config --no-schemas --resource-owner Dummy.Users.User))
+  _any -> Mix.Task.run("ex_oauth2_provider.install", ~w(--no-config --no-schemas --binary-id --resource-owner Dummy.Users.User))
 end
 Mix.Task.run("ecto.create", ~w(--quiet))
 Mix.Task.run("ecto.migrate")

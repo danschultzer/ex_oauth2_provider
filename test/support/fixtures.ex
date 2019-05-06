@@ -1,8 +1,9 @@
 defmodule ExOauth2Provider.Test.Fixtures do
   @moduledoc false
 
+  alias ExOauth2Provider.AccessTokens
   alias ExOauth2Provider.Test.Repo
-  alias ExOauth2Provider.{OauthApplications.OauthApplication, OauthAccessGrants.OauthAccessGrant, OauthAccessTokens}
+  alias Dummy.{OauthApplications.OauthApplication, OauthAccessGrants.OauthAccessGrant}
   alias Ecto.Changeset
 
   @resource_owner ExOauth2Provider.Config.resource_owner_struct(:module)
@@ -37,7 +38,10 @@ defmodule ExOauth2Provider.Test.Fixtures do
     resource_owner = Keyword.get(attrs, :resource_owner) || resource_owner()
     params         = Enum.into(attrs, %{})
 
-    {:ok, access_token} = OauthAccessTokens.create_token(resource_owner, params)
+    {:ok, access_token} = case resource_owner do
+      %OauthApplication{} -> AccessTokens.create_application_token(resource_owner, params)
+      _any -> AccessTokens.create_token(resource_owner, params)
+    end
 
     access_token
   end

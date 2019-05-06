@@ -2,7 +2,8 @@ defmodule ExOauth2Provider.Authorization.CodeTest do
   use ExOauth2Provider.TestCase
 
   alias ExOauth2Provider.Test.{Fixtures, QueryHelpers, Repo}
-  alias ExOauth2Provider.{Authorization, Config, Scopes, OauthAccessGrants.OauthAccessGrant}
+  alias ExOauth2Provider.{Authorization, Config, Scopes}
+  alias Dummy.OauthAccessGrants.OauthAccessGrant
 
   @client_id                "Jf5rM8hQBc"
   @valid_request            %{"client_id" => @client_id, "response_type" => "code", "scope" => "app:read app:write"}

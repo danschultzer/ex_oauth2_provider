@@ -5,7 +5,7 @@ defmodule ExOauth2Provider.Token.Revoke do
   alias ExOauth2Provider.{Token.Utils,
                           Token.Utils.Response,
                           Utils.Error,
-                          OauthAccessTokens}
+                          AccessTokens}
 
   @doc """
   Revokes access token.
@@ -59,7 +59,7 @@ defmodule ExOauth2Provider.Token.Revoke do
 
   defp get_access_token({:ok, %{request: %{"token" => token}} = params}) do
     token
-    |> OauthAccessTokens.get_by_token()
+    |> AccessTokens.get_by_token()
     |> case do
       nil          -> Error.add_error({:ok, params}, Error.invalid_request())
       access_token -> {:ok, Map.put(params, :access_token, access_token)}
@@ -70,7 +70,7 @@ defmodule ExOauth2Provider.Token.Revoke do
   defp get_refresh_token({:error, %{error: _} = params}), do: {:error, params}
   defp get_refresh_token({:ok, %{request: %{"token" => token}} = params}) do
     token
-    |> OauthAccessTokens.get_by_refresh_token
+    |> AccessTokens.get_by_refresh_token
     |> case do
       nil          -> Error.add_error({:ok, params}, Error.invalid_request())
       access_token -> {:ok, Map.put(params, :access_token, access_token)}
@@ -118,7 +118,7 @@ defmodule ExOauth2Provider.Token.Revoke do
 
   defp validate_accessible({:error, params}), do: {:error, params}
   defp validate_accessible({:ok, %{access_token: access_token} = params}) do
-    case OauthAccessTokens.is_accessible?(access_token) do
+    case AccessTokens.is_accessible?(access_token) do
       true  -> {:ok, params}
       false -> Error.add_error({:ok, params}, Error.invalid_request())
     end
@@ -126,7 +126,7 @@ defmodule ExOauth2Provider.Token.Revoke do
 
   defp revoke_token({:error, params}), do: {:error, params}
   defp revoke_token({:ok, %{access_token: access_token} = params}) do
-    case OauthAccessTokens.revoke(access_token) do
+    case AccessTokens.revoke(access_token) do
       {:ok, _}    -> {:ok, params}
       {:error, _} -> Error.add_error({:ok, params}, Error.invalid_request())
     end

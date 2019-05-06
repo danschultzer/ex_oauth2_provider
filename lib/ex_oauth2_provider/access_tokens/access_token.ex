@@ -1,28 +1,72 @@
-defmodule ExOauth2Provider.OauthAccessTokens.OauthAccessToken do
-  @moduledoc false
+defmodule ExOauth2Provider.AccessTokens.AccessToken do
+  @moduledoc """
+  Handles the Ecto schema for access token.
 
-  @type t :: %__MODULE__{}
+  ## Usage
 
-  use ExOauth2Provider.Schema
+  Configure `lib/my_project/oauth_access_tokens/oauth_access_token.ex` the following way:
 
-  alias Ecto.Changeset
-  alias ExOauth2Provider.{Config, Mixin.Scopes, OauthApplications.OauthApplication, Utils}
+      defmodule MyApp.OauthAccessTokens.OauthAccessToken do
+        use Ecto.Schema
+        use ExOauth2Provider.AccessTokens.AccessToken
 
-  schema "oauth_access_tokens" do
-    belongs_to :resource_owner, Config.resource_owner_struct(:module), Config.resource_owner_struct(:options)
-    belongs_to :application, OauthApplication, on_replace: :nilify
+        schema "oauth_access_tokens" do
+          access_token_fields()
 
-    field :token,         :string, null: false
-    field :refresh_token, :string
-    field :expires_in,    :integer
-    field :revoked_at,    :naive_datetime, usec: true
-    field :scopes,        :string
-    field :previous_refresh_token, :string, null: false, default: ""
+          timestamps()
+        end
+      end
+  """
+  alias ExOauth2Provider.Schema
 
-    timestamps()
+  @type t :: Ecto.Schema.t()
+
+  @doc false
+  def attrs() do
+    [
+      {:token, :string, null: false},
+      {:refresh_token, :string},
+      {:expires_in, :integer},
+      {:revoked_at, :utc_datetime},
+      {:scopes, :string},
+      {:previous_refresh_token, :string, null: false, default: ""}
+    ]
   end
 
-  @spec changeset(t(), map()) :: Changeset.t()
+  @doc false
+  def assocs() do
+    [
+      {:belongs_to, :resource_owner, :users},
+      {:belongs_to, :application, :applications, on_replace: :nilify}
+    ]
+  end
+
+  @doc false
+  def indexes() do
+    [
+      {:token, true},
+      {:refresh_token, true}
+    ]
+  end
+
+  defmacro __using__(config) do
+    quote do
+      use ExOauth2Provider.Schema, unquote(config)
+
+      import unquote(__MODULE__), only: [access_token_fields: 0]
+    end
+  end
+
+  defmacro access_token_fields do
+    quote do
+      ExOauth2Provider.Schema.fields(unquote(__MODULE__))
+    end
+  end
+
+  alias Ecto.Changeset
+  alias ExOauth2Provider.{Config, Mixin.Scopes, Utils}
+
+  @spec changeset(Ecto.Schema.t(), map()) :: Changeset.t()
   def changeset(token, params) do
     server_scopes = server_scopes(token)
 
@@ -73,12 +117,14 @@ defmodule ExOauth2Provider.OauthAccessTokens.OauthAccessToken do
     |> Changeset.unique_constraint(:token)
   end
 
-  defp gen_token(changeset) do
+  defp gen_token(%{data: %struct{}} = changeset) do
+    created_at = Schema.__timestamp_for__(struct, :inserted_at)
+
     opts =
       changeset
       |> Changeset.apply_changes()
       |> Map.take([:resource_owner, :scopes, :application, :expires_in])
-      |> Map.put(:created_at, %{NaiveDateTime.utc_now() | microsecond: {0, 0}})
+      |> Map.put(:created_at, created_at)
       |> Enum.into([])
 
     opts = Keyword.put(opts, :resource_owner_id, resource_owner_id(opts[:resource_owner]))

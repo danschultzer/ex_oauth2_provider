@@ -2,13 +2,13 @@ defmodule ExOauth2Provider.Token.AuthorizationCode do
   @moduledoc """
   Functions for dealing with authorization code strategy.
   """
-  alias ExOauth2Provider.{Config,
-                          OauthAccessGrants,
-                          OauthAccessGrants.OauthAccessGrant,
-                          Token.Utils,
-                          Token.Utils.Response,
-                          Utils.Error,
-                          OauthAccessTokens}
+  alias ExOauth2Provider.{
+    Config,
+    AccessGrants,
+    Token.Utils,
+    Token.Utils.Response,
+    Utils.Error,
+    AccessTokens}
 
   @doc """
   Will grant access token by client credentials.
@@ -53,16 +53,16 @@ defmodule ExOauth2Provider.Token.AuthorizationCode do
     end
   end
 
-  defp revoke_grant(%OauthAccessGrant{revoked_at: nil} = access_grant),
-    do: OauthAccessGrants.revoke(access_grant)
+  defp revoke_grant(%{revoked_at: nil} = access_grant),
+    do: AccessGrants.revoke(access_grant)
 
   defp maybe_create_access_token({:error, _} = error, _token_params), do: error
-  defp maybe_create_access_token({:ok, %OauthAccessGrant{} = access_grant}, token_params),
-    do: OauthAccessTokens.get_or_create_token(access_grant.resource_owner, access_grant.application, access_grant.scopes, token_params)
+  defp maybe_create_access_token({:ok, access_grant}, token_params),
+    do: AccessTokens.get_or_create_token(access_grant.resource_owner, access_grant.application, access_grant.scopes, token_params)
 
   defp load_active_access_grant({:ok, %{client: client, request: %{"code" => code}} = params}) do
     client
-    |> OauthAccessGrants.get_active_grant_for(code)
+    |> AccessGrants.get_active_grant_for(code)
     |> ExOauth2Provider.repo.preload(:resource_owner)
     |> ExOauth2Provider.repo.preload(:application)
     |> case do

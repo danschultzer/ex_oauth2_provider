@@ -28,15 +28,15 @@ defmodule Mix.Tasks.ExOauth2Provider.Gen.MigrationTest do
         assert file =~ "defmodule #{inspect Repo}.Migrations.CreateOauthTables do"
         assert file =~ "use Ecto.Migration"
         assert file =~ "def change do"
-        assert file =~ "add :owner_id, references(:users)"
-        assert file =~ "add :resource_owner_id, references(:users)"
-        refute file =~ "add :owner_id, references(:users, type: :binary_id)"
-        refute file =~ "add :resource_owner_id, references(:users, type: :binary_id)"
+        assert file =~ "add :owner_id, references(:users, on_delete: :nothing)"
+        assert file =~ "add :resource_owner_id, references(:users, on_delete: :nothing)"
+        refute file =~ "add :owner_id, references(:users, on_delete: :nothing, type: :binary_id)"
+        refute file =~ "add :resource_owner_id, references(:users, on_delete: :nothing, type: :binary_id)"
         refute file =~ ":oauth_applications, primary_key: false"
         refute file =~ ":oauth_access_grants, primary_key: false"
         refute file =~ ":oauth_access_tokens, primary_key: false"
         refute file =~ "add :id, :binary_id, primary_key: true"
-        refute file =~ "add :application_id, references(:oauth_applications, type: binary_id)"
+        refute file =~ "add :application_id, references(:oauth_applications, on_delete: :nothing, type: binary_id)"
       end
     end)
   end
@@ -49,13 +49,13 @@ defmodule Mix.Tasks.ExOauth2Provider.Gen.MigrationTest do
       assert_file Path.join(@migrations_path, migration_file), fn file ->
         refute file =~ "add :owner_id, :integer, null: false"
         refute file =~ "add :resource_owner_id, :integer"
-        assert file =~ "add :owner_id, references(:users, type: :binary_id)"
-        assert file =~ "add :resource_owner_id, references(:users, type: :binary_id)"
+        assert file =~ "add :owner_id, references(:users, on_delete: :nothing, type: :binary_id)"
+        assert file =~ "add :resource_owner_id, references(:users, on_delete: :nothing, type: :binary_id)"
         assert file =~ ":oauth_applications, primary_key: false"
         assert file =~ ":oauth_access_grants, primary_key: false"
         assert file =~ ":oauth_access_tokens, primary_key: false"
         assert file =~ "add :id, :binary_id, primary_key: true"
-        assert file =~ "add :application_id, references(:oauth_applications, type: :binary_id)"
+        assert file =~ "add :application_id, references(:oauth_applications, on_delete: :nothing, type: :binary_id)"
       end
     end)
   end

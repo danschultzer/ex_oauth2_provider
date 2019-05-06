@@ -7,8 +7,7 @@ defmodule ExOauth2Provider.Token.RefreshToken do
                           Utils.Error,
                           Token.Utils,
                           Token.Utils.Response,
-                          OauthAccessTokens,
-                          OauthAccessTokens.OauthAccessToken}
+                          AccessTokens}
 
   @doc """
   Will grant access token by refresh token.
@@ -36,7 +35,7 @@ defmodule ExOauth2Provider.Token.RefreshToken do
 
   defp load_access_token_by_refresh_token({:ok, %{client: client, request: %{"refresh_token" => refresh_token}} = params}) do
     access_token = client
-                   |> OauthAccessTokens.get_by_refresh_token_for(refresh_token)
+                   |> AccessTokens.get_by_refresh_token_for(refresh_token)
                    |> ExOauth2Provider.repo.preload(:resource_owner)
                    |> ExOauth2Provider.repo.preload(:application)
 
@@ -77,21 +76,21 @@ defmodule ExOauth2Provider.Token.RefreshToken do
     end
   end
 
-  defp revoke_access_token(%OauthAccessToken{} = refresh_token) do
+  defp revoke_access_token(refresh_token) do
     cond do
       not Config.refresh_token_revoked_on_use? ->
         {:ok, refresh_token}
 
-      OauthAccessTokens.is_revoked?(refresh_token) ->
+      AccessTokens.is_revoked?(refresh_token) ->
         {:error, Error.invalid_request()}
 
       true ->
-        OauthAccessTokens.revoke(refresh_token)
+        AccessTokens.revoke(refresh_token)
     end
   end
 
   defp create_access_token({:error, error}, _), do: {:error, error}
-  defp create_access_token({:ok, %OauthAccessToken{} = access_token}, token_params) do
-    OauthAccessTokens.create_token(access_token.resource_owner, token_params)
+  defp create_access_token({:ok, access_token}, token_params) do
+    AccessTokens.create_token(access_token.resource_owner, token_params)
   end
 end

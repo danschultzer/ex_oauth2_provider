@@ -12,7 +12,7 @@ defmodule ExOauth2Provider.Plug do
       ExOauth2Provider.Plug.current_resource_owner(conn)
   """
 
-  alias ExOauth2Provider.{Keys, OauthAccessTokens.OauthAccessToken}
+  alias ExOauth2Provider.{Keys, AccessTokens.AccessToken}
   alias Plug.Conn
 
   @doc """
@@ -44,7 +44,7 @@ defmodule ExOauth2Provider.Plug do
   Fetch the currently verified token from the request.
   Optionally located at a key
   """
-  @spec current_access_token(Conn.t(), atom()) :: OauthAccessToken.t() | nil
+  @spec current_access_token(Conn.t(), atom()) :: AccessToken.t() | nil
   def current_access_token(conn, the_key \\ :default) do
     case get_current_access_token(conn, the_key) do
       {:error, _error}    -> nil
@@ -53,7 +53,7 @@ defmodule ExOauth2Provider.Plug do
   end
 
   @doc false
-  @spec get_current_access_token(Conn.t(), atom()) :: {:ok, OauthAccessToken.t()} | {:error, term()}
+  @spec get_current_access_token(Conn.t(), atom()) :: {:ok, AccessToken.t()} | {:error, term()}
   def get_current_access_token(conn, the_key \\ :default) do
     case conn.private[Keys.access_token_key(the_key)] do
       {:ok, access_token} -> {:ok, access_token}

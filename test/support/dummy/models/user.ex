@@ -6,7 +6,7 @@ defmodule Dummy.Users.User do
 
   schema "users" do
     field :email, :string
-    has_many :tokens, ExOauth2Provider.OauthAccessTokens.OauthAccessToken, foreign_key: :resource_owner_id
+    has_many :tokens, Dummy.OauthAccessTokens.OauthAccessToken, foreign_key: :resource_owner_id
 
     timestamps()
   end

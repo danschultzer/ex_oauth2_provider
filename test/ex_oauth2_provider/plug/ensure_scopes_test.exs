@@ -1,9 +1,10 @@
-defmodule ExOauth2Provider.Plug.EnsureScopeTest do
+defmodule ExOauth2Provider.Plug.EnsureScopesTest do
   @moduledoc false
   use ExOauth2Provider.TestCase
   use Plug.Test
 
-  alias ExOauth2Provider.{OauthAccessTokens.OauthAccessToken, Plug, Plug.EnsureScopes}
+  alias ExOauth2Provider.{Plug, Plug.EnsureScopes}
+  alias Dummy.OauthAccessTokens.OauthAccessToken
 
   @default_scopes "read write"
 
