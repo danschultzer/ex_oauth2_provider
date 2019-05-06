@@ -8,6 +8,3 @@ erl_crash.dump
 /tmp
 .DS_Store
 /.elixir_ls
-
-/test/support/priv/migrations/*
-!/test/support/priv/migrations/20170320052040_create_user.exs

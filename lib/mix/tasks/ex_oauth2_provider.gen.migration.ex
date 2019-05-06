@@ -28,9 +28,9 @@ defmodule Mix.Tasks.ExOauth2Provider.Gen.Migration do
 
   alias Mix.{Ecto, ExOauth2Provider, ExOauth2Provider.Migration}
 
-  @switches [binary_id: :boolean, namespace: :string]
+  @switches     [binary_id: :boolean, namespace: :string]
   @default_opts [binary_id: false, namespace: "oauth"]
-  @mix_task "ex_oauth2_provider.gen.migrations"
+  @mix_task     "ex_oauth2_provider.gen.migrations"
 
   @impl true
   def run(args) do
@@ -47,7 +47,7 @@ defmodule Mix.Tasks.ExOauth2Provider.Gen.Migration do
   defp create_migration_files(config, args) do
     args
     |> Ecto.parse_repo()
-    |> Enum.map(&Ecto.ensure_repo(&1, args))
+    |> Enum.map(&ensure_repo(&1, args))
     |> Enum.map(&Map.put(config, :repo, &1))
     |> Enum.each(&create_migration_files/1)
   end
@@ -57,5 +57,9 @@ defmodule Mix.Tasks.ExOauth2Provider.Gen.Migration do
     content      = Migration.gen(name, namespace, config)
 
     Migration.create_migration_file(repo, name, content)
+  end
+
+  defp ensure_repo(repo, args) do
+    Ecto.ensure_repo(repo, args ++ ~w(--no-deps-check))
   end
 end

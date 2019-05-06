@@ -17,11 +17,11 @@ defmodule Mix.Tasks.ExOauth2Provider.Install do
   alias Mix.ExOauth2Provider
   alias Mix.Tasks.ExOauth2Provider.Gen.{Config, Migration, Schemas}
 
-  @switches [config: :boolean, migration: :boolean, schemas: :boolean]
+  @switches     [config: :boolean, migration: :boolean, schemas: :boolean]
   @default_opts [config: true, migration: true, schemas: true]
-  @mix_task "ex_oauth2_provider.install"
+  @mix_task     "ex_oauth2_provider.install"
 
-  @doc false
+  @impl true
   def run(args) do
     ExOauth2Provider.no_umbrella!(@mix_task)
 

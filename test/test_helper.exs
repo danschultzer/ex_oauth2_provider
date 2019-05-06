@@ -11,9 +11,6 @@ File.rmdir(target)
 :ok = :file.make_symlink(Path.expand(source), target)
 
 # Set up database
-Mix.shell.cmd("rm test/support/priv/migrations/*_create_oauth_tables.exs")
-opts = if System.get_env("UUID"), do: ~w(--binary-id), else: ~w()
-Mix.Task.run("ex_oauth2_provider.gen.migration", ~w(-r ExOauth2Provider.Test.Repo) ++ opts)
 Mix.Task.run("ecto.drop", ~w(--quiet -r ExOauth2Provider.Test.Repo))
 Mix.Task.run("ecto.create", ~w(--quiet -r ExOauth2Provider.Test.Repo))
 Mix.Task.run("ecto.migrate", ~w(-r ExOauth2Provider.Test.Repo))

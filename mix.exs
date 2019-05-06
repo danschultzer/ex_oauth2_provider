@@ -38,7 +38,7 @@ defmodule ExOauth2Provider.Mixfile do
   defp elixirc_paths(_), do: ["lib"]
 
   defp deps do
-    [{:ecto, "~> 2.1 or ~> 3.0"},
+    [{:ecto, "~> 3.0"},
      {:plug, ">= 1.0.0 and < 1.8.0"},
 
      # Dev and test dependencies

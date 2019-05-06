@@ -18,9 +18,9 @@ defmodule Mix.Tasks.ExOauth2Provider.Gen.Config do
 
   alias Mix.{Ecto, ExOauth2Provider, ExOauth2Provider.Config}
 
-  @switches    [resource_owner: :string, config_file: :string]
-  @mix_task "ex_oauth2_provider.gen.migrations"
+  @switches     [resource_owner: :string, config_file: :string]
   @default_opts [resource_owner: "MyApp.Users.User", config_file: "config/config.exs"]
+  @mix_task     "ex_oauth2_provider.gen.migrations"
 
   @impl true
   def run(args) do

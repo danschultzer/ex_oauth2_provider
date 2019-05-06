@@ -12,7 +12,7 @@ defmodule Mix.ExOauth2Provider.Migration do
     base_name = "#{Macro.underscore(name)}.exs"
     path      =
       repo
-      |> source_repo_priv()
+      |> Mix.EctoSQL.source_repo_priv()
       |> Path.join("migrations")
       |> maybe_create_directory()
     timestamp = timestamp(path)
@@ -63,13 +63,6 @@ defmodule Mix.ExOauth2Provider.Migration do
 
   defp pad(i) when i < 10, do: << ?0, ?0 + i >>
   defp pad(i), do: to_string(i)
-
-  # TODO: Remove by 1.1.0 and only use Ecto 3.0
-  defp source_repo_priv(repo) do
-    mod = if Code.ensure_loaded?(Mix.EctoSQL), do: Mix.EctoSQL, else: Mix.Ecto
-
-    mod.source_repo_priv(repo)
-  end
 
   @template """
   defmodule <%= inspect migration.repo %>.Migrations.<%= migration.name %> do

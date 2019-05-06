@@ -2,7 +2,13 @@ defmodule ExOauth2Provider.Mix.TestCase do
   @moduledoc false
   use ExUnit.CaseTemplate
 
-  setup context do
+  setup_all do
+    clear_tmp_files()
+
+    :ok
+  end
+
+  setup _context do
     current_shell = Mix.shell()
 
     on_exit fn ->
@@ -11,6 +17,8 @@ defmodule ExOauth2Provider.Mix.TestCase do
 
     Mix.shell(Mix.Shell.Process)
 
-    context
+    :ok
   end
+
+  defp clear_tmp_files, do: File.rm_rf!("tmp")
 end

@@ -10,7 +10,7 @@ defmodule Mix.Tasks.ExOauth2Provider.Gen.ConfigTest do
 
   @tmp_path Path.join(["tmp", inspect(Config)])
   @config_file "config/config.exs"
-  @options ~w(-r #{to_string(Repo)})
+  @options ~w(-r #{inspect Repo})
 
   setup do
     File.rm_rf!(@tmp_path)

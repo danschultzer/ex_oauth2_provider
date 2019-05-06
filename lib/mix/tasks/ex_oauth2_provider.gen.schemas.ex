@@ -19,9 +19,9 @@ defmodule Mix.Tasks.ExOauth2Provider.Gen.Schemas do
   alias ExOauth2Provider.Config
   alias Mix.{ExOauth2Provider, ExOauth2Provider.Schema}
 
-  @switches [binary_id: :boolean, context_app: :string, namespace: :string]
+  @switches     [binary_id: :boolean, context_app: :string, namespace: :string]
   @default_opts [binary_id: false, namespace: "oauth"]
-  @mix_task "ex_oauth2_provider.gen.migrations"
+  @mix_task     "ex_oauth2_provider.gen.migrations"
 
   @impl true
   def run(args) do
