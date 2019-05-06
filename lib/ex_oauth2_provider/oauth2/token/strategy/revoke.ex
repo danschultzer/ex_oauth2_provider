@@ -70,7 +70,7 @@ defmodule ExOauth2Provider.Token.Revoke do
   defp get_refresh_token({:error, %{error: _} = params}), do: {:error, params}
   defp get_refresh_token({:ok, %{request: %{"token" => token}} = params}) do
     token
-    |> AccessTokens.get_by_refresh_token
+    |> AccessTokens.get_by_refresh_token()
     |> case do
       nil          -> Error.add_error({:ok, params}, Error.invalid_request())
       access_token -> {:ok, Map.put(params, :access_token, access_token)}

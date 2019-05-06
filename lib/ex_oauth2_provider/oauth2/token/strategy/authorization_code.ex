@@ -57,8 +57,16 @@ defmodule ExOauth2Provider.Token.AuthorizationCode do
     do: AccessGrants.revoke(access_grant)
 
   defp maybe_create_access_token({:error, _} = error, _token_params), do: error
-  defp maybe_create_access_token({:ok, access_grant}, token_params),
-    do: AccessTokens.get_or_create_token(access_grant.resource_owner, access_grant.application, access_grant.scopes, token_params)
+  defp maybe_create_access_token({:ok, %{resource_owner: resource_owner, application: application, scopes: scopes}}, token_params) do
+    token_params = Map.merge(token_params, %{scopes: scopes, application: application})
+
+    resource_owner
+    |> AccessTokens.get_token_for(application, scopes)
+    |> case do
+      nil          -> AccessTokens.create_token(resource_owner, token_params)
+      access_token -> {:ok, access_token}
+    end
+  end
 
   defp load_active_access_grant({:ok, %{client: client, request: %{"code" => code}} = params}) do
     client

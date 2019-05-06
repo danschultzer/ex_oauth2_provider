@@ -33,16 +33,25 @@ defmodule ExOauth2Provider.Test.Fixtures do
   end
 
   def access_token(attrs \\ []) do
-    resource_owner = Keyword.get(attrs, :resource_owner) || resource_owner()
-    params         = Enum.into(attrs, %{})
-
-    {:ok, access_token} = case resource_owner do
-      %OauthApplication{} -> AccessTokens.create_application_token(resource_owner, params)
-      _any -> AccessTokens.create_token(resource_owner, params)
-    end
+    {:ok, access_token} =
+      attrs
+      |> Keyword.get(:resource_owner)
+      |> Kernel.||(resource_owner())
+      |> AccessTokens.create_token(Enum.into(attrs, %{}))
 
     access_token
   end
+
+  def application_access_token(attrs \\ []) do
+    {:ok, access_token} =
+      attrs
+      |> Keyword.get(:application)
+      |> Kernel.||(application())
+      |> AccessTokens.create_application_token(Enum.into(attrs, %{}))
+
+    access_token
+  end
+
 
   def access_grant(application, user, code, redirect_uri) do
     attrs = [

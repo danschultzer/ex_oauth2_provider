@@ -58,53 +58,69 @@ defmodule ExOauth2Provider.AccessTokensTest do
     end
   end
 
-  describe "get_matching_token_for/2" do
-    test "fetches", %{user: user, application: application} do
-      {:ok, access_token1} = AccessTokens.create_token(user, %{application: application})
+  describe "get_token_for/3" do
+    test "fetches for resource owner", %{user: user, application: application} do
+      {:ok, _access_token1} = AccessTokens.create_token(user)
+      {:ok, access_token2} = AccessTokens.create_token(user)
+      {:ok, _access_token_with_application} = AccessTokens.create_token(user, %{application: application})
 
-      assert %OauthAccessToken{id: id} = AccessTokens.get_matching_token_for(user, application, "public")
-      assert id == access_token1.id
+      assert %OauthAccessToken{id: id} = AccessTokens.get_token_for(user, nil, nil)
+      assert id == access_token2.id
 
+      refute AccessTokens.get_token_for(Fixtures.resource_owner(), nil, nil)
+    end
+
+    test "with application", %{user: user, application: application} do
+      {:ok, _access_token1} = AccessTokens.create_token(user, %{application: application})
       {:ok, access_token2} = AccessTokens.create_token(user, %{application: application})
+      {:ok, _access_token_without_application} = AccessTokens.create_token(user)
 
-      assert %OauthAccessToken{id: id} = AccessTokens.get_matching_token_for(user, application, "public")
+      assert %OauthAccessToken{id: id} = AccessTokens.get_token_for(user, application, nil)
       assert id == access_token2.id
-
-      inserted_at = QueryHelpers.timestamp(OauthAccessToken, :inserted_at, seconds: 1)
-      QueryHelpers.change!(access_token1, inserted_at: inserted_at)
-
-      assert %OauthAccessToken{id: id} = AccessTokens.get_matching_token_for(user, application, "public")
-      assert id == access_token1.id
     end
 
-    test "with different resource owner", %{user: user, application: application} do
-      {:ok, _access_token} = AccessTokens.create_token(user, %{application: application})
+    test "with scopes", %{user: user} do
+      {:ok, access_token1} = AccessTokens.create_token(user, %{scopes: "public"})
+      {:ok, access_token2} = AccessTokens.create_token(user, %{scopes: "read write"})
 
-      refute AccessTokens.get_matching_token_for(Fixtures.resource_owner(), application, nil)
-    end
-
-    test "with scope", %{user: user, application: application} do
-      {:ok, access_token1} = AccessTokens.create_token(user, %{application: application, scopes: "public"})
-      {:ok, access_token2} = AccessTokens.create_token(user, %{application: application, scopes: "read write"})
-
-      assert %OauthAccessToken{id: id} = AccessTokens.get_matching_token_for(user, application, "public")
+      assert %OauthAccessToken{id: id} = AccessTokens.get_token_for(user, nil, "public")
       assert id == access_token1.id
 
-      assert %OauthAccessToken{id: id} = AccessTokens.get_matching_token_for(user, application, "write read")
+      assert %OauthAccessToken{id: id} = AccessTokens.get_token_for(user, nil, "write read")
       assert id == access_token2.id
 
-      refute AccessTokens.get_matching_token_for(user, application, "other_read")
+      refute AccessTokens.get_token_for(user, nil, "other_read")
     end
 
-    test "with expired access token", %{user: user, application: application} do
-      {:ok, access_token} = AccessTokens.create_token(user, %{application: application, scopes: "public", expires_in: -1})
+    test "filters revoked", %{user: user} do
+      {:ok, access_token} = AccessTokens.create_token(user)
+      assert AccessTokens.get_token_for(user, nil, nil)
 
-      refute AccessTokens.get_matching_token_for(user, application, "public")
+      AccessTokens.revoke(access_token)
+      refute AccessTokens.get_token_for(user, nil, nil)
+    end
 
-      QueryHelpers.change!(access_token, expires_in: 1)
+    test "filters expired", %{user: user} do
+      {:ok, access_token} = AccessTokens.create_token(user)
 
-      assert %OauthAccessToken{id: id} = AccessTokens.get_matching_token_for(user, application, "public")
-      assert id == access_token.id
+      assert AccessTokens.get_token_for(user, nil, nil)
+
+      inserted_at = QueryHelpers.timestamp(access_token.__struct__, :inserted_at, seconds: -access_token.expires_in)
+      QueryHelpers.change!(access_token, inserted_at: inserted_at)
+
+      refute AccessTokens.get_token_for(user, nil, nil)
+    end
+  end
+
+  describe "get_application_token_for/2" do
+    test "fetches", %{application: application} do
+      {:ok, _access_token1} = AccessTokens.create_application_token(application)
+      {:ok, access_token2} = AccessTokens.create_application_token(application)
+
+      assert %OauthAccessToken{id: id} = AccessTokens.get_application_token_for(application, nil)
+      assert id == access_token2.id
+
+      refute AccessTokens.get_application_token_for(Fixtures.application(uid: "application-2"), nil)
     end
   end
 
@@ -213,83 +229,6 @@ defmodule ExOauth2Provider.AccessTokensTest do
     {:ok, access_token} = AccessTokens.create_application_token(application)
     assert is_nil(access_token.resource_owner_id)
     assert access_token.application_id == application.id
-  end
-
-  describe "get_or_create_token/4" do
-    test "gets existing token", %{user: user} do
-      {:ok, access_token} = AccessTokens.get_or_create_token(user, nil, nil, %{})
-      assert is_nil(access_token.application_id)
-      assert access_token.resource_owner_id == user.id
-
-      {:ok, access_token2} = AccessTokens.get_or_create_token(user, nil, nil, %{})
-      assert access_token.id == access_token2.id
-
-      QueryHelpers.change!(access_token, scopes: "write read")
-      {:ok, access_token3} = AccessTokens.get_or_create_token(user, nil, "read write", %{})
-      assert access_token.id == access_token3.id
-    end
-
-    test "with resource owner and application", %{user: user, application: application} do
-      {:ok, access_token} = AccessTokens.get_or_create_token(user, application, nil, %{})
-      assert access_token.application_id == application.id
-      assert access_token.resource_owner_id == user.id
-
-      {:ok, access_token2} = AccessTokens.get_or_create_token(user, application, nil, %{})
-      assert access_token2.id == access_token.id
-
-      QueryHelpers.change!(access_token, scopes: "read write")
-      {:ok, access_token3} = AccessTokens.get_or_create_token(user, application, "read write", %{})
-      assert access_token3.id == access_token.id
-    end
-
-    test "creates token when matching is revoked", %{user: user} do
-      {:ok, access_token} = AccessTokens.get_or_create_token(user, nil, nil, %{})
-      AccessTokens.revoke(access_token)
-      {:ok, access_token2} = AccessTokens.get_or_create_token(user, nil, nil, %{})
-      assert access_token2.id != access_token.id
-    end
-
-    test "creates token when matching has expired", %{user: user} do
-      {:ok, access_token1} = AccessTokens.create_token(user, %{expires_in: 1})
-      {:ok, access_token2} = AccessTokens.create_token(user, %{expires_in: 1})
-
-      {:ok, access_token} = AccessTokens.get_or_create_token(user, nil, nil, %{})
-      assert access_token.id == access_token2.id
-
-      inserted_at = QueryHelpers.timestamp(access_token2.__struct__, :inserted_at, seconds: -access_token.expires_in)
-      QueryHelpers.change!(access_token2, inserted_at: inserted_at)
-
-      {:ok, access_token} = AccessTokens.get_or_create_token(user, nil, nil, %{})
-      assert access_token.id == access_token1.id
-
-      QueryHelpers.change!(access_token1, inserted_at: inserted_at)
-
-      {:ok, access_token} = AccessTokens.get_or_create_token(user, nil, nil, %{})
-      refute access_token.id in [access_token1.id, access_token2.id]
-    end
-
-    test "creates token when params are different", %{user: user} do
-      {:ok, access_token} = AccessTokens.get_or_create_token(user, nil, nil, %{})
-
-      {:ok, access_token2} = AccessTokens.get_or_create_token(Fixtures.resource_owner(), nil, nil, %{})
-      assert access_token2.id != access_token.id
-
-      another_application = Fixtures.application(uid: "another_application")
-      {:ok, access_token3} = AccessTokens.get_or_create_token(user, another_application, nil, %{})
-      assert access_token3.id != access_token.id
-
-      {:ok, access_token4} = AccessTokens.get_or_create_token(user, nil, "read", %{})
-      assert access_token4.id != access_token.id
-    end
-  end
-
-  test "get_or_create_application_token/3", %{application: application} do
-    {:ok, access_token} = AccessTokens.get_or_create_application_token(application, nil, %{})
-    assert access_token.application_id == application.id
-    assert is_nil(access_token.resource_owner_id)
-
-    {:ok, access_token2} = AccessTokens.get_or_create_application_token(application, nil, %{})
-    assert access_token2.id == access_token.id
   end
 
   describe "revoke/1" do

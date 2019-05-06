@@ -95,7 +95,7 @@ defmodule ExOauth2Provider.Authorization.Code do
 
   defp check_previous_authorization({:error, params}), do: {:error, params}
   defp check_previous_authorization({:ok, %{resource_owner: resource_owner, client: application, request: %{"scope" => scopes}} = params}) do
-    case AccessTokens.get_matching_token_for(resource_owner, application, scopes) do
+    case AccessTokens.get_token_for(resource_owner, application, scopes) do
       nil   -> {:ok, params}
       token -> {:ok, Map.put(params, :access_token, token)}
     end

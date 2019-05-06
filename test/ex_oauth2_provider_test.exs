@@ -20,7 +20,7 @@ defmodule ExOauth2ProviderTest do
 
     test "authenticates with application-wide token" do
       application = Fixtures.application()
-      access_token = Fixtures.access_token(resource_owner: application)
+      access_token = Fixtures.application_access_token(application: application)
 
       assert {:ok, access_token} = ExOauth2Provider.authenticate_token(access_token.token)
       refute access_token.resource_owner

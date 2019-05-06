@@ -56,10 +56,17 @@ defmodule ExOauth2Provider.Token.Password do
   defp load_resource_owner({:ok, params}), do: Error.add_error({:ok, params}, Error.invalid_request())
 
   defp issue_access_token({:error, params}), do: {:error, params}
-  defp issue_access_token({:ok, %{client: client, resource_owner: resource_owner, request: request} = params}) do
-    token_params = %{use_refresh_token: Config.use_refresh_token?()}
+  defp issue_access_token({:ok, %{client: application, resource_owner: resource_owner, request: request} = params}) do
+    scopes = request["scope"]
+    token_params = %{use_refresh_token: Config.use_refresh_token?(), scopes: scopes, application: application}
 
-    case AccessTokens.get_or_create_token(resource_owner, client, request["scope"], token_params) do
+    resource_owner
+    |> AccessTokens.get_token_for(application, scopes)
+    |> case do
+      nil          -> AccessTokens.create_token(resource_owner, token_params)
+      access_token -> {:ok, access_token}
+    end
+    |> case do
       {:ok, access_token} -> {:ok, Map.merge(params, %{access_token: access_token})}
       {:error, error}     -> Error.add_error({:ok, params}, error)
     end

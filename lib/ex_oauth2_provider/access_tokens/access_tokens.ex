@@ -69,29 +69,43 @@ defmodule ExOauth2Provider.AccessTokens do
 
   ## Examples
 
-      iex> get_matching_token_for(resource_owner, application, "read write")
+      iex> get_token_for(resource_owner, application, "read write")
       %OauthAccessToken{}
 
-      iex> get_matching_token_for(resource_owner, application, "read invalid")
+      iex> get_token_for(resource_owner, application, "read invalid")
       nil
-
   """
-  @spec get_matching_token_for(Schema.t() | nil, Application.t(), binary()) :: AccessToken.t() | nil
-  def get_matching_token_for(nil, application, scopes) do
-    Config.access_token()
-    |> scope_belongs_to(:resource_owner_id, nil)
-    |> scope_belongs_to(:application_id, application)
-    |> load_matching_token_for(scopes)
-  end
-  def get_matching_token_for(resource_owner, application, scopes) do
+  @spec get_token_for(Schema.t(), Application.t(), binary()) :: AccessToken.t() | nil
+  def get_token_for(resource_owner, application, scopes) do
     Config.access_token()
     |> scope_belongs_to(:resource_owner_id, resource_owner)
     |> scope_belongs_to(:application_id, application)
-    |> load_matching_token_for(scopes)
+    |> load_matching_token_for(application, scopes)
   end
 
-  defp load_matching_token_for(queryable, scopes) do
+  @doc """
+  Gets the most recent, acccessible, matching access token for an application.
+
+  ## Examples
+
+      iex> get_application_token_for(application, "read write")
+      %OauthAccessToken{}
+
+      iex> get_application_token_for(application, "read invalid")
+      nil
+  """
+  @spec get_application_token_for(Application.t(), binary()) :: AccessToken.t() | nil
+  def get_application_token_for(application, scopes) do
+    Config.access_token()
+    |> scope_belongs_to(:resource_owner_id, nil)
+    |> scope_belongs_to(:application_id, application)
+    |> load_matching_token_for(application, scopes)
+  end
+
+  defp load_matching_token_for(queryable, application, scopes) do
     now = SchemaHelpers.__timestamp_for__(Config.access_token(), :inserted_at)
+
+    scopes = maybe_build_scopes(application, scopes)
 
     queryable
     |> where([a], is_nil(a.revoked_at))
@@ -101,6 +115,10 @@ defmodule ExOauth2Provider.AccessTokens do
     |> Enum.filter(&is_accessible?/1)
     |> check_matching_scopes(scopes)
   end
+
+  defp maybe_build_scopes(_application, scopes) when is_binary(scopes), do: scopes
+  defp maybe_build_scopes(%{scopes: server_scopes}, nil), do: Scopes.parse_default_scope_string(server_scopes)
+  defp maybe_build_scopes(_application, nil), do: Scopes.parse_default_scope_string(nil)
 
   defp check_matching_scopes(tokens, scopes) when is_list(tokens) do
     Enum.find(tokens, nil, &check_matching_scopes(&1, scopes))
@@ -146,19 +164,24 @@ defmodule ExOauth2Provider.AccessTokens do
       iex> create_token(resource_owner, %{expires_in: "invalid"})
       {:error, %Ecto.Changeset{}}
   """
-  @spec create_token(Schema.t() | nil, map()) :: {:ok, AccessToken.t()} | {:error, Changeset.t()}
+  @spec create_token(Schema.t(), map()) :: {:ok, AccessToken.t()} | {:error, Changeset.t()}
   def create_token(resource_owner, attrs \\ %{}) do
-    struct =
-      attrs
-      |> Map.take([:application])
-      |> Map.put(:resource_owner, resource_owner)
-
     Config.access_token()
-    |> struct(struct)
+    |> struct(resource_owner: resource_owner)
+    |> put_application(attrs)
     |> do_create_token(attrs)
   end
 
+  defp put_application(access_token, attrs) do
+    case Map.get(attrs, :application) do
+      nil         -> access_token
+      application -> %{access_token | application: application}
+    end
+  end
+
   defp do_create_token(access_token, attrs) do
+    attrs = Map.merge(%{expires_in: Config.access_token_expires_in()}, attrs)
+
     access_token
     |> AccessToken.changeset(attrs)
     |> ExOauth2Provider.repo.insert()
@@ -177,56 +200,6 @@ defmodule ExOauth2Provider.AccessTokens do
     Config.access_token()
     |> struct(application: application)
     |> do_create_token(attrs)
-  end
-
-  @doc """
-  Gets existing access token or creates a new one with supplied attributes.
-
-  ## Examples
-
-      iex> get_or_create_token(application, scopes, attrs)
-      {:ok, %OauthAccessToken{}}
-
-      iex> get_or_create_token(user, application, scopes, attrs)
-      {:ok, %OauthAccessToken{}}
-
-      iex> get_or_create_token(user, application, scopes, attrs)
-      {:error, %Ecto.Changeset{}}
-
-  """
-  @spec get_or_create_token(Schema.t(), Application.t() | nil, binary() | nil, map()) :: {:ok, AccessToken.t()} | {:error, Changeset.t()}
-  def get_or_create_token(resource_owner, application, scopes, attrs) do
-    attrs = Map.merge(%{scopes: scopes, application: application}, attrs)
-    scopes = maybe_build_scopes(application, scopes)
-
-    resource_owner
-    |> get_matching_token_for(application, scopes)
-    |> case do
-      nil ->
-        attrs = Map.merge(%{expires_in: Config.access_token_expires_in()}, attrs)
-
-        create_token(resource_owner, attrs)
-
-      access_token ->
-        {:ok, access_token}
-    end
-  end
-
-  defp maybe_build_scopes(_application, scopes) when is_binary(scopes), do: scopes
-  defp maybe_build_scopes(%{scopes: server_scopes}, nil), do: Scopes.parse_default_scope_string(server_scopes)
-  defp maybe_build_scopes(_application, nil), do: Scopes.parse_default_scope_string(nil)
-
-  @doc """
-  Gets existing application access token or creates a new one with supplied attributes.
-
-  ## Examples
-
-      iex> get_or_create_application_token(application, scopes, attrs)
-      {:ok, %OauthAccessToken{}}
-  """
-  @spec get_or_create_application_token(Application.t(), binary() | nil, map()) :: {:ok, AccessToken.t()} | {:error, Changeset.t()}
-  def get_or_create_application_token(application, scopes, attrs) do
-    get_or_create_token(nil, application, scopes, attrs)
   end
 
   @doc """
