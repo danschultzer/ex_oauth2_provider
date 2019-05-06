@@ -60,7 +60,9 @@ defmodule ExOauth2Provider.AccessTokensTest do
 
   describe "get_token_for/3" do
     test "fetches for resource owner", %{user: user, application: application} do
-      {:ok, _access_token1} = AccessTokens.create_token(user)
+      {:ok, access_token1} = AccessTokens.create_token(user)
+      inserted_at = QueryHelpers.timestamp(OauthAccessToken, :inserted_at, seconds: -1)
+      QueryHelpers.change!(access_token1, inserted_at: inserted_at)
       {:ok, access_token2} = AccessTokens.create_token(user)
       {:ok, _access_token_with_application} = AccessTokens.create_token(user, %{application: application})
 
@@ -71,7 +73,9 @@ defmodule ExOauth2Provider.AccessTokensTest do
     end
 
     test "with application", %{user: user, application: application} do
-      {:ok, _access_token1} = AccessTokens.create_token(user, %{application: application})
+      {:ok, access_token1} = AccessTokens.create_token(user, %{application: application})
+      inserted_at = QueryHelpers.timestamp(OauthAccessToken, :inserted_at, seconds: -1)
+      QueryHelpers.change!(access_token1, inserted_at: inserted_at)
       {:ok, access_token2} = AccessTokens.create_token(user, %{application: application})
       {:ok, _access_token_without_application} = AccessTokens.create_token(user)
 
@@ -114,7 +118,9 @@ defmodule ExOauth2Provider.AccessTokensTest do
 
   describe "get_application_token_for/2" do
     test "fetches", %{application: application} do
-      {:ok, _access_token1} = AccessTokens.create_application_token(application)
+      {:ok, access_token1} = AccessTokens.create_application_token(application)
+      inserted_at = QueryHelpers.timestamp(OauthAccessToken, :inserted_at, seconds: -1)
+      QueryHelpers.change!(access_token1, inserted_at: inserted_at)
       {:ok, access_token2} = AccessTokens.create_application_token(application)
 
       assert %OauthAccessToken{id: id} = AccessTokens.get_application_token_for(application, nil)
