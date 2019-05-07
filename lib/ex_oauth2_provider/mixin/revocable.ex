@@ -2,6 +2,7 @@ defmodule ExOauth2Provider.Mixin.Revocable do
   @moduledoc false
 
   alias Ecto.{Changeset, Schema}
+  alias ExOauth2Provider.Config
   alias ExOauth2Provider.Schema, as: SchemaHelpers
 
   @doc """
@@ -15,26 +16,26 @@ defmodule ExOauth2Provider.Mixin.Revocable do
       iex> revoke(invalid_data)
       {:error, %Ecto.Changeset{}}
   """
-  @spec revoke(Schema.t()) :: {:ok, Schema.t()} | {:error, Changeset.t()}
-  def revoke(data) do
+  @spec revoke(Schema.t(), keyword()) :: {:ok, Schema.t()} | {:error, Changeset.t()}
+  def revoke(data, config \\ []) do
     data
     |> revoke_query()
     |> case do
       nil -> {:ok, data}
-      query -> ExOauth2Provider.repo.update(query)
+      query -> Config.repo(config).update(query)
     end
   end
 
   @doc """
   Same as `revoke/1` but raises error.
   """
-  @spec revoke!(Schema.t()) :: Schema.t() | no_return
-  def revoke!(data) do
+  @spec revoke!(Schema.t(), keyword()) :: Schema.t() | no_return
+  def revoke!(data, config \\ []) do
     data
     |> revoke_query()
     |> case do
       nil -> data
-      query -> ExOauth2Provider.repo.update!(query)
+      query -> Config.repo(config).update!(query)
     end
   end
 

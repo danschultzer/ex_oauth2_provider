@@ -63,15 +63,15 @@ defmodule ExOauth2Provider.AccessGrants.AccessGrant do
   alias Ecto.Changeset
   alias ExOauth2Provider.{Mixin.Scopes, Utils}
 
-  @spec changeset(Ecto.Schema.t(), map()) :: Changeset.t()
-  def changeset(grant, params) do
+  @spec changeset(Ecto.Schema.t(), map(), keyword()) :: Changeset.t()
+  def changeset(grant, params, config) do
     grant
     |> Changeset.cast(params, [:redirect_uri, :expires_in, :scopes])
     |> Changeset.assoc_constraint(:application)
     |> Changeset.assoc_constraint(:resource_owner)
     |> put_token()
-    |> Scopes.put_scopes(grant.application.scopes)
-    |> Scopes.validate_scopes(grant.application.scopes)
+    |> Scopes.put_scopes(grant.application.scopes, config)
+    |> Scopes.validate_scopes(grant.application.scopes, config)
     |> Changeset.validate_required([:redirect_uri, :expires_in, :token, :resource_owner, :application])
     |> Changeset.unique_constraint(:token)
   end

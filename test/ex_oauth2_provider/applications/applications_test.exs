@@ -4,6 +4,7 @@ defmodule ExOauth2Provider.ApplicationsTest do
   alias ExOauth2Provider.Test.Fixtures
   alias ExOauth2Provider.{AccessTokens, Applications}
   alias Dummy.{OauthApplications.OauthApplication, OauthAccessTokens.OauthAccessToken}
+  alias ExOauth2Provider.Test.Repo
 
   @valid_attrs    %{name: "Application", redirect_uri: "https://example.org/endpoint"}
   @invalid_attrs  %{}
@@ -140,7 +141,7 @@ defmodule ExOauth2Provider.ApplicationsTest do
     assert {:ok, objects} = Applications.revoke_all_access_tokens_for(application, user)
     assert Enum.count(objects) == 2
 
-    assert AccessTokens.is_revoked?(ExOauth2Provider.repo.get!(OauthAccessToken, token.id))
-    assert AccessTokens.is_revoked?(ExOauth2Provider.repo.get!(OauthAccessToken, token2.id))
+    assert AccessTokens.is_revoked?(Repo.get!(OauthAccessToken, token.id))
+    assert AccessTokens.is_revoked?(Repo.get!(OauthAccessToken, token2.id))
   end
 end

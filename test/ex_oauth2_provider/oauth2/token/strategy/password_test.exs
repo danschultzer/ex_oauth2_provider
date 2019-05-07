@@ -1,7 +1,7 @@
 defmodule ExOauth2Provider.Token.Strategy.PasswordTest do
   use ExOauth2Provider.TestCase
 
-  alias ExOauth2Provider.Test.{ConfigHelpers, Fixtures, QueryHelpers}
+  alias ExOauth2Provider.Test.{Fixtures, QueryHelpers}
   alias ExOauth2Provider.{Config, Token, Token.Password}
   alias Dummy.OauthAccessTokens.OauthAccessToken
 
@@ -64,10 +64,9 @@ defmodule ExOauth2Provider.Token.Strategy.PasswordTest do
   end
 
   test "#grant/1 error when no password auth set" do
-    ConfigHelpers.set_config(:password_auth, nil)
     expected_error = %{error: :unsupported_grant_type, error_description: "The authorization grant type is not supported by the authorization server."}
 
-    assert Password.grant(@valid_request) == {:error, expected_error, :unprocessable_entity}
+    assert Password.grant(@valid_request, password_auth: nil) == {:error, expected_error, :unprocessable_entity}
   end
 
   test "#grant/1 returns access token", %{user: user, application: application} do
@@ -78,7 +77,7 @@ defmodule ExOauth2Provider.Token.Strategy.PasswordTest do
     assert access_token.resource_owner_id == user.id
     assert access_token.application_id == application.id
     assert access_token.scopes == application.scopes
-    assert access_token.expires_in == Config.access_token_expires_in()
+    assert access_token.expires_in == Config.access_token_expires_in([])
     refute is_nil(access_token.refresh_token)
   end
 
@@ -96,16 +95,14 @@ defmodule ExOauth2Provider.Token.Strategy.PasswordTest do
   end
 
   test "#grant/1 returns access token with custom response handler" do
-    ConfigHelpers.set_config(:access_token_response_body_handler, {__MODULE__, :access_token_response_body_handler})
-    assert {:ok, body} = Password.grant(@valid_request)
+    assert {:ok, body} = Password.grant(@valid_request, access_token_response_body_handler: {__MODULE__, :access_token_response_body_handler})
     access_token = QueryHelpers.get_latest_inserted(OauthAccessToken)
 
     assert body.custom_attr == access_token.inserted_at
   end
 
   test "#grant/1 doesn't set refresh_token when ExOauth2Provider.Config.use_refresh_token? == false" do
-    ConfigHelpers.set_config(:use_refresh_token, false)
-    assert {:ok, body} = Password.grant(@valid_request)
+    assert {:ok, body} = Password.grant(@valid_request, use_refresh_token: false)
     access_token = QueryHelpers.get_latest_inserted(OauthAccessToken)
 
     assert body.access_token == access_token.token

@@ -64,15 +64,15 @@ defmodule ExOauth2Provider.Applications.Application do
   alias ExOauth2Provider.{RedirectURI, Utils}
   alias ExOauth2Provider.Mixin.Scopes
 
-  @spec changeset(Ecto.Schema.t(), map()) :: Changeset.t()
-  def changeset(application, params) do
+  @spec changeset(Ecto.Schema.t(), map(), keyword()) :: Changeset.t()
+  def changeset(application, params, config \\ []) do
     application
-    |> maybe_new_application_changeset(params)
+    |> maybe_new_application_changeset(params, config)
     |> Changeset.cast(params, [:name, :secret, :redirect_uri, :scopes])
     |> Changeset.validate_required([:name, :uid, :redirect_uri])
     |> validate_secret_not_nil()
-    |> Scopes.validate_scopes()
-    |> validate_redirect_uri()
+    |> Scopes.validate_scopes(nil, config)
+    |> validate_redirect_uri(config)
     |> Changeset.unique_constraint(:uid)
   end
 
@@ -83,37 +83,35 @@ defmodule ExOauth2Provider.Applications.Application do
     end
   end
 
-  defp maybe_new_application_changeset(application, params) do
+  defp maybe_new_application_changeset(application, params, config) do
     case Ecto.get_meta(application, :state) do
-      :built  -> new_application_changeset(application, params)
+      :built  -> new_application_changeset(application, params, config)
       :loaded -> application
     end
   end
 
-  defp new_application_changeset(application, params) do
+  defp new_application_changeset(application, params, config) do
     application
     |> Changeset.cast(params, [:uid, :secret])
     |> put_uid()
     |> put_secret()
-    |> Scopes.put_scopes()
+    |> Scopes.put_scopes(nil, config)
     |> Changeset.assoc_constraint(:owner)
   end
 
-  defp validate_redirect_uri(changeset) do
-    url = Changeset.get_field(changeset, :redirect_uri) || ""
-
-    url
+  defp validate_redirect_uri(changeset, config) do
+    changeset
+    |> Changeset.get_field(:redirect_uri)
+    |> Kernel.||("")
     |> String.split()
-    |> Enum.reduce(changeset, &validate_redirect_uri(&2, &1))
-  end
-
-  defp validate_redirect_uri(changeset, url) do
-    url
-    |> RedirectURI.validate
-    |> case do
-       {:error, error} -> Changeset.add_error(changeset, :redirect_uri, error)
-       {:ok, _}        -> changeset
-     end
+    |> Enum.reduce(changeset, fn url, changeset ->
+      url
+      |> RedirectURI.validate(config)
+      |> case do
+         {:error, error} -> Changeset.add_error(changeset, :redirect_uri, error)
+         {:ok, _}        -> changeset
+       end
+    end)
   end
 
   defp put_uid(%{changes: %{uid: _}} = changeset), do: changeset

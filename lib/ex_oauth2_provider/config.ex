@@ -1,53 +1,38 @@
 defmodule ExOauth2Provider.Config do
   @moduledoc false
 
-  @doc false
-  @spec config() :: keyword()
-  def config do
-    app = otp_app()
+  @spec repo(keyword()) :: module()
+  def repo(config), do: get(config, :repo)
 
-    app
-    |> Application.get_env(ExOauth2Provider)
-    |> Kernel.||(Application.get_env(app, PhoenixOauth2Provider))
-    |> Kernel.||(Application.get_env(:ex_oauth2_provider, PhoenixOauth2Provider))
-    |> Kernel.||(Application.get_env(:phoenix_oauth2_provider, ExOAuth2Provider))
-    |> Kernel.||([])
-  end
-
-  @doc false
-  @spec resource_owner() :: atom()
-  def resource_owner() do
-    config()
-    |> Keyword.get(:resource_owner)
-    |> Kernel.||(app_module("Users", "User"))
-  end
+  @spec resource_owner(keyword()) :: module()
+  def resource_owner(config),
+    do: get(config, :resource_owner) || app_module("Users", "User")
 
   defp app_module(context, module) do
     Module.concat([app_base(otp_app()), context, module])
   end
 
-  @doc false
-  @spec access_grant() :: atom()
-  def access_grant(), do: get_oauth_struct(:access_grant)
+  @spec access_grant(keyword()) :: module()
+  def access_grant(config),
+    do: get_oauth_struct(config, :access_grant)
 
-  @doc false
-  @spec access_token() :: atom()
-  def access_token(), do: get_oauth_struct(:access_token)
+  @spec access_token(keyword()) :: module()
+  def access_token(config),
+    do: get_oauth_struct(config, :access_token)
 
-  @doc false
-  @spec application() :: atom()
-  def application(), do: get_oauth_struct(:application)
+  @spec application(keyword()) :: module()
+  def application(config),
+    do: get_oauth_struct(config, :application)
 
-  defp get_oauth_struct(name, namespace \\ "oauth") do
+  defp get_oauth_struct(config, name, namespace \\ "oauth") do
     context = Macro.camelize("#{namespace}_#{name}s")
     module  = Macro.camelize("#{namespace}_#{name}")
 
-    config()
-    |> Keyword.get(name)
+    config
+    |> get(name)
     |> Kernel.||(app_module(context, module))
   end
 
-  @doc false
   @spec otp_app() :: atom()
   def otp_app(), do: Keyword.fetch!(Mix.Project.config(), :app)
 
@@ -70,92 +55,101 @@ defmodule ExOauth2Provider.Config do
   end
 
   # Define default access token scopes for your provider
-  @doc false
-  @spec default_scopes() :: [binary()]
-  def default_scopes do
-    Keyword.get(config(), :default_scopes, [])
-  end
-
-  # Define optional access token scopes for your provider
-  @doc false
-  @spec optional_scopes() :: [binary()]
-  defp optional_scopes do
-    Keyword.get(config(), :optional_scopes, [])
-  end
+  @spec default_scopes(keyword()) :: [binary()]
+  def default_scopes(config),
+    do: get(config, :default_scopes, [])
 
   # Combined scopes list for your provider
-  @doc false
-  @spec server_scopes() :: [binary()]
-  def server_scopes do
-    default_scopes() ++ optional_scopes()
+  @spec server_scopes(keyword()) :: [binary()]
+  def server_scopes(config) do
+    config
+    |> default_scopes()
+    |> Kernel.++(get(config, :optional_scopes, []))
   end
 
-  @doc false
-  @spec native_redirect_uri() :: binary()
-  def native_redirect_uri do
-     Keyword.get(config(), :native_redirect_uri, "urn:ietf:wg:oauth:2.0:oob")
-  end
+  @spec native_redirect_uri(keyword()) :: binary()
+  def native_redirect_uri(config),
+    do: get(config, :native_redirect_uri, "urn:ietf:wg:oauth:2.0:oob")
 
-  @doc false
-  @spec authorization_code_expires_in() :: integer()
-  def authorization_code_expires_in do
-    Keyword.get(config(), :authorization_code_expires_in, 600)
-  end
+  @spec authorization_code_expires_in(keyword()) :: integer()
+  def authorization_code_expires_in(config),
+    do: get(config, :authorization_code_expires_in, 600)
 
-  @doc false
-  @spec access_token_expires_in() :: integer()
-  def access_token_expires_in do
-    Keyword.get(config(), :access_token_expires_in, 7200)
-  end
+  @spec access_token_expires_in(keyword()) :: integer()
+  def access_token_expires_in(config),
+    do: get(config, :access_token_expires_in, 7200)
 
   # Issue access tokens with refresh token (disabled by default)
-  @doc false
-  @spec use_refresh_token?() :: boolean()
-  def use_refresh_token? do
-    Keyword.get(config(), :use_refresh_token, false)
-  end
+  @spec use_refresh_token?(keyword()) :: boolean()
+  def use_refresh_token?(config),
+    do: get(config, :use_refresh_token, false)
 
   # Password auth method to use. Disabled by default. When set, it'll enable
   # password auth strategy. Set config as:
   # `password_auth: {MyModule, :my_auth_method}`
-  @doc false
-  @spec password_auth() :: {atom(), atom()} | nil
-  def password_auth do
-    Keyword.get(config(), :password_auth, nil)
-  end
+  @spec password_auth(keyword()) :: {atom(), atom()} | nil
+  def password_auth(config),
+    do: get(config, :password_auth)
 
-  @doc false
-  @spec refresh_token_revoked_on_use?() :: boolean()
-  def refresh_token_revoked_on_use? do
-    Keyword.get(config(), :revoke_refresh_token_on_use, false)
-  end
+  @spec refresh_token_revoked_on_use?(keyword()) :: boolean()
+  def refresh_token_revoked_on_use?(config),
+    do: get(config, :revoke_refresh_token_on_use, false)
 
   # Forces the usage of the HTTPS protocol in non-native redirect uris
   # (enabled by default in non-development environments). OAuth2
   # delegates security in communication to the HTTPS protocol so it is
   # wise to keep this enabled.
-  @doc false
-  @spec force_ssl_in_redirect_uri?() :: boolean()
-  def force_ssl_in_redirect_uri? do
-    Keyword.get(config(), :force_ssl_in_redirect_uri, Mix.env != :dev)
-  end
+  @spec force_ssl_in_redirect_uri?(keyword()) :: boolean()
+  def force_ssl_in_redirect_uri?(config),
+    do: get(config, :force_ssl_in_redirect_uri, Mix.env != :dev)
 
   # Use a custom access token generator
-  @doc false
-  @spec access_token_generator() :: {atom(), atom()} | nil
-  def access_token_generator do
-    Keyword.get(config(), :access_token_generator, nil)
+  @spec access_token_generator(keyword()) :: {atom(), atom()} | nil
+  def access_token_generator(config),
+    do: get(config, :access_token_generator)
+
+  @spec access_token_response_body_handler(keyword()) :: {atom(), atom()} | nil
+  def access_token_response_body_handler(config),
+    do: get(config, :access_token_response_body_handler)
+
+  @spec grant_flows(keyword()) :: [binary()]
+  def grant_flows(config),
+    do: get(config, :grant_flows, ~w(authorization_code client_credentials))
+
+  defp get(config, key, value \\ nil) do
+    config
+    |> get_from_config(key)
+    |> get_from_app_env(key)
+    |> get_from_global_env(key)
+    |> case do
+      :not_found -> value
+      value      -> value
+    end
   end
 
-  @doc false
-  @spec access_token_response_body_handler() :: {atom(), atom()} | nil
-  def access_token_response_body_handler do
-    Keyword.get(config(), :access_token_response_body_handler, nil)
-  end
+  defp get_from_config(config, key), do: Keyword.get(config, key, :not_found)
 
-  @doc false
-  @spec grant_flows() :: [binary()]
-  def grant_flows do
-    Keyword.get(config(), :grant_flows, ~w(authorization_code client_credentials))
+  defp get_from_app_env(:not_found, key) do
+    app = otp_app()
+
+    app
+    |> Application.get_env(ExOauth2Provider, [])
+    |> case do
+      []     -> Application.get_env(app, PhoenixOauth2Provider, [])
+      config -> config
+    end
+    |> Keyword.get(key, :not_found)
   end
+  defp get_from_app_env(value, _key), do: value
+
+  defp get_from_global_env(:not_found, key) do
+    :ex_oauth2_provider
+    |> Application.get_env(ExOAuth2Provider, [])
+    |> case do
+      []     -> Application.get_env(:phoenix_oauth2_provider, PhoenixOauth2Provider, [])
+      config -> config
+    end
+    |> Keyword.get(key, :not_found)
+  end
+  defp get_from_global_env(value, _key), do: value
 end

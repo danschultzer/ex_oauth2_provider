@@ -21,9 +21,11 @@ defmodule ExOauth2Provider.Applications do
       ** (Ecto.NoResultsError)
 
   """
-  @spec get_application!(binary()) :: Application.t() | no_return
-  def get_application!(uid) do
-    ExOauth2Provider.repo.get_by!(Config.application(), uid: uid)
+  @spec get_application!(binary(), keyword()) :: Application.t() | no_return
+  def get_application!(uid, config \\ []) do
+    config
+    |> Config.application()
+    |> Config.repo(config).get_by!(uid: uid)
   end
 
   @doc """
@@ -40,9 +42,11 @@ defmodule ExOauth2Provider.Applications do
       ** (Ecto.NoResultsError)
 
   """
-  @spec get_application_for!(Schema.t(), binary()) :: Application.t() | no_return
-  def get_application_for!(resource_owner, uid) do
-    ExOauth2Provider.repo.get_by!(Config.application(), owner_id: resource_owner.id, uid: uid)
+  @spec get_application_for!(Schema.t(), binary(), keyword()) :: Application.t() | no_return
+  def get_application_for!(resource_owner, uid, config \\ []) do
+    config
+    |> Config.application()
+    |> Config.repo(config).get_by!(owner_id: resource_owner.id, uid: uid)
   end
 
   @doc """
@@ -57,9 +61,11 @@ defmodule ExOauth2Provider.Applications do
       nil
 
   """
-  @spec get_application(binary()) :: Application.t() | nil
-  def get_application(uid) do
-    ExOauth2Provider.repo.get_by(Config.application(), uid: uid)
+  @spec get_application(binary(), keyword()) :: Application.t() | nil
+  def get_application(uid, config \\ []) do
+    config
+    |> Config.application()
+    |> Config.repo(config).get_by(uid: uid)
   end
 
   @doc """
@@ -67,16 +73,18 @@ defmodule ExOauth2Provider.Applications do
 
   ## Examples
 
-      iex> get_application("c341a5c7b331ef076eb4954668d54f590e0009e06b81b100191aa22c93044f3d", "SECRET")
+      iex> load_application("c341a5c7b331ef076eb4954668d54f590e0009e06b81b100191aa22c93044f3d", "SECRET")
       %OauthApplication{}
 
-      iex> get_application("75d72f326a69444a9287ea264617058dbbfe754d7071b8eef8294cbf4e7e0fdc", "SECRET")
+      iex> load_application("75d72f326a69444a9287ea264617058dbbfe754d7071b8eef8294cbf4e7e0fdc", "SECRET")
       nil
 
   """
-  @spec get_application(binary(), binary()) :: Application.t() | nil
-  def get_application(uid, secret) do
-    ExOauth2Provider.repo.get_by(Config.application(), uid: uid, secret: secret)
+  @spec load_application(binary(), binary(), keyword()) :: Application.t() | nil
+  def load_application(uid, secret, config \\ []) do
+    config
+    |> Config.application()
+    |> Config.repo(config).get_by(uid: uid, secret: secret)
   end
 
   @doc """
@@ -88,11 +96,12 @@ defmodule ExOauth2Provider.Applications do
       [%OauthApplication{}, ...]
 
   """
-  @spec get_applications_for(Schema.t()) :: [Application.t()]
-  def get_applications_for(resource_owner) do
-    Config.application()
+  @spec get_applications_for(Schema.t(), keyword()) :: [Application.t()]
+  def get_applications_for(resource_owner, config \\ []) do
+    config
+    |> Config.application()
     |> where([a], a.owner_id == ^resource_owner.id)
-    |> ExOauth2Provider.repo.all()
+    |> Config.repo(config).all()
   end
 
   @doc """
@@ -103,16 +112,17 @@ defmodule ExOauth2Provider.Applications do
       iex> get_authorized_applications_for(owner)
       [%OauthApplication{},...]
   """
-  @spec get_authorized_applications_for(Schema.t()) :: [Application.t()]
-  def get_authorized_applications_for(resource_owner) do
+  @spec get_authorized_applications_for(Schema.t(), keyword()) :: [Application.t()]
+  def get_authorized_applications_for(resource_owner, config \\ []) do
     application_ids =
       resource_owner
-      |> AccessTokens.get_authorized_tokens_for()
+      |> AccessTokens.get_authorized_tokens_for(config)
       |> Enum.map(&Map.get(&1, :application_id))
 
-    Config.application()
+    config
+    |> Config.application()
     |> where([a], a.id in ^application_ids)
-    |> ExOauth2Provider.repo.all()
+    |> Config.repo(config).all()
   end
 
   @doc """
@@ -127,12 +137,13 @@ defmodule ExOauth2Provider.Applications do
       {:error, %Ecto.Changeset{}}
 
   """
-  @spec create_application(Schema.t()) :: {:ok, Application.t()} | {:error, Changeset.t()}
-  def create_application(owner, attrs \\ %{}) do
-    Config.application()
+  @spec create_application(Schema.t(), map(), keyword()) :: {:ok, Application.t()} | {:error, Changeset.t()}
+  def create_application(owner, attrs \\ %{}, config \\ []) do
+    config
+    |> Config.application()
     |> struct(owner: owner)
-    |> Application.changeset(attrs)
-    |> ExOauth2Provider.repo.insert()
+    |> Application.changeset(attrs, config)
+    |> Config.repo(config).insert()
   end
 
   @doc """
@@ -147,11 +158,11 @@ defmodule ExOauth2Provider.Applications do
       {:error, %Ecto.Changeset{}}
 
   """
-  @spec update_application(Application.t(), map()) :: {:ok, Application.t()} | {:error, Changeset.t()}
-  def update_application(application, attrs) do
+  @spec update_application(Application.t(), map(), keyword()) :: {:ok, Application.t()} | {:error, Changeset.t()}
+  def update_application(application, attrs, config \\ []) do
     application
-    |> Application.changeset(attrs)
-    |> ExOauth2Provider.repo.update()
+    |> Application.changeset(attrs, config)
+    |> Config.repo(config).update()
   end
 
   @doc """
@@ -166,9 +177,9 @@ defmodule ExOauth2Provider.Applications do
       {:error, %Ecto.Changeset{}}
 
   """
-  @spec delete_application(Application.t()) :: {:ok, Application.t()} | {:error, Changeset.t()}
-  def delete_application(application) do
-    ExOauth2Provider.repo.delete(application)
+  @spec delete_application(Application.t(), keyword()) :: {:ok, Application.t()} | {:error, Changeset.t()}
+  def delete_application(application, config \\ []) do
+    Config.repo(config).delete(application)
   end
 
   @doc """
@@ -180,15 +191,18 @@ defmodule ExOauth2Provider.Applications do
       {:ok, [%OauthAccessToken{}]}
 
   """
-  @spec revoke_all_access_tokens_for(Application.t(), Schema.t()) :: [AccessToken.t()]
-  def revoke_all_access_tokens_for(application, resource_owner) do
-    ExOauth2Provider.repo.transaction fn ->
-      Config.access_token()
+  @spec revoke_all_access_tokens_for(Application.t(), Schema.t(), keyword()) :: [AccessToken.t()]
+  def revoke_all_access_tokens_for(application, resource_owner, config \\ []) do
+    repo = Config.repo(config)
+
+    repo.transaction fn ->
+      config
+      |> Config.access_token()
       |> where([a], a.resource_owner_id == ^resource_owner.id)
       |> where([a], a.application_id == ^application.id)
       |> where([o], is_nil(o.revoked_at))
-      |> ExOauth2Provider.repo.all()
-      |> Enum.map(&AccessTokens.revoke!/1)
+      |> repo.all()
+      |> Enum.map(&AccessTokens.revoke(&1, config))
     end
   end
 end

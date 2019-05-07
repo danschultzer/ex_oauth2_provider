@@ -45,11 +45,12 @@ defmodule ExOauth2Provider.Plug.VerifyHeader do
   @doc false
   @spec call(Conn.t(), keyword()) :: Conn.t()
   def call(conn, opts) do
-    key = Keyword.get(opts, :key, :default)
+    key    = Keyword.get(opts, :key, :default)
+    config = Keyword.get(opts, :config, [])
 
     conn
     |> fetch_token(opts)
-    |> verify_token(conn, key)
+    |> verify_token(conn, key, config)
   end
 
   defp fetch_token(conn, opts) do
@@ -71,10 +72,10 @@ defmodule ExOauth2Provider.Plug.VerifyHeader do
     end
   end
 
-  defp verify_token(nil, conn, _), do: conn
-  defp verify_token("", conn, _), do: conn
-  defp verify_token(token, conn, key) do
-    access_token = ExOauth2Provider.authenticate_token(token)
+  defp verify_token(nil, conn, _, _config), do: conn
+  defp verify_token("", conn, _, _config), do: conn
+  defp verify_token(token, conn, key, config) do
+    access_token = ExOauth2Provider.authenticate_token(token, config)
 
     Plug.set_current_access_token(conn, access_token, key)
   end

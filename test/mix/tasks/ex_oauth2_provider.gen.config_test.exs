@@ -10,7 +10,7 @@ defmodule Mix.Tasks.ExOauth2Provider.Gen.ConfigTest do
 
   @tmp_path Path.join(["tmp", inspect(Config)])
   @config_file "config/config.exs"
-  @options ~w(-r #{inspect Repo})
+  @options ~w(--context-app test -r #{inspect Repo})
 
   setup do
     File.rm_rf!(@tmp_path)
@@ -33,7 +33,7 @@ defmodule Mix.Tasks.ExOauth2Provider.Gen.ConfigTest do
   test "appends to config file" do
     File.cd!(@tmp_path, fn ->
       original = File.read!(@config_file)
-      expected = "config :ex_oauth2_provider, ExOauth2Provider"
+      expected = "config :test, ExOauth2Provider"
       Config.run(@options)
       source = File.read!(@config_file)
 

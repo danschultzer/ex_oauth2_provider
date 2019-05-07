@@ -1,7 +1,7 @@
 defmodule ExOauth2Provider.AccessTokensTest do
   use ExOauth2Provider.TestCase
 
-  alias ExOauth2Provider.Test.{ConfigHelpers, Fixtures, QueryHelpers}
+  alias ExOauth2Provider.Test.{Fixtures, QueryHelpers}
   alias ExOauth2Provider.AccessTokens
   alias Dummy.OauthAccessTokens.OauthAccessToken
 
@@ -29,32 +29,32 @@ defmodule ExOauth2Provider.AccessTokensTest do
       {:ok, old_access_token} = AccessTokens.create_token(user, %{use_refresh_token: true})
       {:ok, new_access_token} = AccessTokens.create_token(user, %{use_refresh_token: true, previous_refresh_token: old_access_token})
 
-      assert %OauthAccessToken{id: id} = AccessTokens.get_by_previous_refresh_token_for(new_access_token)
+      assert %OauthAccessToken{id: id} = AccessTokens.get_by_previous_refresh_token_for(new_access_token, [])
       assert id == old_access_token.id
 
-      refute AccessTokens.get_by_previous_refresh_token_for(old_access_token)
+      refute AccessTokens.get_by_previous_refresh_token_for(old_access_token, [])
 
       {:ok, new_access_token_different_user} = AccessTokens.create_token(Fixtures.resource_owner(), %{use_refresh_token: true, previous_refresh_token: old_access_token})
 
-      refute AccessTokens.get_by_previous_refresh_token_for(new_access_token_different_user)
+      refute AccessTokens.get_by_previous_refresh_token_for(new_access_token_different_user, [])
     end
 
     test "with application", %{user: user, application: application} do
       {:ok, old_access_token} = AccessTokens.create_token(user, %{application: application, use_refresh_token: true})
       {:ok, new_access_token} = AccessTokens.create_token(user, %{application: application, use_refresh_token: true, previous_refresh_token: old_access_token})
 
-      assert %OauthAccessToken{id: id} = AccessTokens.get_by_previous_refresh_token_for(new_access_token)
+      assert %OauthAccessToken{id: id} = AccessTokens.get_by_previous_refresh_token_for(new_access_token, [])
       assert id == old_access_token.id
 
-      refute AccessTokens.get_by_previous_refresh_token_for(old_access_token)
+      refute AccessTokens.get_by_previous_refresh_token_for(old_access_token, [])
 
       {:ok, new_access_token_different_user} = AccessTokens.create_token(Fixtures.resource_owner(), %{application: application, use_refresh_token: true, previous_refresh_token: old_access_token})
-      refute AccessTokens.get_by_previous_refresh_token_for(new_access_token_different_user)
+      refute AccessTokens.get_by_previous_refresh_token_for(new_access_token_different_user, [])
 
       new_application = Fixtures.application(resource_owner: user, uid: "new_app")
       {:ok, new_access_token_different_app} = AccessTokens.create_token(user, %{application: new_application, use_refresh_token: true, previous_refresh_token: old_access_token})
 
-      refute AccessTokens.get_by_previous_refresh_token_for(new_access_token_different_app)
+      refute AccessTokens.get_by_previous_refresh_token_for(new_access_token_different_app, [])
     end
   end
 
@@ -167,9 +167,7 @@ defmodule ExOauth2Provider.AccessTokensTest do
     end
 
     test "with custom access token generator", %{user: user} do
-      ConfigHelpers.set_config(:access_token_generator, {__MODULE__, :access_token_generator})
-
-      {:ok, access_token} = AccessTokens.create_token(user, %{})
+      {:ok, access_token} = AccessTokens.create_token(user, %{}, access_token_generator: {__MODULE__, :access_token_generator})
       assert access_token.token == "custom_generated-#{user.id}"
     end
 

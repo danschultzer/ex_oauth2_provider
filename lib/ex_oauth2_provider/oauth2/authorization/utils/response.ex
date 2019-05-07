@@ -10,29 +10,29 @@ defmodule ExOauth2Provider.Authorization.Utils.Response do
   @type success :: {:ok, Schema.t(), [binary()]}
 
   @doc false
-  @spec error_response({:error, map()}) :: error() | redirect() | native_redirect()
-  def error_response({:error, %{error: error} = params}), do: build_response(params, error)
+  @spec error_response({:error, map()}, keyword()) :: error() | redirect() | native_redirect()
+  def error_response({:error, %{error: error} = params}, config), do: build_response(params, error, config)
 
   @doc false
-  @spec preauthorize_response({:ok, map()} | {:error, map()}) :: success() | error() | redirect() | native_redirect()
-  def preauthorize_response({:ok, %{grant: grant} = params}), do: build_response(params, %{code: grant.token})
-  def preauthorize_response({:ok, %{client: client, request: %{"scope" => scopes}}}), do: {:ok, client, Scopes.to_list(scopes)}
-  def preauthorize_response({:error, %{error: error} = params}), do: build_response(params, error)
+  @spec preauthorize_response({:ok, map()} | {:error, map()}, keyword()) :: success() | error() | redirect() | native_redirect()
+  def preauthorize_response({:ok, %{grant: grant} = params}, config), do: build_response(params, %{code: grant.token}, config)
+  def preauthorize_response({:ok, %{client: client, request: %{"scope" => scopes}}}, _config), do: {:ok, client, Scopes.to_list(scopes)}
+  def preauthorize_response({:error, %{error: error} = params}, config), do: build_response(params, error, config)
 
   @doc false
-  @spec authorize_response({:ok, map()} | {:error, map()}) :: success() | error() | redirect() | native_redirect()
-  def authorize_response({:ok, %{grant: grant} = params}), do: build_response(params, %{code: grant.token})
-  def authorize_response({:error, %{error: error} = params}), do: build_response(params, error)
+  @spec authorize_response({:ok, map()} | {:error, map()}, keyword()) :: success() | error() | redirect() | native_redirect()
+  def authorize_response({:ok, %{grant: grant} = params}, config), do: build_response(params, %{code: grant.token}, config)
+  def authorize_response({:error, %{error: error} = params}, config), do: build_response(params, error, config)
 
   @doc false
-  @spec deny_response({:error, map()}) :: error() | redirect() | native_redirect()
-  def deny_response({:error, %{error: error} = params}), do: build_response(params, error)
+  @spec deny_response({:error, map()}, keyword()) :: error() | redirect() | native_redirect()
+  def deny_response({:error, %{error: error} = params}, config), do: build_response(params, error, config)
 
-  defp build_response(%{request: request} = params, payload) do
+  defp build_response(%{request: request} = params, payload, config) do
     payload = add_state(payload, request)
 
-    case can_redirect?(params) do
-      true -> build_redirect_response(params, payload)
+    case can_redirect?(params, config) do
+      true -> build_redirect_response(params, payload, config)
       _    -> build_standard_response(params, payload)
     end
   end
@@ -49,8 +49,8 @@ defmodule ExOauth2Provider.Authorization.Utils.Response do
     end
   end
 
-  defp build_redirect_response(%{request: %{"redirect_uri" => redirect_uri}}, payload) do
-    case RedirectURI.native_redirect_uri?(redirect_uri) do
+  defp build_redirect_response(%{request: %{"redirect_uri" => redirect_uri}}, payload, config) do
+    case RedirectURI.native_redirect_uri?(redirect_uri, config) do
       true -> {:native_redirect, payload}
       _    -> {:redirect, RedirectURI.uri_with_query(redirect_uri, payload)}
     end
@@ -66,9 +66,9 @@ defmodule ExOauth2Provider.Authorization.Utils.Response do
     {:error, error, :bad_request}
   end
 
-  defp can_redirect?(%{error: %{error: :invalid_redirect_uri}}), do: false
-  defp can_redirect?(%{error: %{error: :invalid_client}}), do: false
-  defp can_redirect?(%{error: %{error: _error}, request: %{"redirect_uri" => redirect_uri}}), do: !RedirectURI.native_redirect_uri?(redirect_uri)
-  defp can_redirect?(%{error: _}), do: false
-  defp can_redirect?(%{request: %{}}), do: true
+  defp can_redirect?(%{error: %{error: :invalid_redirect_uri}}, _config), do: false
+  defp can_redirect?(%{error: %{error: :invalid_client}}, _config), do: false
+  defp can_redirect?(%{error: %{error: _error}, request: %{"redirect_uri" => redirect_uri}}, config), do: !RedirectURI.native_redirect_uri?(redirect_uri, config)
+  defp can_redirect?(%{error: _}, _config), do: false
+  defp can_redirect?(%{request: %{}}, _config), do: true
 end

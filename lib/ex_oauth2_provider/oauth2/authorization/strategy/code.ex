@@ -55,14 +55,15 @@ defmodule ExOauth2Provider.Authorization.Code do
   end
   ```
   """
-  alias ExOauth2Provider.{Config,
-                          AccessTokens,
-                          AccessGrants,
-                          RedirectURI,
-                          Authorization.Utils.Response,
-                          Utils.Error,
-                          Authorization.Utils,
-                          Scopes}
+  alias ExOauth2Provider.{
+    Config,
+    AccessTokens,
+    AccessGrants,
+    Authorization.Utils,
+    Authorization.Utils.Response,
+    RedirectURI,
+    Scopes,
+    Utils.Error}
   alias Ecto.Schema
 
   @doc """
@@ -83,27 +84,27 @@ defmodule ExOauth2Provider.Authorization.Code do
       {:redirect, redirect_uri}                                     # Redirect
       {:native_redirect, %{code: code}}                             # Redirect to :show page
   """
-  @spec preauthorize(Schema.t(), map()) :: Response.success() | Response.error() | Response.redirect() | Response.native_redirect()
-  def preauthorize(resource_owner, request) do
+  @spec preauthorize(Schema.t(), map(), keyword()) :: Response.success() | Response.error() | Response.redirect() | Response.native_redirect()
+  def preauthorize(resource_owner, request, config \\ []) do
     resource_owner
-    |> Utils.prehandle_request(request)
-    |> validate_request()
-    |> check_previous_authorization()
-    |> reissue_grant()
-    |> Response.preauthorize_response()
+    |> Utils.prehandle_request(request, config)
+    |> validate_request(config)
+    |> check_previous_authorization(config)
+    |> reissue_grant(config)
+    |> Response.preauthorize_response(config)
   end
 
-  defp check_previous_authorization({:error, params}), do: {:error, params}
-  defp check_previous_authorization({:ok, %{resource_owner: resource_owner, client: application, request: %{"scope" => scopes}} = params}) do
-    case AccessTokens.get_token_for(resource_owner, application, scopes) do
+  defp check_previous_authorization({:error, params}, _config), do: {:error, params}
+  defp check_previous_authorization({:ok, %{resource_owner: resource_owner, client: application, request: %{"scope" => scopes}} = params}, config) do
+    case AccessTokens.get_token_for(resource_owner, application, scopes, config) do
       nil   -> {:ok, params}
       token -> {:ok, Map.put(params, :access_token, token)}
     end
   end
 
-  defp reissue_grant({:error, params}), do: {:error, params}
-  defp reissue_grant({:ok, %{access_token: _access_token} = params}), do: issue_grant({:ok, params})
-  defp reissue_grant({:ok, params}), do: {:ok, params}
+  defp reissue_grant({:error, params}, _config), do: {:error, params}
+  defp reissue_grant({:ok, %{access_token: _access_token} = params}, config), do: issue_grant({:ok, params}, config)
+  defp reissue_grant({:ok, params}, _config), do: {:ok, params}
 
   @doc """
   Authorizes an authorization code flow request.
@@ -126,17 +127,17 @@ defmodule ExOauth2Provider.Authorization.Code do
       {:redirect, redirect_uri}                                    # Redirect
       {:native_redirect, %{code: code}}                            # Redirect to :show page
   """
-  @spec authorize(Schema.t(), map()) :: Response.success() | Response.error() | Response.redirect() | Response.native_redirect()
-  def authorize(resource_owner, request) do
+  @spec authorize(Schema.t(), map(), keyword()) :: Response.success() | Response.error() | Response.redirect() | Response.native_redirect()
+  def authorize(resource_owner, request, config \\ []) do
     resource_owner
-    |> Utils.prehandle_request(request)
-    |> validate_request()
-    |> issue_grant()
-    |> Response.authorize_response()
+    |> Utils.prehandle_request(request, config)
+    |> validate_request(config)
+    |> issue_grant(config)
+    |> Response.authorize_response(config)
   end
 
-  defp issue_grant({:error, %{error: _error} = params}), do: {:error, params}
-  defp issue_grant({:ok, %{resource_owner: resource_owner, client: application, request: request} = params}) do
+  defp issue_grant({:error, %{error: _error} = params}, _config), do: {:error, params}
+  defp issue_grant({:ok, %{resource_owner: resource_owner, client: application, request: request} = params}, config) do
     grant_params =
       request
       |> Map.take(["redirect_uri", "scope"])
@@ -146,9 +147,9 @@ defmodule ExOauth2Provider.Authorization.Code do
           _       -> {String.to_atom(k), v}
         end
       end)
-      |> Map.put(:expires_in, Config.authorization_code_expires_in())
+      |> Map.put(:expires_in, Config.authorization_code_expires_in(config))
 
-    case AccessGrants.create_grant(resource_owner, application, grant_params) do
+    case AccessGrants.create_grant(resource_owner, application, grant_params, config) do
       {:ok, grant}    -> {:ok, Map.put(params, :grant, grant)}
       {:error, error} -> Error.add_error({:ok, params}, error)
     end
@@ -169,21 +170,21 @@ defmodule ExOauth2Provider.Authorization.Code do
       {:error, %{error: error, error_description: _}, http_status} # Error occurred
       {:redirect, redirect_uri}                                    # Redirect
   """
-  @spec deny(Schema.t(), map()) :: Response.error() | Response.redirect()
-  def deny(resource_owner, request) do
+  @spec deny(Schema.t(), map(), keyword()) :: Response.error() | Response.redirect()
+  def deny(resource_owner, request, config \\ []) do
     resource_owner
-    |> Utils.prehandle_request(request)
-    |> validate_request()
+    |> Utils.prehandle_request(request, config)
+    |> validate_request(config)
     |> Error.add_error(Error.access_denied())
-    |> Response.deny_response()
+    |> Response.deny_response(config)
   end
 
-  defp validate_request({:error, params}), do: {:error, params}
-  defp validate_request({:ok, params}) do
+  defp validate_request({:error, params}, _config), do: {:error, params}
+  defp validate_request({:ok, params}, config) do
     {:ok, params}
     |> validate_resource_owner()
-    |> validate_redirect_uri()
-    |> validate_scopes()
+    |> validate_redirect_uri(config)
+    |> validate_scopes(config)
   end
 
   defp validate_resource_owner({:ok, %{resource_owner: resource_owner} = params}) do
@@ -193,10 +194,13 @@ defmodule ExOauth2Provider.Authorization.Code do
     end
   end
 
-  defp validate_scopes({:error, params}), do: {:error, params}
-  defp validate_scopes({:ok, %{request: %{"scope" => scopes}, client: client} = params}) do
+  defp validate_scopes({:error, params}, _config), do: {:error, params}
+  defp validate_scopes({:ok, %{request: %{"scope" => scopes}, client: client} = params}, config) do
     scopes        = Scopes.to_list(scopes)
-    server_scopes = client.scopes |> Scopes.to_list() |> Scopes.default_to_server_scopes()
+    server_scopes =
+      client.scopes
+      |> Scopes.to_list()
+      |> Scopes.default_to_server_scopes(config)
 
     case Scopes.all?(server_scopes, scopes) do
       true  -> {:ok, params}
@@ -204,18 +208,18 @@ defmodule ExOauth2Provider.Authorization.Code do
     end
   end
 
-  defp validate_redirect_uri({:error, params}), do: {:error, params}
-  defp validate_redirect_uri({:ok, %{request: %{"redirect_uri" => redirect_uri}, client: client} = params}) do
+  defp validate_redirect_uri({:error, params}, _config), do: {:error, params}
+  defp validate_redirect_uri({:ok, %{request: %{"redirect_uri" => redirect_uri}, client: client} = params}, config) do
     cond do
-      RedirectURI.native_redirect_uri?(redirect_uri) ->
+      RedirectURI.native_redirect_uri?(redirect_uri, config) ->
         {:ok, params}
 
-      RedirectURI.valid_for_authorization?(redirect_uri, client.redirect_uri) ->
+      RedirectURI.valid_for_authorization?(redirect_uri, client.redirect_uri, config) ->
         {:ok, params}
 
       true ->
         Error.add_error({:ok, params}, Error.invalid_redirect_uri())
     end
   end
-  defp validate_redirect_uri({:ok, params}), do: Error.add_error({:ok, params}, Error.invalid_request())
+  defp validate_redirect_uri({:ok, params}, _config), do: Error.add_error({:ok, params}, Error.invalid_request())
 end

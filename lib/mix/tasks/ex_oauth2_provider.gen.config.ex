@@ -16,10 +16,11 @@ defmodule Mix.Tasks.ExOauth2Provider.Gen.Config do
   """
   use Mix.Task
 
+  alias ExOauth2Provider.Config, as: ProviderConfig
   alias Mix.{Ecto, ExOauth2Provider, ExOauth2Provider.Config}
 
-  @switches     [resource_owner: :string, config_file: :string]
-  @default_opts [resource_owner: "MyApp.Users.User", config_file: "config/config.exs"]
+  @switches     [config_file: :string, context_app: :string, resource_owner: :string]
+  @default_opts [config_file: "config/config.exs"]
   @mix_task     "ex_oauth2_provider.gen.migrations"
 
   @impl true
@@ -38,5 +39,11 @@ defmodule Mix.Tasks.ExOauth2Provider.Gen.Config do
     Map.put(config, :repos, repos)
   end
 
-  defp update_config_file(config), do: Config.update(config)
+  defp update_config_file(config) do
+    context_app    = Map.get(config, :context_app) || ProviderConfig.otp_app()
+    resource_owner = Map.get(config, :resource_owner) || Module.concat([ProviderConfig.app_base(context_app), "Users", "User"])
+    config_file    = Map.get(config, :config_file)
+
+    Config.update(context_app, config_file, Map.put(config, :resource_owner, resource_owner))
+  end
 end

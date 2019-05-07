@@ -159,7 +159,7 @@ defmodule ExOauth2Provider.Authorization.CodeTest do
     access_grant = Repo.get_by(OauthAccessGrant, token: code)
 
     assert access_grant.resource_owner_id == resource_owner.id
-    assert access_grant.expires_in == Config.authorization_code_expires_in()
+    assert access_grant.expires_in == Config.authorization_code_expires_in([])
     assert access_grant.scopes == @valid_request["scope"]
   end
 

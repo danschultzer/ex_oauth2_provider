@@ -22,33 +22,21 @@ defmodule ExOauth2Provider.Scopes do
   end
 
   @doc """
-  Default scopes for server
-  """
-  @spec default_server_scopes() :: [binary()]
-  def default_server_scopes, do: Config.default_scopes()
-
-  @doc """
-  All scopes for server
-  """
-  @spec server_scopes() :: [binary()]
-  def server_scopes, do: Config.server_scopes()
-
-  @doc """
   Filter defaults scopes from scopes list
   """
-  @spec filter_default_scopes([binary()]) :: [binary()]
-  def filter_default_scopes(scopes) do
-    default_scopes = default_server_scopes()
+  @spec filter_default_scopes([binary()], keyword()) :: [binary()]
+  def filter_default_scopes(scopes, config) do
+    default_server_scopes = Config.default_scopes(config)
 
-    Enum.filter(scopes, &Enum.member?(default_scopes, &1))
+    Enum.filter(scopes, &Enum.member?(default_server_scopes, &1))
   end
 
   @doc """
   Will default to server scopes if no scopes supplied
   """
-  @spec default_to_server_scopes([binary()]) :: [binary()]
-  def default_to_server_scopes([]), do: Config.server_scopes()
-  def default_to_server_scopes(server_scopes), do: server_scopes
+  @spec default_to_server_scopes([binary()], keyword()) :: [binary()]
+  def default_to_server_scopes([], config), do: Config.server_scopes(config)
+  def default_to_server_scopes(server_scopes, _config), do: server_scopes
 
   @doc """
   Fetch scopes from an access token

@@ -2,7 +2,7 @@ defmodule ExOauth2ProviderTest do
   use ExOauth2Provider.TestCase
   doctest ExOauth2Provider
 
-  alias ExOauth2Provider.Test.{ConfigHelpers, Fixtures, Repo}
+  alias ExOauth2Provider.Test.{Fixtures, Repo}
   alias ExOauth2Provider.AccessTokens
   alias Dummy.OauthAccessTokens.OauthAccessToken
 
@@ -45,13 +45,11 @@ defmodule ExOauth2ProviderTest do
     end
 
     test "doesn't revoke when refresh_token_revoked_on_use? == false" do
-      ConfigHelpers.set_config(:revoke_refresh_token_on_use, false)
-
       user = Fixtures.resource_owner()
       access_token  = Fixtures.access_token(resource_owner: user, use_refresh_token: true)
       access_token2 = Fixtures.access_token(resource_owner: user, use_refresh_token: true, previous_refresh_token: access_token)
 
-      assert {:ok, access_token2} = ExOauth2Provider.authenticate_token(access_token2.token)
+      assert {:ok, access_token2} = ExOauth2Provider.authenticate_token(access_token2.token, revoke_refresh_token_on_use: false)
       access_token = Repo.get_by(OauthAccessToken, token: access_token.token)
       refute AccessTokens.is_revoked?(access_token)
       access_token2 = Repo.get_by(OauthAccessToken, token: access_token2.token)

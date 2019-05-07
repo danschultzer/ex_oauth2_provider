@@ -44,7 +44,7 @@ You have to ensure that a `resource_owner` has been authenticated on the followi
 
 ```elixir
 # GET /oauth/authorize?response_type=code&client_id=CLIENT_ID&redirect_uri=CALLBACK_URL&scope=read
-case ExOauth2Provider.Authorization.preauthorize(resource_owner, params) do
+case ExOauth2Provider.Authorization.preauthorize(resource_owner, params, config) do
   {:ok, client, scopes}             -> # render authorization page
   {:redirect, redirect_uri}         -> # redirect to external redirect_uri
   {:native_redirect, %{code: code}} -> # redirect to local :show endpoint
@@ -52,14 +52,14 @@ case ExOauth2Provider.Authorization.preauthorize(resource_owner, params) do
 end
 
 # POST /oauth/authorize?response_type=code&client_id=CLIENT_ID&redirect_uri=CALLBACK_URL&scope=read
-ExOauth2Provider.Authorization.authorize(resource_owner, params) do
+ExOauth2Provider.Authorization.authorize(resource_owner, params, config) do
   {:redirect, redirect_uri}         -> # redirect to external redirect_uri
   {:native_redirect, %{code: code}} -> # redirect to local :show endpoint
   {:error, error, http_status}      -> # render error page
 end
 
 # DELETE /oauth/authorize?response_type=code&client_id=CLIENT_ID&redirect_uri=CALLBACK_URL&scope=read
-ExOauth2Provider.Authorization.deny(resource_owner, params) do
+ExOauth2Provider.Authorization.deny(resource_owner, params, config) do
   {:redirect, redirect_uri}         -> # redirect to external redirect_uri
   {:error, error, http_status}      -> # render error page
 end
@@ -69,7 +69,7 @@ end
 
 ```elixir
 # POST /oauth/token?client_id=CLIENT_ID&client_secret=CLIENT_SECRET&grant_type=authorization_code&code=AUTHORIZATION_CODE&redirect_uri=CALLBACK_URL
-case ExOauth2Provider.Token.grant(params) do
+case ExOauth2Provider.Token.grant(params, config) do
   {:ok, access_token}               -> # JSON response
   {:error, error, http_status}      -> # JSON response
 end
@@ -79,7 +79,7 @@ end
 
 ```elixir
 # GET /oauth/revoke?client_id=CLIENT_ID&client_secret=CLIENT_SECRET&token=ACCESS_TOKEN
-case ExOauth2Provider.Token.revoke(params) do
+case ExOauth2Provider.Token.revoke(params, config) do
   {:ok, %{}}                        -> # JSON response
   {:error, error, http_status}      -> # JSON response
 end
@@ -97,7 +97,7 @@ ExOauth2Provider doesn't support **implicit** grant flow. Instead you should set
 
 ```elixir
 # POST /oauth/token?client_id=CLIENT_ID&client_secret=CLIENT_SECRET&grant_type=client_credentials
-case ExOauth2Provider.Token.grant(params) do
+case ExOauth2Provider.Token.grant(params, config) do
   {:ok, access_token}               -> # JSON response
   {:error, error, http_status}      -> # JSON response
 end
@@ -108,7 +108,7 @@ end
 Refresh tokens can be enabled in the configuration:
 
 ```elixir
-config :ex_oauth2_provider, ExOauth2Provider,
+config :my_app, ExOauth2Provider,
   repo: ExOauth2Provider.Test.Repo,
   resource_owner: Dummy.Users.User,
   use_refresh_token: true
@@ -118,7 +118,7 @@ The `refresh_token` grant flow will then be enabled.
 
 ```elixir
 # POST /oauth/token?client_id=CLIENT_ID&client_secret=CLIENT_SECRET&grant_type=refresh_token&refresh_token=REFRESH_TOKEN
-case ExOauth2Provider.Token.grant(params) do
+case ExOauth2Provider.Token.grant(params, config) do
   {:ok, access_token}               -> # JSON response
   {:error, error, http_status}      -> # JSON response
 end
@@ -130,12 +130,12 @@ You'll need to provide an authorization method that accepts username and passwor
 
 ```elixir
 # Configuration in config/config.exs
-config :ex_oauth2_provider, ExOauth2Provider,
+config :my_app, ExOauth2Provider,
   password_auth: {MyApp.MyModule, :authenticate}
 
 # Module example
 defmodule MyApp.MyModule do
-  def authenticate(username, password) do
+  def authenticate(username, password, config) do
     user = repo.get_by(User, email: username)
     cond do
       user == nil                       -> {:error, :no_user_found}
@@ -150,7 +150,7 @@ The `password` grant flow will then be enabled.
 
 ```elixir
 # POST /oauth/token?client_id=CLIENT_ID&grant_type=password&username=USERNAME&password=PASSWORD
-case ExOauth2Provider.Token.grant(params) do
+case ExOauth2Provider.Token.grant(params, config) do
   {:ok, access_token}               -> # JSON response
   {:error, error, http_status}      -> # JSON response
 end
@@ -161,7 +161,7 @@ end
 Server wide scopes can be defined in the configuration:
 
 ```elixir
-config :ex_oauth2_provider, ExOauth2Provider,
+config :my_app, ExOauth2Provider,
   repo: ExOauth2Provider.Test.Repo,
   resource_owner: Dummy.Users.User,
   default_scopes: ~w(public),
@@ -181,10 +181,11 @@ Looks for a verified token loaded by [`VerifyHeader`](#exoauth2providerplugverif
 You can use a custom `:handler` as part of a pipeline, or inside a Phoenix controller like so:
 
 ```elixir
-defmodule MyApp.MyController do
-  use MyApp.Web, :controller
+defmodule MyAppWeb.MyController do
+  use MyAppWeb, :controller
 
-  plug ExOauth2Provider.Plug.EnsureAuthenticated, handler: MyApp.MyAuthErrorHandler
+  plug ExOauth2Provider.Plug.EnsureAuthenticated,
+    handler: MyAppWeb.MyAuthErrorHandler
 end
 ```
 
@@ -195,20 +196,22 @@ end
 Looks for a previously verified token. If one is found, confirms that all listed scopes are present in the token. If not, the `:unauthorized` function is called on your `:handler`.
 
 ```elixir
-defmodule MyApp.MyController do
-  use MyApp.Web, :controller
+defmodule MyAppWeb.MyController do
+  use MyAppWeb, :controller
 
-  plug ExOauth2Provider.Plug.EnsureScopes, handler: MyApp.MyAuthErrorHandler, scopes: ~w(read write)
+  plug ExOauth2Provider.Plug.EnsureScopes,
+    handler: MyAppWeb.MyAuthErrorHandler, scopes: ~w(read write)
 end
 ```
 
 When scopes' sets are specified through a `:one_of` map, the token is searched for at least one matching scopes set to allow the request. The first set that matches will allow the request. If no set matches, the `:unauthorized` function is called.
 
 ```elixir
-defmodule MyApp.MyController do
-  use MyApp.Web, :controller
+defmodule MyAppWeb.MyController do
+  use MyAppWeb, :controller
 
-  plug ExOauth2Provider.Plug.EnsureScopes, handler: MyApp.MyAuthErrorHandler,
+  plug ExOauth2Provider.Plug.EnsureScopes,
+    handler: MyAppWeb.MyAuthErrorHandler,
     one_of: [~w(admin), ~w(read write)]
 end
 ```
@@ -218,7 +221,7 @@ end
 If the Authorization Header was verified, you'll be able to retrieve the current resource owner or access token.
 
 ```elixir
-ExOauth2Provider.Plug.current_access_token(conn) # access the token in the default location
+ExOauth2Provider.Plug.current_access_token(conn, config) # access the token in the default location
 ExOauth2Provider.Plug.current_access_token(conn, :secret) # access the token in the secret location
 ```
 
@@ -233,7 +236,7 @@ You can add your own access token generator, as this example shows:
 
 ```elixir
 # config/config.exs
-config :ex_oauth2_provider, ExOauth2Provider,
+config :my_app, ExOauth2Provider,
   access_token_generator: {MyModule, :my_method}
 
 defmodule MyModule
@@ -258,7 +261,7 @@ You can add extra values to the response body.
 
 ```elixir
 # config/config.exs
-config :ex_oauth2_provider, ExOauth2Provider,
+config :my_app, ExOauth2Provider,
   access_token_response_body_handler: {MyModule, :my_method}
 
 defmodule MyModule
