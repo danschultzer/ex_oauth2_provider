@@ -33,12 +33,15 @@ defmodule Mix.Tasks.ExOauth2Provider.Gen.ConfigTest do
   test "appends to config file" do
     File.cd!(@tmp_path, fn ->
       original = File.read!(@config_file)
-      expected = "config :test, ExOauth2Provider"
-      Config.run(@options)
-      source = File.read!(@config_file)
 
-      assert String.starts_with?(source, original)
-      assert String.contains?(source, expected)
+      Config.run(@options)
+
+      file = File.read!(@config_file)
+
+      assert file =~ "config :test, ExOauth2Provider,"
+      assert file =~ "  repo: #{inspect Repo},"
+      assert file =~ "  resource_owner: Test.Users.User"
+      assert file =~ original
     end)
   end
 
@@ -46,21 +49,20 @@ defmodule Mix.Tasks.ExOauth2Provider.Gen.ConfigTest do
     File.cd!(@tmp_path, fn ->
       # Should only append once
       Config.run(@options)
-      source = File.read!(@config_file)
+      file = File.read!(@config_file)
       Config.run(@options)
-      source2 = File.read!(@config_file)
+      file2 = File.read!(@config_file)
 
-      assert source == source2
+      assert file == file2
     end)
   end
 
   test "configures resource_owner in config file" do
     File.cd!(@tmp_path, fn ->
-      expected = "resource_owner: Test.ResourceOwner"
       Config.run(@options ++ ~w(--resource-owner Test.ResourceOwner))
-      source = File.read!(@config_file)
+      file = File.read!(@config_file)
 
-      assert String.contains?(source, expected)
+      assert file =~ "  resource_owner: Test.ResourceOwner"
     end)
   end
 end

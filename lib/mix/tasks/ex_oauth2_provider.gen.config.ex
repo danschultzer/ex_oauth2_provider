@@ -39,11 +39,13 @@ defmodule Mix.Tasks.ExOauth2Provider.Gen.Config do
     Map.put(config, :repos, repos)
   end
 
-  defp update_config_file(config) do
+  defp update_config_file(%{repos: [repo | _repos]} = config) do
     context_app    = Map.get(config, :context_app) || ProviderConfig.otp_app()
-    resource_owner = Map.get(config, :resource_owner) || Module.concat([ProviderConfig.app_base(context_app), "Users", "User"])
+    resource_owner = Map.get(config, :resource_owner) || resource_owner(ProviderConfig.app_base(context_app))
     config_file    = Map.get(config, :config_file)
 
-    Config.update(context_app, config_file, Map.put(config, :resource_owner, resource_owner))
+    Config.update(config_file, context_app, repo: inspect(repo), resource_owner: resource_owner)
   end
+
+  defp resource_owner(base), do: inspect Module.concat([base, "Users", "User"])
 end

@@ -2,15 +2,13 @@ defmodule Mix.ExOauth2Provider.Config do
   @moduledoc false
 
   @template """
-  config :<%= context_app %>, ExOauth2Provider,
-    repo: <%= repo %>,
-    resource_owner: <%= resource_owner %>
+  config :<%= app %>, <%= inspect key %><%= for {key, value} <- opts do %>,
+    <%= key %>: <%= value %><% end %>
   """
 
-  @spec update(binary(), binary(), map()) :: map()
-  def update(context_app, config_file, %{repos: repos, resource_owner: resource_owner}) do
-    repo    = Enum.map(repos, &to_string(&1))
-    content = EEx.eval_string(@template, context_app: context_app, repo: repo, resource_owner: resource_owner)
+  @spec update(binary(), binary(), keyword()) :: map()
+  def update(config_file, context_app, opts, key \\ ExOauth2Provider) do
+    content = EEx.eval_string(@template, app: context_app, key: key, opts: opts)
     source  = if File.exists?(config_file), do: File.read!(config_file), else: false
 
     source
