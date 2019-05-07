@@ -5,11 +5,11 @@ defmodule ExOauth2Provider.Authorization.Utils do
   alias Ecto.Schema
 
   @doc false
-  @spec prehandle_request(Schema.t(), map()) :: {:ok, map()} | {:error, map()}
-  def prehandle_request(resource_owner, request) do
+  @spec prehandle_request(Schema.t(), map(), keyword()) :: {:ok, map()} | {:error, map()}
+  def prehandle_request(resource_owner, request, config) do
     resource_owner
     |> new_params(request)
-    |> load_client()
+    |> load_client(config)
     |> set_defaults()
   end
 
@@ -17,13 +17,13 @@ defmodule ExOauth2Provider.Authorization.Utils do
     {:ok, %{resource_owner: resource_owner, request: request}}
   end
 
-  defp load_client({:ok, %{request: %{"client_id" => client_id}} = params}) do
-    case Applications.get_application(client_id) do
+  defp load_client({:ok, %{request: %{"client_id" => client_id}} = params}, config) do
+    case Applications.get_application(client_id, config) do
       nil    -> Error.add_error({:ok, params}, Error.invalid_client())
       client -> {:ok, Map.put(params, :client, client)}
     end
   end
-  defp load_client({:ok, params}), do: Error.add_error({:ok, params}, Error.invalid_request())
+  defp load_client({:ok, params}, _config), do: Error.add_error({:ok, params}, Error.invalid_request())
 
   defp set_defaults({:error, params}), do: {:error, params}
   defp set_defaults({:ok, %{request: request, client: client} = params}) do

@@ -3,43 +3,43 @@ defmodule ExOauth2Provider.RedirectURITest do
   alias ExOauth2Provider.{Config, RedirectURI}
 
   test "validate native url" do
-    uri = Config.native_redirect_uri()
-    assert RedirectURI.validate(uri) == {:ok, uri}
+    uri = Config.native_redirect_uri([])
+    assert RedirectURI.validate(uri, []) == {:ok, uri}
   end
 
   test "validate rejects blank" do
-    assert RedirectURI.validate("") == {:error, "Redirect URI cannot be blank"}
-    assert RedirectURI.validate(nil) == {:error, "Redirect URI cannot be blank"}
-    assert RedirectURI.validate("  ") == {:error, "Redirect URI cannot be blank"}
+    assert RedirectURI.validate("", []) == {:error, "Redirect URI cannot be blank"}
+    assert RedirectURI.validate(nil, []) == {:error, "Redirect URI cannot be blank"}
+    assert RedirectURI.validate("  ", []) == {:error, "Redirect URI cannot be blank"}
   end
 
   test "validate rejects with fragment" do
-    assert RedirectURI.validate("https://app.co/test#fragment") == {:error, "Redirect URI cannot contain fragments"}
+    assert RedirectURI.validate("https://app.co/test#fragment", []) == {:error, "Redirect URI cannot contain fragments"}
   end
 
   test "validate rejects with missing scheme" do
-    assert RedirectURI.validate("app.co") == {:error, "Redirect URI must be an absolute URI"}
+    assert RedirectURI.validate("app.co", []) == {:error, "Redirect URI must be an absolute URI"}
   end
 
   test "validate rejects relative url" do
-    assert RedirectURI.validate("/abc/123") == {:error, "Redirect URI must be an absolute URI"}
+    assert RedirectURI.validate("/abc/123", []) == {:error, "Redirect URI must be an absolute URI"}
   end
 
   test "validate rejects scheme only" do
-    assert RedirectURI.validate("https://") == {:error, "Redirect URI must be an absolute URI"}
+    assert RedirectURI.validate("https://", []) == {:error, "Redirect URI must be an absolute URI"}
   end
 
   test "validate https scheme" do
-    assert RedirectURI.validate("http://app.co/") == {:error, "Redirect URI must be an HTTPS/SSL URI"}
+    assert RedirectURI.validate("http://app.co/", []) == {:error, "Redirect URI must be an HTTPS/SSL URI"}
   end
 
   test "validate" do
     uri = "https://app.co"
-    assert RedirectURI.validate(uri) == {:ok, uri}
+    assert RedirectURI.validate(uri, []) == {:ok, uri}
     uri = "https://app.co/path"
-    assert RedirectURI.validate(uri) == {:ok, uri}
+    assert RedirectURI.validate(uri, []) == {:ok, uri}
     uri = "https://app.co/?query=1"
-    assert RedirectURI.validate(uri) == {:ok, uri}
+    assert RedirectURI.validate(uri, []) == {:ok, uri}
   end
 
   test "matches?#true" do
@@ -61,20 +61,20 @@ defmodule ExOauth2Provider.RedirectURITest do
 
   test "valid_for_authorization?#true" do
     uri = "https://app.co/aaa"
-    assert RedirectURI.valid_for_authorization?(uri, uri)
+    assert RedirectURI.valid_for_authorization?(uri, uri, [])
   end
 
   test "valid_for_authorization?#false" do
-    refute RedirectURI.valid_for_authorization?("https://app.co/aaa", "https://app.co/bbb")
+    refute RedirectURI.valid_for_authorization?("https://app.co/aaa", "https://app.co/bbb", [])
   end
 
   test "valid_for_authorization?#true with array" do
-    assert RedirectURI.valid_for_authorization?("https://app.co/aaa", "https://example.com/bbb\nhttps://app.co/aaa")
+    assert RedirectURI.valid_for_authorization?("https://app.co/aaa", "https://example.com/bbb\nhttps://app.co/aaa", [])
   end
 
   test "valid_for_authorization?#false with invalid uri" do
     uri = "https://app.co/aaa?waffles=abc"
-    refute RedirectURI.valid_for_authorization?(uri, uri)
+    refute RedirectURI.valid_for_authorization?(uri, uri, [])
   end
 
   test "uri_with_query/2" do

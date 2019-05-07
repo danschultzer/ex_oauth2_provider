@@ -2,10 +2,11 @@ defmodule ExOauth2Provider.Token.ClientCredentials do
   @moduledoc """
   Functions for dealing with client credentials strategy.
   """
-  alias ExOauth2Provider.{AccessTokens,
-                          Token.Utils,
-                          Token.Utils.Response,
-                          Utils.Error}
+  alias ExOauth2Provider.{
+    AccessTokens,
+    Token.Utils,
+    Token.Utils.Response,
+    Utils.Error}
 
   @doc """
   Will grant access token by client credentials.
@@ -21,16 +22,16 @@ defmodule ExOauth2Provider.Token.ClientCredentials do
       {:ok, access_token}
       {:error, %{error: error, error_description: description}, http_status}
   """
-  @spec grant(map()) :: {:ok, map()} | {:error, map(), atom()}
-  def grant(%{"grant_type" => "client_credentials"} = request) do
+  @spec grant(map(), keyword()) :: {:ok, map()} | {:error, map(), atom()}
+  def grant(%{"grant_type" => "client_credentials"} = request, config \\ []) do
     {:ok, %{request: request}}
-    |> Utils.load_client()
-    |> issue_access_token_by_creds()
-    |> Response.response()
+    |> Utils.load_client(config)
+    |> issue_access_token_by_creds(config)
+    |> Response.response(config)
   end
 
-  defp issue_access_token_by_creds({:error, params}), do: {:error, params}
-  defp issue_access_token_by_creds({:ok, %{client: application, request: request} = params}) do
+  defp issue_access_token_by_creds({:error, params}, _config), do: {:error, params}
+  defp issue_access_token_by_creds({:ok, %{client: application, request: request} = params}, config) do
     scopes = request["scope"]
     token_params = %{
       use_refresh_token: false, # client_credentials MUST NOT use refresh tokens
@@ -38,9 +39,9 @@ defmodule ExOauth2Provider.Token.ClientCredentials do
     }
 
     application
-    |> AccessTokens.get_application_token_for(scopes)
+    |> AccessTokens.get_application_token_for(scopes, config)
     |> case do
-      nil          -> AccessTokens.create_application_token(application, token_params)
+      nil          -> AccessTokens.create_application_token(application, token_params, config)
       access_token -> {:ok, access_token}
     end
     |> case do

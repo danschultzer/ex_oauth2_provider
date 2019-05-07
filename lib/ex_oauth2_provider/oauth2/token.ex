@@ -2,9 +2,10 @@ defmodule ExOauth2Provider.Token do
   @moduledoc """
   Handler for dealing with generating access tokens.
   """
-  alias ExOauth2Provider.{Config,
-                          Token.Revoke,
-                          Utils.Error}
+  alias ExOauth2Provider.{
+    Config,
+    Token.Revoke,
+    Utils.Error}
   alias Ecto.Schema
 
   @doc """
@@ -22,39 +23,40 @@ defmodule ExOauth2Provider.Token do
 
       {:error, %{error: error, error_description: description}, http_status}
   """
-  @spec grant(map()) :: {:ok, Schema.t()} | {:error, map(), term}
-  def grant(request) do
-    case validate_grant_type(request) do
+  @spec grant(map(), keyword()) :: {:ok, Schema.t()} | {:error, map(), term}
+  def grant(request, config \\ []) do
+    case validate_grant_type(request, config) do
       {:error, :invalid_grant_type} -> Error.unsupported_grant_type()
       {:error, :missing_grant_type} -> Error.invalid_request()
-      {:ok, token_module}           -> token_module.grant(request)
+      {:ok, token_module}           -> token_module.grant(request, config)
     end
   end
 
-  defp validate_grant_type(%{"grant_type" => type}) do
+  defp validate_grant_type(%{"grant_type" => type}, config) do
     type
-    |> fetch_module()
+    |> fetch_module(config)
     |> case do
       nil -> {:error, :invalid_grant_type}
       mod -> {:ok, mod}
     end
   end
-  defp validate_grant_type(_), do: {:error, :missing_grant_type}
+  defp validate_grant_type(_, _config), do: {:error, :missing_grant_type}
 
-  defp fetch_module(type) do
-    Config.grant_flows()
-    |> grant_type_can_be_used?(type)
+  defp fetch_module(type, config) do
+    config
+    |> Config.grant_flows()
+    |> grant_type_can_be_used?(type, config)
     |> case do
       true  -> grant_type_to_mod(type)
       false -> nil
     end
   end
 
-  defp grant_type_can_be_used?(_, "refresh_token"),
-    do: Config.use_refresh_token?()
-  defp grant_type_can_be_used?(_, "password"),
-    do: not is_nil(Config.password_auth())
-  defp grant_type_can_be_used?(grant_flows, grant_type) do
+  defp grant_type_can_be_used?(_, "refresh_token", config),
+    do: Config.use_refresh_token?(config)
+  defp grant_type_can_be_used?(_, "password", config),
+    do: not is_nil(Config.password_auth(config))
+  defp grant_type_can_be_used?(grant_flows, grant_type, _config) do
     Enum.member?(grant_flows, grant_type)
   end
 
@@ -78,6 +80,6 @@ defmodule ExOauth2Provider.Token do
 
       {:ok, %{}}
   """
-  @spec revoke(map()) :: {:ok, Schema.t()} | {:error, map(), term()}
-  def revoke(request), do: Revoke.revoke(request)
+  @spec revoke(map(), keyword()) :: {:ok, Schema.t()} | {:error, map(), term()}
+  def revoke(request, config \\ []), do: Revoke.revoke(request, config)
 end

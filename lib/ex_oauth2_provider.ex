@@ -49,26 +49,27 @@ defmodule ExOauth2Provider do
       {:ok, access_token}
       {:error, reason}
   """
-  @spec authenticate_token(binary()) :: {:ok, map()} | {:error, any()}
-  def authenticate_token(nil), do: {:error, :token_inaccessible}
-  def authenticate_token(token) do
+  @spec authenticate_token(binary(), keyword()) :: {:ok, map()} | {:error, any()}
+  def authenticate_token(token, config \\ [])
+  def authenticate_token(nil, _config), do: {:error, :token_inaccessible}
+  def authenticate_token(token, config) do
     token
-    |> load_access_token()
-    |> maybe_revoke_previous_refresh_token()
+    |> load_access_token(config)
+    |> maybe_revoke_previous_refresh_token(config)
     |> validate_access_token()
-    |> load_resource_owner()
+    |> load_resource_owner(config)
   end
 
-  defp load_access_token(token) do
-    case AccessTokens.get_by_token(token) do
+  defp load_access_token(token, config) do
+    case AccessTokens.get_by_token(token, config) do
       nil          -> {:error, :token_not_found}
       access_token -> {:ok, access_token}
     end
   end
 
-  defp maybe_revoke_previous_refresh_token({:error, error}), do: {:error, error}
-  defp maybe_revoke_previous_refresh_token({:ok, access_token}) do
-    case Config.refresh_token_revoked_on_use?() do
+  defp maybe_revoke_previous_refresh_token({:error, error}, _config), do: {:error, error}
+  defp maybe_revoke_previous_refresh_token({:ok, access_token}, config) do
+    case Config.refresh_token_revoked_on_use?(config) do
       true  -> revoke_previous_refresh_token(access_token)
       false -> {:ok, access_token}
     end
@@ -89,14 +90,11 @@ defmodule ExOauth2Provider do
     end
   end
 
-  defp load_resource_owner({:error, error}), do: {:error, error}
-  defp load_resource_owner({:ok, access_token}) do
-    access_token = repo().preload(access_token, :resource_owner)
+  defp load_resource_owner({:error, error}, _config), do: {:error, error}
+  defp load_resource_owner({:ok, access_token}, config) do
+    repo         = Config.repo(config)
+    access_token = repo.preload(access_token, :resource_owner)
 
     {:ok, access_token}
   end
-
-  @doc false
-  @spec repo() :: Ecto.Repo.t()
-  def repo, do: Keyword.get(Config.config(), :repo)
 end

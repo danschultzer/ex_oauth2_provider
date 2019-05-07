@@ -1,7 +1,7 @@
 defmodule ExOauth2Provider.Token.Strategy.RefreshTokenTest do
   use ExOauth2Provider.TestCase
 
-  alias ExOauth2Provider.Test.{ConfigHelpers, Fixtures, QueryHelpers, Repo}
+  alias ExOauth2Provider.Test.{Fixtures, QueryHelpers, Repo}
   alias ExOauth2Provider.{Config, AccessTokens, Token, Token.RefreshToken}
   alias Dummy.OauthAccessTokens.OauthAccessToken
 
@@ -73,23 +73,19 @@ defmodule ExOauth2Provider.Token.Strategy.RefreshTokenTest do
     assert new_access_token.resource_owner_id == access_token.resource_owner_id
     assert new_access_token.application_id == access_token.application_id
     assert new_access_token.scopes == access_token.scopes
-    assert new_access_token.expires_in == Config.access_token_expires_in()
+    assert new_access_token.expires_in == Config.access_token_expires_in([])
     assert new_access_token.previous_refresh_token == access_token.refresh_token
     assert AccessTokens.is_revoked?(access_token)
   end
 
   test "#grant/1 returns access token with custom response handler", %{valid_request: valid_request} do
-    ConfigHelpers.set_config(:access_token_response_body_handler, {__MODULE__, :access_token_response_body_handler})
-
-    assert {:ok, body} = RefreshToken.grant(valid_request)
+    assert {:ok, body} = RefreshToken.grant(valid_request, access_token_response_body_handler: {__MODULE__, :access_token_response_body_handler})
     access_token = Repo.get_by(OauthAccessToken, token: body.access_token)
     assert body.custom_attr == access_token.inserted_at
   end
 
   test "#grant/1 when refresh_token_revoked_on_use? == false", %{valid_request: valid_request, access_token: access_token} do
-    ConfigHelpers.set_config(:revoke_refresh_token_on_use, false)
-
-    assert {:ok, new_access_token} = RefreshToken.grant(valid_request)
+    assert {:ok, new_access_token} = RefreshToken.grant(valid_request, revoke_refresh_token_on_use: false)
 
     access_token = Repo.get_by(OauthAccessToken, id: access_token.id)
     new_access_token = Repo.get_by(OauthAccessToken, token: new_access_token.access_token)

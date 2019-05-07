@@ -7,37 +7,37 @@ defmodule ExOauth2Provider.RedirectURI do
   @doc """
   Validates if a url can be used as a redirect_uri
   """
-  @spec validate(binary() | nil) :: {:ok, binary()} | {:error, binary()}
-  def validate(nil), do: validate("")
-  def validate(url) when is_binary(url) do
+  @spec validate(binary() | nil, keyword()) :: {:ok, binary()} | {:error, binary()}
+  def validate(nil, config), do: validate("", config)
+  def validate(url, config) when is_binary(url) do
     url
     |> String.trim()
-    |> do_validate()
-  end
+    |> case do
+      "" ->
+        {:error, "Redirect URI cannot be blank"}
 
-  defp do_validate(""),
-    do: {:error, "Redirect URI cannot be blank"}
-  defp do_validate(url) do
-    if native_redirect_uri?(url) do
-      {:ok, url}
-    else
-      do_validate(url, URI.parse(url))
+      url ->
+        case native_redirect_uri?(url, config) do
+          true  -> {:ok, url}
+          false -> do_validate(url, URI.parse(url), config)
+        end
     end
   end
-  defp do_validate(_url, %{fragment: fragment}) when not is_nil(fragment),
+
+  defp do_validate(_url, %{fragment: fragment}, _config) when not is_nil(fragment),
     do: {:error, "Redirect URI cannot contain fragments"}
-  defp do_validate(_url, %{scheme: schema, host: host}) when is_nil(schema) or is_nil(host),
+  defp do_validate(_url, %{scheme: schema, host: host}, _config) when is_nil(schema) or is_nil(host),
     do: {:error, "Redirect URI must be an absolute URI"}
-  defp do_validate(url, uri) do
-    if invalid_ssl_uri?(uri) do
+  defp do_validate(url, uri, config) do
+    if invalid_ssl_uri?(uri, config) do
       {:error, "Redirect URI must be an HTTPS/SSL URI"}
     else
       {:ok, url}
     end
   end
 
-  defp invalid_ssl_uri?(uri) do
-    Config.force_ssl_in_redirect_uri?() and uri.scheme == "http"
+  defp invalid_ssl_uri?(uri, config) do
+    Config.force_ssl_in_redirect_uri?(config) and uri.scheme == "http"
   end
 
   @doc """
@@ -55,10 +55,10 @@ defmodule ExOauth2Provider.RedirectURI do
   @doc """
   Check if a url matches a client redirect_uri
   """
-  @spec valid_for_authorization?(binary(), binary()) :: boolean()
-  def valid_for_authorization?(url, client_url) do
+  @spec valid_for_authorization?(binary(), binary(), keyword()) :: boolean()
+  def valid_for_authorization?(url, client_url, config) do
     url
-    |> validate()
+    |> validate(config)
     |> do_valid_for_authorization?(client_url)
   end
 
@@ -72,9 +72,9 @@ defmodule ExOauth2Provider.RedirectURI do
   @doc """
   Check if a url is native
   """
-  @spec native_redirect_uri?(binary()) :: boolean()
-  def native_redirect_uri?(url) do
-    Config.native_redirect_uri() == url
+  @spec native_redirect_uri?(binary(), keyword()) :: boolean()
+  def native_redirect_uri?(url, config) do
+    Config.native_redirect_uri(config) == url
   end
 
   @doc """

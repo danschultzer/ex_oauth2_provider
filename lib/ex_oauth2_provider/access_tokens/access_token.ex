@@ -66,8 +66,8 @@ defmodule ExOauth2Provider.AccessTokens.AccessToken do
   alias Ecto.Changeset
   alias ExOauth2Provider.{Config, Mixin.Scopes, Utils}
 
-  @spec changeset(Ecto.Schema.t(), map()) :: Changeset.t()
-  def changeset(token, params) do
+  @spec changeset(Ecto.Schema.t(), map(), keyword()) :: Changeset.t()
+  def changeset(token, params, config \\ []) do
     server_scopes = server_scopes(token)
 
     token
@@ -75,9 +75,9 @@ defmodule ExOauth2Provider.AccessTokens.AccessToken do
     |> validate_application_or_resource_owner()
     |> put_previous_refresh_token(params[:previous_refresh_token])
     |> put_refresh_token(params[:use_refresh_token])
-    |> Scopes.put_scopes(server_scopes)
-    |> Scopes.validate_scopes(server_scopes)
-    |> put_token()
+    |> Scopes.put_scopes(server_scopes, config)
+    |> Scopes.validate_scopes(server_scopes, config)
+    |> put_token(config)
   end
 
   defp server_scopes(%{application: %{scopes: scopes}}), do: scopes
@@ -110,14 +110,14 @@ defmodule ExOauth2Provider.AccessTokens.AccessToken do
     |> Changeset.assoc_constraint(:resource_owner)
   end
 
-  defp put_token(changeset) do
+  defp put_token(changeset, config) do
     changeset
-    |> Changeset.change(%{token: gen_token(changeset)})
+    |> Changeset.change(%{token: gen_token(changeset, config)})
     |> Changeset.validate_required([:token])
     |> Changeset.unique_constraint(:token)
   end
 
-  defp gen_token(%{data: %struct{}} = changeset) do
+  defp gen_token(%{data: %struct{}} = changeset, config) do
     created_at = Schema.__timestamp_for__(struct, :inserted_at)
 
     opts =
@@ -129,7 +129,7 @@ defmodule ExOauth2Provider.AccessTokens.AccessToken do
 
     opts = Keyword.put(opts, :resource_owner_id, resource_owner_id(opts[:resource_owner]))
 
-    case Config.access_token_generator() do
+    case Config.access_token_generator(config) do
       nil              -> Utils.generate_token(opts)
       {module, method} -> apply(module, method, [opts])
     end

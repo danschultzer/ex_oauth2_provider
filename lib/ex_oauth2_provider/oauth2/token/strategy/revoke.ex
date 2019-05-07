@@ -2,10 +2,12 @@ defmodule ExOauth2Provider.Token.Revoke do
   @moduledoc """
   Functions for dealing with revocation.
   """
-  alias ExOauth2Provider.{Token.Utils,
-                          Token.Utils.Response,
-                          Utils.Error,
-                          AccessTokens}
+  alias ExOauth2Provider.{
+    AccessTokens,
+    Config,
+    Token.Utils,
+    Token.Utils.Response,
+    Utils.Error}
 
   @doc """
   Revokes access token.
@@ -33,53 +35,53 @@ defmodule ExOauth2Provider.Token.Revoke do
   ## Response
       {:ok, %{}}
   """
-  @spec revoke(map()) :: {:ok, map()} | {:error, map(), atom()}
-  def revoke(request) do
+  @spec revoke(map(), keyword()) :: {:ok, map()} | {:error, map(), atom()}
+  def revoke(request, config \\ []) do
     {:ok, %{request: request}}
-    |> load_client_if_presented()
+    |> load_client_if_presented(config)
     |> return_error()
-    |> load_access_token()
+    |> load_access_token(config)
     |> validate_request()
-    |> revoke_token()
-    |> Response.revocation_response()
+    |> revoke_token(config)
+    |> Response.revocation_response(config)
   end
 
-  defp load_client_if_presented({:ok, %{request: %{"client_id" => _}} = params}),
-    do: Utils.load_client({:ok, params})
-  defp load_client_if_presented({:ok, params}), do: {:ok, params}
+  defp load_client_if_presented({:ok, %{request: %{"client_id" => _}} = params}, config),
+    do: Utils.load_client({:ok, params}, config)
+  defp load_client_if_presented({:ok, params}, _config), do: {:ok, params}
 
-  defp load_access_token({:error, %{error: _} = params}), do: {:error, params}
-  defp load_access_token({:ok, %{request: %{"token" => _}} = params}) do
+  defp load_access_token({:error, %{error: _} = params}, _config), do: {:error, params}
+  defp load_access_token({:ok, %{request: %{"token" => _}} = params}, config) do
     {:ok, params}
-    |> get_access_token()
-    |> get_refresh_token()
-    |> preload_token_associations()
+    |> get_access_token(config)
+    |> get_refresh_token(config)
+    |> preload_token_associations(config)
   end
-  defp load_access_token({:ok, params}), do: Error.add_error({:ok, params}, Error.invalid_request())
+  defp load_access_token({:ok, params}, _config), do: Error.add_error({:ok, params}, Error.invalid_request())
 
-  defp get_access_token({:ok, %{request: %{"token" => token}} = params}) do
+  defp get_access_token({:ok, %{request: %{"token" => token}} = params}, config) do
     token
-    |> AccessTokens.get_by_token()
+    |> AccessTokens.get_by_token(config)
     |> case do
       nil          -> Error.add_error({:ok, params}, Error.invalid_request())
       access_token -> {:ok, Map.put(params, :access_token, access_token)}
     end
   end
 
-  defp get_refresh_token({:ok,%{access_token: _} = params}), do: {:ok, params}
-  defp get_refresh_token({:error, %{error: _} = params}), do: {:error, params}
-  defp get_refresh_token({:ok, %{request: %{"token" => token}} = params}) do
+  defp get_refresh_token({:ok,%{access_token: _} = params}, _config), do: {:ok, params}
+  defp get_refresh_token({:error, %{error: _} = params}, _config), do: {:error, params}
+  defp get_refresh_token({:ok, %{request: %{"token" => token}} = params}, config) do
     token
-    |> AccessTokens.get_by_refresh_token()
+    |> AccessTokens.get_by_refresh_token(config)
     |> case do
       nil          -> Error.add_error({:ok, params}, Error.invalid_request())
       access_token -> {:ok, Map.put(params, :access_token, access_token)}
     end
   end
 
-  defp preload_token_associations({:error, params}), do: {:error, params}
-  defp preload_token_associations({:ok, %{access_token: access_token} = params}) do
-    {:ok, Map.put(params, :access_token, ExOauth2Provider.repo.preload(access_token, :application))}
+  defp preload_token_associations({:error, params}, _config), do: {:error, params}
+  defp preload_token_associations({:ok, %{access_token: access_token} = params}, config) do
+    {:ok, Map.put(params, :access_token, Config.repo(config).preload(access_token, :application))}
   end
 
   defp validate_request({:error, params}), do: {:error, params}
@@ -124,9 +126,9 @@ defmodule ExOauth2Provider.Token.Revoke do
     end
   end
 
-  defp revoke_token({:error, params}), do: {:error, params}
-  defp revoke_token({:ok, %{access_token: access_token} = params}) do
-    case AccessTokens.revoke(access_token) do
+  defp revoke_token({:error, params}, _config), do: {:error, params}
+  defp revoke_token({:ok, %{access_token: access_token} = params}, config) do
+    case AccessTokens.revoke(access_token, config) do
       {:ok, _}    -> {:ok, params}
       {:error, _} -> Error.add_error({:ok, params}, Error.invalid_request())
     end

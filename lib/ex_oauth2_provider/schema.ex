@@ -5,8 +5,9 @@ defmodule ExOauth2Provider.Schema do
 
   alias ExOauth2Provider.Config
 
-  defmacro __using__(_config) do
+  defmacro __using__(config \\ []) do
     quote do
+      @config unquote(config)
     end
   end
 
@@ -22,7 +23,7 @@ defmodule ExOauth2Provider.Schema do
       end)
 
       unquote(module).assocs()
-      |> unquote(__MODULE__).__assocs_with_queryable__()
+      |> unquote(__MODULE__).__assocs_with_queryable__(@config)
       |> Enum.each(fn
         {:belongs_to, name, queryable} ->
           belongs_to(name, queryable)
@@ -40,19 +41,19 @@ defmodule ExOauth2Provider.Schema do
   end
 
   @doc false
-  def __assocs_with_queryable__(assocs) do
+  def __assocs_with_queryable__(assocs, config) do
     Enum.map(assocs, fn
-      {:belongs_to, name, table} -> {:belongs_to, name, table_to_queryable(table)}
-      {:belongs_to, name, table, defaults} -> {:belongs_to, name, table_to_queryable(table), defaults}
-      {:has_many, name, table} -> {:has_many, name, table_to_queryable(table)}
-      {:has_many, name, table, defaults} -> {:has_many, name, table_to_queryable(table), defaults}
+      {:belongs_to, name, table} -> {:belongs_to, name, table_to_queryable(config, table)}
+      {:belongs_to, name, table, defaults} -> {:belongs_to, name, table_to_queryable(config, table), defaults}
+      {:has_many, name, table} -> {:has_many, name, table_to_queryable(config, table)}
+      {:has_many, name, table, defaults} -> {:has_many, name, table_to_queryable(config, table), defaults}
     end)
   end
 
-  defp table_to_queryable(:access_grants), do: Config.access_grant()
-  defp table_to_queryable(:access_tokens), do: Config.access_token()
-  defp table_to_queryable(:applications), do: Config.application()
-  defp table_to_queryable(:users), do: Config.resource_owner()
+  defp table_to_queryable(config, :access_grants), do: Config.access_grant(config)
+  defp table_to_queryable(config, :access_tokens), do: Config.access_token(config)
+  defp table_to_queryable(config, :applications), do: Config.application(config)
+  defp table_to_queryable(config, :users), do: Config.resource_owner(config)
 
     @doc false
     def __timestamp_for__(struct, column) do

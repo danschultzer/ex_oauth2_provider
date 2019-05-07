@@ -4,16 +4,16 @@ defmodule ExOauth2Provider.Token.Utils.Response do
   alias ExOauth2Provider.Config
 
   @doc false
-  @spec response({:ok, map()} | {:error, map()}) :: {:ok, map()} | {:error, map(), atom()}
-  def response({:ok, %{access_token: token}}), do: build_response(%{access_token: token})
-  def response({:error, %{error: _} = params}), do: build_response(params)
+  @spec response({:ok, map()} | {:error, map()}, keyword()) :: {:ok, map()} | {:error, map(), atom()}
+  def response({:ok, %{access_token: token}}, config), do: build_response(%{access_token: token}, config)
+  def response({:error, %{error: _} = params}, config), do: build_response(params, config)
 
   @doc false
-  @spec revocation_response({:ok, map()} | {:error, map()}) :: {:ok, map()} | {:error, map(), atom()}
-  def revocation_response({:error, %{should_return_error: true} = params}), do: response({:error, params})
-  def revocation_response({_any, _params}), do: {:ok, %{}}
+  @spec revocation_response({:ok, map()} | {:error, map()}, keyword()) :: {:ok, map()} | {:error, map(), atom()}
+  def revocation_response({:error, %{should_return_error: true} = params}, config), do: response({:error, params}, config)
+  def revocation_response({_any, _params}, _config), do: {:ok, %{}}
 
-  defp build_response(%{access_token: access_token}) do
+  defp build_response(%{access_token: access_token}, config) do
     body = %{access_token: access_token.token,
               # Access Token type: Bearer.
               # @see https://tools.ietf.org/html/rfc6750
@@ -23,18 +23,18 @@ defmodule ExOauth2Provider.Token.Utils.Response do
               refresh_token: access_token.refresh_token,
               scope: access_token.scopes,
               created_at: access_token.inserted_at
-            } |> customize_access_token_response(access_token)
+            } |> customize_access_token_response(access_token, config)
     {:ok, body}
   end
-  defp build_response(%{error: error, error_http_status: error_http_status}) do
+  defp build_response(%{error: error, error_http_status: error_http_status}, _config) do
     {:error, error, error_http_status}
   end
-  defp build_response(%{error: error}) do # For DB errors
+  defp build_response(%{error: error}, _config) do # For DB errors
     {:error, error, :bad_request}
   end
 
-  defp customize_access_token_response(response_body, access_token) do
-    case Config.access_token_response_body_handler() do
+  defp customize_access_token_response(response_body, access_token, config) do
+    case Config.access_token_response_body_handler(config) do
       {module, method} -> apply(module, method, [response_body, access_token])
       _                -> response_body
     end
