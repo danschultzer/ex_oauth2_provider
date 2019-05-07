@@ -1,15 +1,18 @@
 defmodule Mix.Tasks.ExOauth2Provider.Install do
-  @shortdoc "Generates a new migration for the repo"
+  @shortdoc "Installs ExOauth2Provider"
 
   @moduledoc """
-  Generates migrations and schema module files.
+  Generates migrations, schema module files, and updates config.
 
         mix ex_oauth2_provider.install
+
+        mix ex_oauth2_provider.install --no-config
 
   ## Arguments
 
     * `--no-config` -- Don't append to your `config/config.exs` file
-    * `--no-migration` -- Don't add migration file
+    * `--no-migration` -- Don't create migration file
+    * `--no-schemas` -- Don't create schema module files
   """
 
   use Mix.Task

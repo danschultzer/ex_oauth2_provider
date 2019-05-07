@@ -1,8 +1,8 @@
 defmodule Mix.Tasks.ExOauth2Provider.Gen.Migration do
-  @shortdoc "Generates ex_oauth2_provider migration file"
+  @shortdoc "Generates ExOauth2Provider migration file"
 
   @moduledoc """
-  Generates ex_oauth2_provider migration files.
+  Generates migration file.
 
       mix ex_oauth2_provider.gen.migrations -r MyApp.Repo
 

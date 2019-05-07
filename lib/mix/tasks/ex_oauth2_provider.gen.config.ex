@@ -1,8 +1,8 @@
 defmodule Mix.Tasks.ExOauth2Provider.Gen.Config do
-  @shortdoc "Generates ex_oauth2_provider config"
+  @shortdoc "Generates ExOauth2Provider config"
 
   @moduledoc """
-  Generates ex_oauth2_provider migration files.
+  Updates app config file.
 
       mix ex_oauth2_provider.gen.config
 

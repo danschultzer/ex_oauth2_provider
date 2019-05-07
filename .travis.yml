@@ -1,18 +1,13 @@
 language: elixir
-elixir:
-  - 1.8
-otp_release:
-  - 21.0
-env:
-  - MIX_ENV=test
 sudo: false
 matrix:
   include:
     - elixir: 1.8
       otp_release: 21.0
+      env: MIX_ENV=test
     - elixir: 1.8
       otp_release: 21.0
-      env: UUID=true
+      env: MIX_ENV=test UUID=true
 script:
   - mix test
 after_script:

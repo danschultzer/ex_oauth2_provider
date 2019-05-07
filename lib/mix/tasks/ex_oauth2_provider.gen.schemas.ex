@@ -1,8 +1,8 @@
 defmodule Mix.Tasks.ExOauth2Provider.Gen.Schemas do
-  @shortdoc "Generates ex_oauth2_provider schema files"
+  @shortdoc "Generates ExOauth2Provider schema files"
 
   @moduledoc """
-  Generates ex_oauth2_provider schema files.
+  Generates schema files.
 
       mix ex_oauth2_provider.gen.schemas
 
