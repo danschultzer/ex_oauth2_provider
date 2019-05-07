@@ -3,7 +3,8 @@ defmodule ExOauth2ProviderTest do
   doctest ExOauth2Provider
 
   alias ExOauth2Provider.Test.{ConfigHelpers, Fixtures, Repo}
-  alias ExOauth2Provider.{OauthAccessTokens, OauthAccessTokens.OauthAccessToken}
+  alias ExOauth2Provider.AccessTokens
+  alias Dummy.OauthAccessTokens.OauthAccessToken
 
   describe "authenticate_token/1" do
     test "error when invalid" do
@@ -19,7 +20,7 @@ defmodule ExOauth2ProviderTest do
 
     test "authenticates with application-wide token" do
       application = Fixtures.application()
-      access_token = Fixtures.access_token(resource_owner: application)
+      access_token = Fixtures.application_access_token(application: application)
 
       assert {:ok, access_token} = ExOauth2Provider.authenticate_token(access_token.token)
       refute access_token.resource_owner
@@ -32,13 +33,13 @@ defmodule ExOauth2ProviderTest do
 
       assert {:ok, access_token} = ExOauth2Provider.authenticate_token(access_token.token)
       access_token = Repo.get_by(OauthAccessToken, token: access_token.token)
-      refute OauthAccessTokens.is_revoked?(access_token)
+      refute AccessTokens.is_revoked?(access_token)
       access_token2 = Repo.get_by(OauthAccessToken, token: access_token2.token)
       refute "" == access_token2.previous_refresh_token
 
       assert {:ok, access_token2} = ExOauth2Provider.authenticate_token(access_token2.token)
       access_token = Repo.get_by(OauthAccessToken, token: access_token.token)
-      assert OauthAccessTokens.is_revoked?(access_token)
+      assert AccessTokens.is_revoked?(access_token)
       access_token2 = Repo.get_by(OauthAccessToken, token: access_token2.token)
       assert "" == access_token2.previous_refresh_token
     end
@@ -52,7 +53,7 @@ defmodule ExOauth2ProviderTest do
 
       assert {:ok, access_token2} = ExOauth2Provider.authenticate_token(access_token2.token)
       access_token = Repo.get_by(OauthAccessToken, token: access_token.token)
-      refute OauthAccessTokens.is_revoked?(access_token)
+      refute AccessTokens.is_revoked?(access_token)
       access_token2 = Repo.get_by(OauthAccessToken, token: access_token2.token)
       refute "" == access_token2.previous_refresh_token
     end
@@ -65,17 +66,9 @@ defmodule ExOauth2ProviderTest do
 
     test "error when revoked token" do
       access_token = Fixtures.access_token()
-      OauthAccessTokens.revoke(access_token)
+      AccessTokens.revoke(access_token)
 
       assert ExOauth2Provider.authenticate_token(access_token.token) == {:error, :token_inaccessible}
-    end
-
-    test "error when invalid resource owner" do
-      resource_owner_id = (if is_nil(System.get_env("UUID")), do: 0, else: "09b58e2b-8fff-4b8d-ba94-18a06dd4fc29")
-      user = %{Fixtures.resource_owner() | id: resource_owner_id}
-      access_token = Fixtures.access_token(resource_owner: user)
-
-      assert ExOauth2Provider.authenticate_token(access_token.token) == {:error, :no_association_found}
     end
   end
 end

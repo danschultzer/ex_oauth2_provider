@@ -2,7 +2,8 @@ defmodule ExOauth2Provider.Token.Strategy.RefreshTokenTest do
   use ExOauth2Provider.TestCase
 
   alias ExOauth2Provider.Test.{ConfigHelpers, Fixtures, QueryHelpers, Repo}
-  alias ExOauth2Provider.{Config, OauthAccessTokens, OauthAccessTokens.OauthAccessToken, Token, Token.RefreshToken}
+  alias ExOauth2Provider.{Config, AccessTokens, Token, Token.RefreshToken}
+  alias Dummy.OauthAccessTokens.OauthAccessToken
 
   @client_id            "Jf5rM8hQBc"
   @client_secret        "secret"
@@ -57,7 +58,7 @@ defmodule ExOauth2Provider.Token.Strategy.RefreshTokenTest do
   end
 
   test "#grant/1 error when access token has been revoked", %{valid_request: valid_request, access_token: access_token} do
-    QueryHelpers.change!(access_token, revoked_at: NaiveDateTime.utc_now())
+    QueryHelpers.change!(access_token, revoked_at: DateTime.utc_now())
 
     assert Token.grant(valid_request) == {:error, @invalid_request_error, :bad_request}
   end
@@ -74,7 +75,7 @@ defmodule ExOauth2Provider.Token.Strategy.RefreshTokenTest do
     assert new_access_token.scopes == access_token.scopes
     assert new_access_token.expires_in == Config.access_token_expires_in()
     assert new_access_token.previous_refresh_token == access_token.refresh_token
-    assert OauthAccessTokens.is_revoked?(access_token)
+    assert AccessTokens.is_revoked?(access_token)
   end
 
   test "#grant/1 returns access token with custom response handler", %{valid_request: valid_request} do
@@ -94,7 +95,7 @@ defmodule ExOauth2Provider.Token.Strategy.RefreshTokenTest do
     new_access_token = Repo.get_by(OauthAccessToken, token: new_access_token.access_token)
 
     assert new_access_token.previous_refresh_token == ""
-    refute OauthAccessTokens.is_revoked?(access_token)
+    refute AccessTokens.is_revoked?(access_token)
   end
 
   def access_token_response_body_handler(body, access_token) do

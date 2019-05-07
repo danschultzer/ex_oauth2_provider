@@ -35,7 +35,7 @@ defmodule ExOauth2Provider do
   expire.
   """
 
-  alias ExOauth2Provider.{Config, OauthAccessTokens}
+  alias ExOauth2Provider.{Config, AccessTokens}
 
   @doc """
   Authenticate an access token.
@@ -56,11 +56,11 @@ defmodule ExOauth2Provider do
     |> load_access_token()
     |> maybe_revoke_previous_refresh_token()
     |> validate_access_token()
-    |> load_resource()
+    |> load_resource_owner()
   end
 
   defp load_access_token(token) do
-    case OauthAccessTokens.get_by_token(token) do
+    case AccessTokens.get_by_token(token) do
       nil          -> {:error, :token_not_found}
       access_token -> {:ok, access_token}
     end
@@ -75,7 +75,7 @@ defmodule ExOauth2Provider do
   end
 
   defp revoke_previous_refresh_token(access_token) do
-    case OauthAccessTokens.revoke_previous_refresh_token(access_token) do
+    case AccessTokens.revoke_previous_refresh_token(access_token) do
       {:error, _any}       -> {:error, :no_association_found}
       {:ok, _access_token} -> {:ok, access_token}
     end
@@ -83,24 +83,17 @@ defmodule ExOauth2Provider do
 
   defp validate_access_token({:error, error}), do: {:error, error}
   defp validate_access_token({:ok, access_token}) do
-    case OauthAccessTokens.is_accessible?(access_token) do
+    case AccessTokens.is_accessible?(access_token) do
       true  -> {:ok, access_token}
       false -> {:error, :token_inaccessible}
     end
   end
 
-  defp load_resource({:error, error}), do: {:error, error}
-  defp load_resource({:ok, access_token}) do
+  defp load_resource_owner({:error, error}), do: {:error, error}
+  defp load_resource_owner({:ok, access_token}) do
     access_token = repo().preload(access_token, :resource_owner)
 
-    case has_association?(access_token) do
-      true  -> {:ok, access_token}
-      false -> {:error, :no_association_found}
-    end
-  end
-
-  defp has_association?(access_token) do
-    is_nil(access_token.resource_owner_id) || not is_nil(access_token.resource_owner)
+    {:ok, access_token}
   end
 
   @doc false

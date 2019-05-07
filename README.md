@@ -24,7 +24,7 @@ Run `mix deps.get` to install it, and then run the install script:
 mix ex_oauth2_provider.install
 ```
 
-This will add the necessary Ecto migrations and schema modules, to your app, and set sample configuration in `config/config.exs`.
+This will add the necessary Ecto migrations and schema modules to your app.
 
 You are required to use a resource owner struct that already exists. If you don't have any user module struct (`MyApp.Users.User`), you can create a migration with this:
 
@@ -271,52 +271,14 @@ end
 
 Remember to change the field type for the `token` column in the `oauth_access_tokens` table to accepts tokens larger than 255 characters.
 
-## Using UUID or custom primary key type
+## Using binary id
 
-### 1. If only resource owner uses `:uuid`
+### Generate migration file with binary id
 
-You'll need to create the migration file with the argument `--uuid resource_owners`:
-
-```bash
-mix ex_oauth2_provider.install --uuid resource_owners
-```
-
-And set the config to use `:binary_id` for `belongs_to` fields:
-
-```elixir
-config :ex_oauth2_provider, ExOauth2Provider,
-  resource_owner: {Dummy.Users.User, :binary_id}
-```
-
-### 2. If all structs should use `:uuid`
-
-If you don't have auto-incrementing integers as primary keys in your database you can set up `ExOauth2Provider` to handle all primary keys as `:uuid` by doing the following.
-
-Update the `:ex_oauth2_provider` config in `config/config.exs` to use the the [UUID schema](lib/ex_oauth2_provider/schemas/uuid.ex) macro:
-
-```elixir
-config :ex_oauth2_provider, ExOauth2Provider,
-  resource_owner: {Dummy.Users.User, :binary_id},
-  app_schema: ExOauth2Provider.Schema.UUID
-```
-
-And generate a migration file that uses `:uuid` for all tables:
+You'll need to create the migration file and schema modules with the argument `--binary-id`:
 
 ```bash
-mix ex_oauth2_provider.install --uuid all
-```
-
-### 3. If you need something different than `:uuid`
-
-It's also possible to use a completely different setup by adding a custom schema macro, however you'll need to ensure that the schema file is compiled before this library and that you've updated the migration file accordingly.
-
-### 4. If you need custom `belongs_to` options for resource owner
-
-You can provide a list of `belongs_to` options, by passing a keyword list instead. This is useful when you want to use a `references` value:
-
-```elixir
-config :ex_oauth2_provider, ExOauth2Provider,
-  resource_owner: {Dummy.Users.User, [type: :binary_id, references: :uuid]}
+mix ex_oauth2_provider.install --binary-id
 ```
 
 ## Acknowledgement

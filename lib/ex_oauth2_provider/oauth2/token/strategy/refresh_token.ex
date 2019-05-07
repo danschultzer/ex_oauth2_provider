@@ -7,8 +7,7 @@ defmodule ExOauth2Provider.Token.RefreshToken do
                           Utils.Error,
                           Token.Utils,
                           Token.Utils.Response,
-                          OauthAccessTokens,
-                          OauthAccessTokens.OauthAccessToken}
+                          AccessTokens}
 
   @doc """
   Will grant access token by refresh token.
@@ -36,7 +35,7 @@ defmodule ExOauth2Provider.Token.RefreshToken do
 
   defp load_access_token_by_refresh_token({:ok, %{client: client, request: %{"refresh_token" => refresh_token}} = params}) do
     access_token = client
-                   |> OauthAccessTokens.get_by_refresh_token_for(refresh_token)
+                   |> AccessTokens.get_by_refresh_token_for(refresh_token)
                    |> ExOauth2Provider.repo.preload(:resource_owner)
                    |> ExOauth2Provider.repo.preload(:application)
 
@@ -50,17 +49,14 @@ defmodule ExOauth2Provider.Token.RefreshToken do
   defp issue_access_token_by_refresh_token({:error, params}), do: {:error, params}
   defp issue_access_token_by_refresh_token({:ok, %{refresh_token: refresh_token, request: _} = params}) do
     result = ExOauth2Provider.repo.transaction(fn ->
-      token_params =
-        add_previous_refresh_token(
-          %{application: refresh_token.application,
-            scopes: refresh_token.scopes,
-            expires_in: Config.access_token_expires_in,
-            use_refresh_token: true},
-          refresh_token)
+      token_params = token_params(refresh_token)
 
       refresh_token
       |> revoke_access_token()
-      |> create_access_token(token_params)
+      |> case do
+        {:ok, %{resource_owner: resource_owner}} -> AccessTokens.create_token(resource_owner, token_params)
+        {:error, error}     -> {:error, error}
+      end
     end)
 
     case result do
@@ -70,28 +66,25 @@ defmodule ExOauth2Provider.Token.RefreshToken do
     end
   end
 
-  defp add_previous_refresh_token(params, refresh_token) do
-    case Config.refresh_token_revoked_on_use? do
+  defp token_params(%{scopes: scopes, application: application} = refresh_token) do
+    params = %{scopes: scopes, application: application, use_refresh_token: true}
+
+    case Config.refresh_token_revoked_on_use?() do
       true  -> Map.put(params, :previous_refresh_token, refresh_token)
       false -> params
     end
   end
 
-  defp revoke_access_token(%OauthAccessToken{} = refresh_token) do
+  defp revoke_access_token(refresh_token) do
     cond do
       not Config.refresh_token_revoked_on_use? ->
         {:ok, refresh_token}
 
-      OauthAccessTokens.is_revoked?(refresh_token) ->
+      AccessTokens.is_revoked?(refresh_token) ->
         {:error, Error.invalid_request()}
 
       true ->
-        OauthAccessTokens.revoke(refresh_token)
+        AccessTokens.revoke(refresh_token)
     end
-  end
-
-  defp create_access_token({:error, error}, _), do: {:error, error}
-  defp create_access_token({:ok, %OauthAccessToken{} = access_token}, token_params) do
-    OauthAccessTokens.create_token(access_token.resource_owner, token_params)
   end
 end

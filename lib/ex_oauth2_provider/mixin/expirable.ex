@@ -2,6 +2,7 @@ defmodule ExOauth2Provider.Mixin.Expirable do
   @moduledoc false
 
   alias Ecto.Schema
+  alias ExOauth2Provider.Schema, as: SchemaHelpers
 
   @doc """
   Filter expired data.
@@ -39,8 +40,13 @@ defmodule ExOauth2Provider.Mixin.Expirable do
   @spec is_expired?(Schema.t() | nil) :: boolean()
   def is_expired?(nil), do: true
   def is_expired?(%{expires_in: nil, inserted_at: _}), do: false
-  def is_expired?(%{expires_in: expires_in, inserted_at: inserted_at}) do
-    expires_at = NaiveDateTime.add(inserted_at, expires_in, :second)
-    NaiveDateTime.compare(expires_at, NaiveDateTime.utc_now) == :lt
+  def is_expired?(%struct{expires_in: expires_in, inserted_at: inserted_at}) do
+    now  = SchemaHelpers.__timestamp_for__(struct, :inserted_at)
+    type = now.__struct__()
+
+    inserted_at
+    |> type.add(expires_in, :second)
+    |> type.compare(now)
+    |> Kernel.!=(:gt)
   end
 end

@@ -1,7 +1,7 @@
 defmodule ExOauth2Provider.Authorization.Utils do
   @moduledoc false
 
-  alias ExOauth2Provider.{OauthApplications, Utils.Error}
+  alias ExOauth2Provider.{Applications, Utils.Error}
   alias Ecto.Schema
 
   @doc false
@@ -18,7 +18,7 @@ defmodule ExOauth2Provider.Authorization.Utils do
   end
 
   defp load_client({:ok, %{request: %{"client_id" => client_id}} = params}) do
-    case OauthApplications.get_application(client_id) do
+    case Applications.get_application(client_id) do
       nil    -> Error.add_error({:ok, params}, Error.invalid_client())
       client -> {:ok, Map.put(params, :client, client)}
     end

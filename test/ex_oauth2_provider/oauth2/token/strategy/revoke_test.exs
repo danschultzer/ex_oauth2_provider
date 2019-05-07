@@ -2,7 +2,8 @@ defmodule ExOauth2Provider.Token.Strategy.RevokeTest do
   use ExOauth2Provider.TestCase
 
   alias ExOauth2Provider.Test.{Fixtures, QueryHelpers}
-  alias ExOauth2Provider.{OauthAccessTokens, Token, OauthAccessTokens.OauthAccessToken}
+  alias ExOauth2Provider.{AccessTokens, Token}
+  alias Dummy.OauthAccessTokens.OauthAccessToken
 
   @client_id            "Jf5rM8hQBc"
   @client_secret        "secret"
@@ -37,14 +38,14 @@ defmodule ExOauth2Provider.Token.Strategy.RevokeTest do
     params = Map.delete(valid_request, "token")
 
     assert Token.revoke(params) == {:ok, %{}}
-    refute OauthAccessTokens.is_revoked?(QueryHelpers.get_latest_inserted(OauthAccessToken))
+    refute AccessTokens.is_revoked?(QueryHelpers.get_latest_inserted(OauthAccessToken))
   end
 
   test "#revoke/1 when invalid token", %{valid_request: valid_request} do
     params = Map.merge(valid_request, %{"token" => "invalid"})
 
     assert Token.revoke(params) == {:ok, %{}}
-    refute OauthAccessTokens.is_revoked?(QueryHelpers.get_latest_inserted(OauthAccessToken))
+    refute AccessTokens.is_revoked?(QueryHelpers.get_latest_inserted(OauthAccessToken))
   end
 
   test "#revoke/1 when access token owned by another client", %{valid_request: valid_request, access_token: access_token} do
@@ -52,7 +53,7 @@ defmodule ExOauth2Provider.Token.Strategy.RevokeTest do
     QueryHelpers.change!(access_token, application_id: new_application.id)
 
     assert Token.revoke(valid_request) == {:ok, %{}}
-    refute OauthAccessTokens.is_revoked?(QueryHelpers.get_latest_inserted(OauthAccessToken))
+    refute AccessTokens.is_revoked?(QueryHelpers.get_latest_inserted(OauthAccessToken))
   end
 
   test "#revoke/1 when access token not owned by a client", %{access_token: access_token} do
@@ -61,11 +62,11 @@ defmodule ExOauth2Provider.Token.Strategy.RevokeTest do
     params = %{"token" => access_token.token}
 
     assert Token.revoke(params) == {:ok, %{}}
-    assert OauthAccessTokens.is_revoked?(QueryHelpers.get_latest_inserted(OauthAccessToken))
+    assert AccessTokens.is_revoked?(QueryHelpers.get_latest_inserted(OauthAccessToken))
   end
 
   test "#revoke/1", %{valid_request: valid_request} do
     assert Token.revoke(valid_request) == {:ok, %{}}
-    assert OauthAccessTokens.is_revoked?(QueryHelpers.get_latest_inserted(OauthAccessToken))
+    assert AccessTokens.is_revoked?(QueryHelpers.get_latest_inserted(OauthAccessToken))
   end
 end

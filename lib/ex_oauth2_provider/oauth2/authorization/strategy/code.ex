@@ -56,8 +56,8 @@ defmodule ExOauth2Provider.Authorization.Code do
   ```
   """
   alias ExOauth2Provider.{Config,
-                          OauthAccessTokens,
-                          OauthAccessGrants,
+                          AccessTokens,
+                          AccessGrants,
                           RedirectURI,
                           Authorization.Utils.Response,
                           Utils.Error,
@@ -95,7 +95,7 @@ defmodule ExOauth2Provider.Authorization.Code do
 
   defp check_previous_authorization({:error, params}), do: {:error, params}
   defp check_previous_authorization({:ok, %{resource_owner: resource_owner, client: application, request: %{"scope" => scopes}} = params}) do
-    case OauthAccessTokens.get_matching_token_for(resource_owner, application, scopes) do
+    case AccessTokens.get_token_for(resource_owner, application, scopes) do
       nil   -> {:ok, params}
       token -> {:ok, Map.put(params, :access_token, token)}
     end
@@ -148,7 +148,7 @@ defmodule ExOauth2Provider.Authorization.Code do
       end)
       |> Map.put(:expires_in, Config.authorization_code_expires_in())
 
-    case OauthAccessGrants.create_grant(resource_owner, application, grant_params) do
+    case AccessGrants.create_grant(resource_owner, application, grant_params) do
       {:ok, grant}    -> {:ok, Map.put(params, :grant, grant)}
       {:error, error} -> Error.add_error({:ok, params}, error)
     end

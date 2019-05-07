@@ -1,16 +1,15 @@
 defmodule ExOauth2Provider.Test.Fixtures do
   @moduledoc false
 
+  alias ExOauth2Provider.AccessTokens
   alias ExOauth2Provider.Test.Repo
-  alias ExOauth2Provider.{OauthApplications.OauthApplication, OauthAccessGrants.OauthAccessGrant, OauthAccessTokens}
+  alias Dummy.{OauthApplications.OauthApplication, OauthAccessGrants.OauthAccessGrant, Users.User}
   alias Ecto.Changeset
-
-  @resource_owner ExOauth2Provider.Config.resource_owner_struct(:module)
 
   def resource_owner(attrs \\ []) do
     attrs = Keyword.merge([email: "foo@example.com"], attrs)
 
-    @resource_owner
+    User
     |> struct()
     |> Changeset.change(attrs)
     |> Repo.insert!()
@@ -34,13 +33,25 @@ defmodule ExOauth2Provider.Test.Fixtures do
   end
 
   def access_token(attrs \\ []) do
-    resource_owner = Keyword.get(attrs, :resource_owner) || resource_owner()
-    params         = Enum.into(attrs, %{})
-
-    {:ok, access_token} = OauthAccessTokens.create_token(resource_owner, params)
+    {:ok, access_token} =
+      attrs
+      |> Keyword.get(:resource_owner)
+      |> Kernel.||(resource_owner())
+      |> AccessTokens.create_token(Enum.into(attrs, %{}))
 
     access_token
   end
+
+  def application_access_token(attrs \\ []) do
+    {:ok, access_token} =
+      attrs
+      |> Keyword.get(:application)
+      |> Kernel.||(application())
+      |> AccessTokens.create_application_token(Enum.into(attrs, %{}))
+
+    access_token
+  end
+
 
   def access_grant(application, user, code, redirect_uri) do
     attrs = [

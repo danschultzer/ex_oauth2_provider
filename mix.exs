@@ -6,7 +6,7 @@ defmodule ExOauth2Provider.Mixfile do
   def project do
     [app: :ex_oauth2_provider,
      version: @version,
-     elixir: "~> 1.4",
+     elixir: "~> 1.8",
      elixirc_paths: elixirc_paths(Mix.env),
      build_embedded: Mix.env == :prod,
      start_permanent: Mix.env == :prod,
@@ -38,7 +38,7 @@ defmodule ExOauth2Provider.Mixfile do
   defp elixirc_paths(_), do: ["lib"]
 
   defp deps do
-    [{:ecto, "~> 2.1 or ~> 3.0"},
+    [{:ecto, "~> 3.0"},
      {:plug, ">= 1.0.0 and < 1.8.0"},
 
      # Dev and test dependencies

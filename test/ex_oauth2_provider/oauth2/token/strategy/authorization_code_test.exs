@@ -2,7 +2,8 @@ defmodule ExOauth2Provider.Token.Strategy.AuthorizationCodeTest do
   use ExOauth2Provider.TestCase
 
   alias ExOauth2Provider.Test.{ConfigHelpers, Fixtures, QueryHelpers}
-  alias ExOauth2Provider.{Config, Token, Token.AuthorizationCode, OauthAccessGrants, OauthAccessTokens.OauthAccessToken}
+  alias ExOauth2Provider.{Config, Token, Token.AuthorizationCode, AccessGrants}
+  alias Dummy.OauthAccessTokens.OauthAccessToken
 
   @client_id          "Jf5rM8hQBc"
   @client_secret      "secret"
@@ -115,20 +116,20 @@ defmodule ExOauth2Provider.Token.Strategy.AuthorizationCodeTest do
   end
 
   test "#grant/1 error when revoked grant", %{access_grant: access_grant} do
-    QueryHelpers.change!(access_grant, revoked_at: NaiveDateTime.utc_now())
+    QueryHelpers.change!(access_grant, revoked_at: DateTime.utc_now())
 
     assert Token.grant(@valid_request) == {:error, @invalid_grant, :unprocessable_entity}
   end
 
   test "#grant/1 error when grant expired", %{access_grant: access_grant} do
-    inserted_at = NaiveDateTime.add(NaiveDateTime.utc_now(), -access_grant.expires_in, :second)
+    inserted_at = QueryHelpers.timestamp(OauthAccessToken, :inserted_at, seconds: -access_grant.expires_in)
     QueryHelpers.change!(access_grant, inserted_at: inserted_at)
 
     assert Token.grant(@valid_request) == {:error, @invalid_grant, :unprocessable_entity}
   end
 
   test "#grant/1 error when grant revoked", %{access_grant: access_grant} do
-    OauthAccessGrants.revoke(access_grant)
+    AccessGrants.revoke(access_grant)
 
     assert Token.grant(@valid_request) == {:error, @invalid_grant, :unprocessable_entity}
   end

@@ -2,6 +2,7 @@ defmodule ExOauth2Provider.Mixin.Revocable do
   @moduledoc false
 
   alias Ecto.{Changeset, Schema}
+  alias ExOauth2Provider.Schema, as: SchemaHelpers
 
   @doc """
   Revoke data.
@@ -37,8 +38,8 @@ defmodule ExOauth2Provider.Mixin.Revocable do
     end
   end
 
-  defp revoke_query(%{revoked_at: nil} = data) do
-    Changeset.change(data, revoked_at: %{NaiveDateTime.utc_now() | microsecond: {0, 0}})
+  defp revoke_query(%struct{revoked_at: nil} = data) do
+    Changeset.change(data, revoked_at: SchemaHelpers.__timestamp_for__(struct, :revoked_at))
   end
   defp revoke_query(_data), do: nil
 
