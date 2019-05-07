@@ -3,7 +3,7 @@ defmodule ExOauth2Provider do
   A module that provides OAuth 2 capabilities for Elixir applications.
 
   ## Configuration
-      config :ex_oauth2_provider, ExOauth2Provider,
+      config :my_app, ExOauth2Provider,
         repo: App.Repo,
         resource_owner: App.Users.User,
         application_owner: App.Users.User,

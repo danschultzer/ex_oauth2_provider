@@ -130,7 +130,7 @@ You'll need to provide an authorization method that accepts username and passwor
 
 ```elixir
 # Configuration in config/config.exs
-config :ex_oauth2_provider, ExOauth2Provider,
+config :my_app, ExOauth2Provider,
   password_auth: {MyApp.MyModule, :authenticate}
 
 # Module example
@@ -161,7 +161,7 @@ end
 Server wide scopes can be defined in the configuration:
 
 ```elixir
-config :ex_oauth2_provider, ExOauth2Provider,
+config :my_app, ExOauth2Provider,
   repo: ExOauth2Provider.Test.Repo,
   resource_owner: Dummy.Users.User,
   default_scopes: ~w(public),
@@ -236,7 +236,7 @@ You can add your own access token generator, as this example shows:
 
 ```elixir
 # config/config.exs
-config :ex_oauth2_provider, ExOauth2Provider,
+config :my_app, ExOauth2Provider,
   access_token_generator: {MyModule, :my_method}
 
 defmodule MyModule
@@ -261,7 +261,7 @@ You can add extra values to the response body.
 
 ```elixir
 # config/config.exs
-config :ex_oauth2_provider, ExOauth2Provider,
+config :my_app, ExOauth2Provider,
   access_token_response_body_handler: {MyModule, :my_method}
 
 defmodule MyModule
