@@ -133,16 +133,17 @@ You'll need to provide an authorization method that accepts username and passwor
 ```elixir
 # Configuration in config/config.exs
 config :my_app, ExOauth2Provider,
-  password_auth: {MyApp.MyModule, :authenticate}
+  password_auth: {Auth, :authenticate}
 
 # Module example
-defmodule MyApp.MyModule do
+defmodule Auth do
   def authenticate(username, password, config) do
-    user = repo.get_by(User, email: username)
+    user = Repo.get_by(User, email: username)
+
     cond do
-      user == nil                       -> {:error, :no_user_found}
-      check_pw(user.password, password) -> {:ok, user}
-      true                              -> {:error, :invalid_password}
+      user == nil                            -> {:error, :no_user_found}
+      check_pw(user.password_hash, password) -> {:ok, user}
+      true                                   -> {:error, :invalid_password}
     end
   end
 end
@@ -239,18 +240,17 @@ You can add your own access token generator, as this example shows:
 ```elixir
 # config/config.exs
 config :my_app, ExOauth2Provider,
-  access_token_generator: {MyModule, :my_method}
+  access_token_generator: {AccessToken, :new}
 
-defmodule MyModule
-  def my_method(access_token) do
-    %JWT.token{
+defmodule AccessToken
+  def new(access_token) do
+    with_signer(%JWT.token{
       resource_owner_id: access_token.resource_owner_id,
       application_id: access_token.application.id,
       scopes: access_token.scopes,
       expires_in: access_token.expires_in,
       created_at: access_token.created_at
-    }
-    |> with_signer(hs256("my_secret"))
+    }, hs256("my_secret"))
   end
 end
 ```
@@ -264,12 +264,11 @@ You can add extra values to the response body.
 ```elixir
 # config/config.exs
 config :my_app, ExOauth2Provider,
-  access_token_response_body_handler: {MyModule, :my_method}
+  access_token_response_body_handler: {CustomResponse, :response}
 
-defmodule MyModule
-  def my_method(response_body, access_token) do
-    response_body
-    |> Map.merge(%{user_id: access_token.resource_owner.id})
+defmodule CustomResponse
+  def response(response_body, access_token) do
+    Map.merge(response_body, %{user_id: access_token.resource_owner.id})
   end
 end
 ```
