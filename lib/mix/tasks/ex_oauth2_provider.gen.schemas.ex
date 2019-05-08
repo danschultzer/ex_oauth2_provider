@@ -10,8 +10,8 @@ defmodule Mix.Tasks.ExOauth2Provider.Gen.Schemas do
 
   ## Arguments
 
-    * `--binary-id` - use binary id for primary key
-    * `--namespace` - schema namespace to use, defaults to `oauth`
+    * `--binary-id` - use binary id for primary keys
+    * `--namespace` - namespace to prepend table and schema module name
     * `--context-app` - context app to use for path and module names
   """
   use Mix.Task

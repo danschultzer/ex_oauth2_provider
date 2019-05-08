@@ -21,8 +21,8 @@ defmodule Mix.Tasks.ExOauth2Provider.Gen.Migration do
   ## Arguments
 
     * `-r`, `--repo` - the repo module
-    * `--binary-id` - use binary id for primary key
-    * `--namespace` - schema namespace to use, defaults to `oauth`
+    * `--binary-id` - use binary id for primary keys
+    * `--namespace` - namespace to prepend table and schema module name
   """
   use Mix.Task
 

@@ -6,22 +6,23 @@ defmodule Mix.Tasks.ExOauth2Provider.Install do
 
         mix ex_oauth2_provider.install
 
-        mix ex_oauth2_provider.install --no-config
+        mix ex_oauth2_provider.install --no-schemas
 
   ## Arguments
 
-    * `--no-config` -- Don't append to your `config/config.exs` file
-    * `--no-migration` -- Don't create migration file
-    * `--no-schemas` -- Don't create schema module files
+    * `--context-app` - context app to use for path and module names
+    * `--no-migration` - don't create migration file
+    * `--no-schemas` - don't create schema module files
   """
 
   use Mix.Task
 
-  alias Mix.ExOauth2Provider
-  alias Mix.Tasks.ExOauth2Provider.Gen.{Config, Migration, Schemas}
+  alias ExOauth2Provider.Config, as: ProviderConfig
+  alias Mix.{Ecto, ExOauth2Provider, ExOauth2Provider.Config}
+  alias Mix.Tasks.ExOauth2Provider.Gen.{Migration, Schemas}
 
-  @switches     [config: :boolean, migration: :boolean, schemas: :boolean]
-  @default_opts [config: true, migration: true, schemas: true]
+  @switches     [context_app: :string, migration: :boolean, schemas: :boolean]
+  @default_opts [migration: true, schemas: true]
   @mix_task     "ex_oauth2_provider.install"
 
   @impl true
@@ -33,7 +34,7 @@ defmodule Mix.Tasks.ExOauth2Provider.Install do
     |> parse()
     |> run_migration(args)
     |> run_schemas(args)
-    |> run_config(args)
+    |> print_config_instructions(args)
   end
 
   defp parse({config, _parsed, _invalid}), do: config
@@ -52,10 +53,22 @@ defmodule Mix.Tasks.ExOauth2Provider.Install do
   end
   defp run_schemas(config, _args), do: config
 
-  defp run_config(%{config: true} = config, args) do
-    Config.run(args)
+  defp print_config_instructions(config, args) do
+    [repo | _repos] = Ecto.parse_repo(args)
+    context_app     = Map.get(config, :context_app) || ProviderConfig.otp_app()
+    resource_owner  = resource_owner(ProviderConfig.app_base(context_app))
+
+    content = Config.gen(context_app, repo: inspect(repo), resource_owner: resource_owner)
+
+    Mix.shell.info(
+      """
+      ExOauth2Provider has been installed! Please append the following to `config/config.ex`:
+
+      #{content}
+      """)
 
     config
   end
-  defp run_config(config, _args), do: config
+
+  defp resource_owner(base), do: inspect Module.concat([base, "Users", "User"])
 end

@@ -18,15 +18,25 @@ def deps do
 end
 ```
 
-Run `mix deps.get` to install it, and then run the install script:
+Run `mix deps.get` to install it.
+
+## Getting started
+
+Generate the migrations and schema modules:
 
 ```bash
 mix ex_oauth2_provider.install
 ```
 
-This will add the necessary Ecto migrations and schema modules to your app.
+Add the following to `config/config.ex`:
 
-A resource owner module is required, and by default `MyApp.Users.User` will be used. If you don't have any user setup, you shuld consider setting up [`Pow`](https://github.com/danschultzer/pow) first.
+```elixir
+config :my_app, ExOauth2Provider,
+  repo: MyApp.Repo,
+  resource_owner: MyApp.Users.User
+```
+
+If you don't have any user setup, you shuld consider setting up [`Pow`](https://github.com/danschultzer/pow) first.
 
 ## Authorize code flow
 
