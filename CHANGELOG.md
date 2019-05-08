@@ -1,5 +1,9 @@
 # Changelog
 
+## v0.5.1 (TBA)
+
+* Relaxed plug requirement up to 2.0.0
+
 ## v0.5.0 (2019-05-08)
 
 This is a full rewrite of the library, and are several breaking changes. You're encouraged to test your app well if you upgrade from 0.4.
