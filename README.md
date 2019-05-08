@@ -26,15 +26,7 @@ mix ex_oauth2_provider.install
 
 This will add the necessary Ecto migrations and schema modules to your app.
 
-You are required to use a resource owner struct that already exists. If you don't have any user module struct (`MyApp.Users.User`), you can create a migration with this:
-
-```bash
-mix ecto.gen.migration create_users --change $'    create table(:users) do\n      add :email, :string\n    end'
-```
-
-And use the struct in [test/support/dummy/models/user.ex](test/support/dummy/models/user.ex).
-
-If you're not using auto incremental integer (`:id`) for your primary key(s), please read the [Using UUID or custom primary key type](#using-uuid-or-custom-primary-key-type) section.
+A resource owner module is required, and by default `MyApp.Users.User` will be used. If you don't have any user setup, you shuld consider setting up [`Pow`](https://github.com/danschultzer/pow) first.
 
 ## Authorize code flow
 
