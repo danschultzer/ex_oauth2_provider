@@ -126,6 +126,20 @@ defmodule ExOauth2Provider.Applications do
   end
 
   @doc """
+  Create application changeset.
+
+  ## Examples
+
+      iex> change_application(application)
+      {:ok, %OauthApplication{}}
+
+  """
+  @spec change_application(Application.t(), map(), keyword()) :: Changeset.t()
+  def change_application(application, attrs \\ %{}, config \\ []) do
+    Application.changeset(application, attrs, config)
+  end
+
+  @doc """
   Creates an application.
 
   ## Examples
