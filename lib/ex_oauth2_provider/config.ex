@@ -134,10 +134,6 @@ defmodule ExOauth2Provider.Config do
 
     app
     |> Application.get_env(ExOauth2Provider, [])
-    |> case do
-      []     -> Application.get_env(app, PhoenixOauth2Provider, [])
-      config -> config
-    end
     |> Keyword.get(key, :not_found)
   end
   defp get_from_app_env(value, _key), do: value
@@ -145,10 +141,6 @@ defmodule ExOauth2Provider.Config do
   defp get_from_global_env(:not_found, key) do
     :ex_oauth2_provider
     |> Application.get_env(ExOAuth2Provider, [])
-    |> case do
-      []     -> Application.get_env(:phoenix_oauth2_provider, PhoenixOauth2Provider, [])
-      config -> config
-    end
     |> Keyword.get(key, :not_found)
   end
   defp get_from_global_env(value, _key), do: value
