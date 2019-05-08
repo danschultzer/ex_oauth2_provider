@@ -14,6 +14,16 @@ This is a full rewrite of the library, and are several breaking changes. You're 
 
 Schema modules are now generated when installing ExOauth2Provider. To upgrade please run `mix ex_oauth2_provider.install --no-migrations` to generate the schema files.
 
+In the `MyApp.OauthAccessGrants.OauthAccessGrant` schema module you should update the `timestamp/0` macro to ignore `:updated_at`:
+
+```elixir
+  schema "oauth_access_grants" do
+    access_grant_fields()
+
+    timestamps(updated_at: false)
+  end
+```
+
 #### 2. Configuration
 
 Config now has the form `config :my_app, ExOauth2Provider`. You can still use the previous `config :ex_oauth2_provider, ExOauth2Provider` configuration, but you are encouraged to switch over to the app specific configuration.
