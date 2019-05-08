@@ -1,7 +1,7 @@
 defmodule ExOauth2Provider.Test.QueryHelpers do
   @moduledoc false
 
-  alias ExOauth2Provider.Test.Repo
+  alias Dummy.Repo
   import Ecto.Query
   alias Ecto.Changeset
   alias ExOauth2Provider.Schema

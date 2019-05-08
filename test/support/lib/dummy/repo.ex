@@ -1,4 +1,4 @@
-defmodule ExOauth2Provider.Test.Repo do
+defmodule Dummy.Repo do
   @moduledoc false
   use Ecto.Repo, otp_app: :ex_oauth2_provider, adapter: Ecto.Adapters.Postgres
 

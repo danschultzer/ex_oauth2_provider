@@ -111,8 +111,8 @@ Refresh tokens can be enabled in the configuration:
 
 ```elixir
 config :my_app, ExOauth2Provider,
-  repo: ExOauth2Provider.Test.Repo,
-  resource_owner: Dummy.Users.User,
+  repo: MyApp.Repo,
+  resource_owner: MyApp.Users.User,
   use_refresh_token: true
 ```
 
@@ -164,8 +164,8 @@ Server wide scopes can be defined in the configuration:
 
 ```elixir
 config :my_app, ExOauth2Provider,
-  repo: ExOauth2Provider.Test.Repo,
-  resource_owner: Dummy.Users.User,
+  repo: MyApp.Repo,
+  resource_owner: MyApp.Users.User,
   default_scopes: ~w(public),
   optional_scopes: ~w(read update)
 ```

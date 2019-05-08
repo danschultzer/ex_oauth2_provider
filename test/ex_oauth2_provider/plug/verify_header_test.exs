@@ -1,14 +1,10 @@
 defmodule ExOauth2Provider.Plug.VerifyHeaderTest do
   @moduledoc false
-  use ExOauth2Provider.TestCase
-  use Plug.Test
+  use ExOauth2Provider.ConnCase
 
-  alias ExOauth2Provider.Test.Fixtures
+  alias Plug.Conn
   alias ExOauth2Provider.{Plug, Plug.VerifyHeader}
-
-  setup do
-    {:ok, conn: conn(:get, "/") }
-  end
+  alias ExOauth2Provider.Test.Fixtures
 
   test "with no access token at a default location", %{conn: conn} do
     opts = VerifyHeader.init([])
@@ -37,7 +33,7 @@ defmodule ExOauth2Provider.Plug.VerifyHeaderTest do
       opts = VerifyHeader.init()
       conn =
         conn
-        |> put_req_header("authorization", access_token.token)
+        |> Conn.put_req_header("authorization", access_token.token)
         |> VerifyHeader.call(opts)
 
       assert Plug.authenticated?(conn)
@@ -48,7 +44,7 @@ defmodule ExOauth2Provider.Plug.VerifyHeaderTest do
       opts = VerifyHeader.init(key: :secret)
       conn =
         conn
-        |> put_req_header("authorization", access_token.token)
+        |> Conn.put_req_header("authorization", access_token.token)
         |> VerifyHeader.call(opts)
 
       assert Plug.authenticated?(conn, :secret)
@@ -59,7 +55,7 @@ defmodule ExOauth2Provider.Plug.VerifyHeaderTest do
       opts = VerifyHeader.init(realm: "Bearer")
       conn =
         conn
-        |> put_req_header("authorization", "Bearer #{access_token.token}")
+        |> Conn.put_req_header("authorization", "Bearer #{access_token.token}")
         |> VerifyHeader.call(opts)
 
       assert Plug.authenticated?(conn)
@@ -72,8 +68,8 @@ defmodule ExOauth2Provider.Plug.VerifyHeaderTest do
       opts = VerifyHeader.init(realm: "Client")
       conn =
         conn
-        |> put_req_header("authorization", "Bearer #{access_token.token}")
-        |> put_req_header("authorization", "Client #{another_access_token.token}")
+        |> Conn.put_req_header("authorization", "Bearer #{access_token.token}")
+        |> Conn.put_req_header("authorization", "Client #{another_access_token.token}")
         |> VerifyHeader.call(opts)
 
       assert Plug.authenticated?(conn)

@@ -1,8 +1,8 @@
 defmodule ExOauth2Provider.AccessGrantsTest do
   use ExOauth2Provider.TestCase
 
-  alias ExOauth2Provider.Test.Fixtures
   alias ExOauth2Provider.AccessGrants
+  alias ExOauth2Provider.Test.Fixtures
   alias Dummy.OauthAccessGrants.OauthAccessGrant
 
   @valid_attrs %{expires_in: 600, redirect_uri: "https://example.org/endpoint"}

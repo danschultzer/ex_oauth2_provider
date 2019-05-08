@@ -1,9 +1,9 @@
 defmodule ExOauth2Provider.Token.Strategy.RefreshTokenTest do
   use ExOauth2Provider.TestCase
 
-  alias ExOauth2Provider.Test.{Fixtures, QueryHelpers, Repo}
   alias ExOauth2Provider.{Config, AccessTokens, Token, Token.RefreshToken}
-  alias Dummy.OauthAccessTokens.OauthAccessToken
+  alias ExOauth2Provider.Test.{Fixtures, QueryHelpers}
+  alias Dummy.{OauthAccessTokens.OauthAccessToken, Repo}
 
   @client_id            "Jf5rM8hQBc"
   @client_secret        "secret"

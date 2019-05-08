@@ -1,12 +1,7 @@
 defmodule ExOauth2Provider.PlugTest do
-  use ExOauth2Provider.TestCase
-  require Plug.Test
-  use Plug.Test
-  alias ExOauth2Provider.Plug
+  use ExOauth2Provider.ConnCase
 
-  setup do
-    {:ok, %{conn: conn(:post, "/")}}
-  end
+  alias ExOauth2Provider.Plug
 
   test "authenticated?/1", context do
     refute Plug.authenticated?(context.conn)

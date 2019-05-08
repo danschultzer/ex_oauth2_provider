@@ -1,10 +1,9 @@
 defmodule ExOauth2Provider.Plug.EnsureAuthenticatedTest do
   @moduledoc false
-  use ExOauth2Provider.TestCase
-  use Plug.Test
+  use ExOauth2Provider.ConnCase
 
-  alias ExOauth2Provider.Test.Fixtures
   alias ExOauth2Provider.{Plug, Plug.EnsureAuthenticated}
+  alias ExOauth2Provider.Test.Fixtures
 
   defmodule TestHandler do
     @moduledoc false
@@ -14,10 +13,6 @@ defmodule ExOauth2Provider.Plug.EnsureAuthenticatedTest do
 
       :unauthenticated
     end
-  end
-
-  setup do
-    {:ok, conn: conn(:get, "/foo")}
   end
 
   describe "with valid access token doesn't require authentication" do

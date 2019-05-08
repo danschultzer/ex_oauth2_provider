@@ -2,9 +2,9 @@ defmodule ExOauth2ProviderTest do
   use ExOauth2Provider.TestCase
   doctest ExOauth2Provider
 
-  alias ExOauth2Provider.Test.{Fixtures, Repo}
   alias ExOauth2Provider.AccessTokens
-  alias Dummy.OauthAccessTokens.OauthAccessToken
+  alias ExOauth2Provider.Test.Fixtures
+  alias Dummy.{OauthAccessTokens.OauthAccessToken, Repo}
 
   describe "authenticate_token/1" do
     test "error when invalid" do

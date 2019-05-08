@@ -1,8 +1,8 @@
 defmodule ExOauth2Provider.TokenTest do
   use ExOauth2Provider.TestCase
 
-  alias ExOauth2Provider.Test.Fixtures
   alias ExOauth2Provider.Token
+  alias ExOauth2Provider.Test.Fixtures
 
   @client_id          "Jf5rM8hQBc"
   @client_secret      "secret"

@@ -3,8 +3,7 @@ defmodule ExOauth2Provider.ApplicationsTest do
 
   alias ExOauth2Provider.Test.Fixtures
   alias ExOauth2Provider.{AccessTokens, Applications}
-  alias Dummy.{OauthApplications.OauthApplication, OauthAccessTokens.OauthAccessToken}
-  alias ExOauth2Provider.Test.Repo
+  alias Dummy.{OauthApplications.OauthApplication, OauthAccessTokens.OauthAccessToken, Repo}
 
   @valid_attrs    %{name: "Application", redirect_uri: "https://example.org/endpoint"}
   @invalid_attrs  %{}

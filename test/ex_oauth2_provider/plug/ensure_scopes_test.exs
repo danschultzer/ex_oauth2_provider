@@ -1,7 +1,6 @@
 defmodule ExOauth2Provider.Plug.EnsureScopesTest do
   @moduledoc false
-  use ExOauth2Provider.TestCase
-  use Plug.Test
+  use ExOauth2Provider.ConnCase
 
   alias ExOauth2Provider.{Plug, Plug.EnsureScopes}
   alias Dummy.OauthAccessTokens.OauthAccessToken
@@ -16,10 +15,6 @@ defmodule ExOauth2Provider.Plug.EnsureScopesTest do
 
       :forbidden
     end
-  end
-
-  setup do
-    {:ok, conn: conn(:get, "/foo")}
   end
 
   test "is valid when there's no scopes", %{conn: conn} do

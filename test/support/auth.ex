@@ -1,7 +1,7 @@
 defmodule ExOauth2Provider.Test.Auth do
   @moduledoc false
 
-  alias ExOauth2Provider.Test.Repo
+  alias Dummy.Repo
 
   def auth(username, password) do
     user = Repo.get_by(Dummy.Users.User, email: username)

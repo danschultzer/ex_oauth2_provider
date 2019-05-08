@@ -1,8 +1,8 @@
 defmodule ExOauth2Provider.AuthorizationTest do
   use ExOauth2Provider.TestCase
 
-  alias ExOauth2Provider.Test.{Fixtures, QueryHelpers}
   alias ExOauth2Provider.Authorization
+  alias ExOauth2Provider.Test.{Fixtures, QueryHelpers}
 
   @client_id              "Jf5rM8hQBc"
   @client_secret          "secret"

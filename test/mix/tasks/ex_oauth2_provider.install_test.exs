@@ -2,7 +2,7 @@ defmodule Mix.Tasks.ExOauth2Provider.InstallTest do
   use ExOauth2Provider.Mix.TestCase
 
   alias Mix.Tasks.ExOauth2Provider.Install
-  alias ExOauth2Provider.Test.Repo
+  alias Dummy.Repo
 
   @tmp_path Path.join(["tmp", inspect(Install)])
   @options ~w(--context-app test -r #{inspect Repo} --no-migration --no-scehmas)

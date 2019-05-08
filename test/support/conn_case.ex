@@ -1,4 +1,4 @@
-defmodule ExOauth2Provider.TestCase do
+defmodule ExOauth2Provider.ConnCase do
   @moduledoc false
 
   use ExUnit.CaseTemplate
@@ -9,6 +9,8 @@ defmodule ExOauth2Provider.TestCase do
     :ok = Sandbox.checkout(Dummy.Repo)
     Sandbox.mode(Dummy.Repo, {:shared, self()})
 
-    :ok
+    conn = Plug.Test.conn(:get, "/")
+
+    {:ok, conn: conn}
   end
 end

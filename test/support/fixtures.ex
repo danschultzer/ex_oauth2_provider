@@ -2,8 +2,7 @@ defmodule ExOauth2Provider.Test.Fixtures do
   @moduledoc false
 
   alias ExOauth2Provider.AccessTokens
-  alias ExOauth2Provider.Test.Repo
-  alias Dummy.{OauthApplications.OauthApplication, OauthAccessGrants.OauthAccessGrant, Users.User}
+  alias Dummy.{OauthApplications.OauthApplication, OauthAccessGrants.OauthAccessGrant, Repo, Users.User}
   alias Ecto.Changeset
 
   def resource_owner(attrs \\ []) do
