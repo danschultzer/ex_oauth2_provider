@@ -1,6 +1,6 @@
 # Changelog
 
-## v0.5.1 (2019-06-08)
+## v0.5.1 (2019-05-08)
 
 * Relaxed plug requirement up to 2.0.0
 * Fix bug where otp app name could not be fetched in release
