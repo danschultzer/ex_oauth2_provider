@@ -14,10 +14,10 @@ defmodule ExOauth2Provider.Applications do
 
   ## Examples
 
-      iex> get_application!("c341a5c7b331ef076eb4954668d54f590e0009e06b81b100191aa22c93044f3d")
+      iex> get_application!("c341a5c7b331ef076eb4954668d54f590e0009e06b81b100191aa22c93044f3d", otp_app: :my_app)
       %OauthApplication{}
 
-      iex> get_application!("75d72f326a69444a9287ea264617058dbbfe754d7071b8eef8294cbf4e7e0fdc")
+      iex> get_application!("75d72f326a69444a9287ea264617058dbbfe754d7071b8eef8294cbf4e7e0fdc", otp_app: :my_app)
       ** (Ecto.NoResultsError)
 
   """
@@ -35,10 +35,10 @@ defmodule ExOauth2Provider.Applications do
 
   ## Examples
 
-      iex> get_application_for!(owner, "c341a5c7b331ef076eb4954668d54f590e0009e06b81b100191aa22c93044f3d")
+      iex> get_application_for!(owner, "c341a5c7b331ef076eb4954668d54f590e0009e06b81b100191aa22c93044f3d", otp_app: :my_app)
       %OauthApplication{}
 
-      iex> get_application_for!(owner, "75d72f326a69444a9287ea264617058dbbfe754d7071b8eef8294cbf4e7e0fdc")
+      iex> get_application_for!(owner, "75d72f326a69444a9287ea264617058dbbfe754d7071b8eef8294cbf4e7e0fdc", otp_app: :my_app)
       ** (Ecto.NoResultsError)
 
   """
@@ -54,10 +54,10 @@ defmodule ExOauth2Provider.Applications do
 
   ## Examples
 
-      iex> get_application("c341a5c7b331ef076eb4954668d54f590e0009e06b81b100191aa22c93044f3d")
+      iex> get_application("c341a5c7b331ef076eb4954668d54f590e0009e06b81b100191aa22c93044f3d", otp_app: :my_app)
       %OauthApplication{}
 
-      iex> get_application("75d72f326a69444a9287ea264617058dbbfe754d7071b8eef8294cbf4e7e0fdc")
+      iex> get_application("75d72f326a69444a9287ea264617058dbbfe754d7071b8eef8294cbf4e7e0fdc", otp_app: :my_app)
       nil
 
   """
@@ -73,10 +73,10 @@ defmodule ExOauth2Provider.Applications do
 
   ## Examples
 
-      iex> load_application("c341a5c7b331ef076eb4954668d54f590e0009e06b81b100191aa22c93044f3d", "SECRET")
+      iex> load_application("c341a5c7b331ef076eb4954668d54f590e0009e06b81b100191aa22c93044f3d", "SECRET", otp_app: :my_app)
       %OauthApplication{}
 
-      iex> load_application("75d72f326a69444a9287ea264617058dbbfe754d7071b8eef8294cbf4e7e0fdc", "SECRET")
+      iex> load_application("75d72f326a69444a9287ea264617058dbbfe754d7071b8eef8294cbf4e7e0fdc", "SECRET", otp_app: :my_app)
       nil
 
   """
@@ -92,7 +92,7 @@ defmodule ExOauth2Provider.Applications do
 
   ## Examples
 
-      iex> get_applications_for(resource_owner)
+      iex> get_applications_for(resource_owner, otp_app: :my_app)
       [%OauthApplication{}, ...]
 
   """
@@ -109,7 +109,7 @@ defmodule ExOauth2Provider.Applications do
 
   ## Examples
 
-      iex> get_authorized_applications_for(owner)
+      iex> get_authorized_applications_for(owner, otp_app: :my_app)
       [%OauthApplication{},...]
   """
   @spec get_authorized_applications_for(Schema.t(), keyword()) :: [Application.t()]
@@ -130,7 +130,7 @@ defmodule ExOauth2Provider.Applications do
 
   ## Examples
 
-      iex> change_application(application)
+      iex> change_application(application, %{}, otp_app: :my_app)
       {:ok, %OauthApplication{}}
 
   """
@@ -144,10 +144,10 @@ defmodule ExOauth2Provider.Applications do
 
   ## Examples
 
-      iex> create_application(user, %{name: "App", redirect_uri: "http://example.com"})
+      iex> create_application(user, %{name: "App", redirect_uri: "http://example.com"}, otp_app: :my_app)
       {:ok, %OauthApplication{}}
 
-      iex> create_application(user, %{name: ""})
+      iex> create_application(user, %{name: ""}, otp_app: :my_app)
       {:error, %Ecto.Changeset{}}
 
   """
@@ -165,10 +165,10 @@ defmodule ExOauth2Provider.Applications do
 
   ## Examples
 
-      iex> update_application(application, %{name: "Updated App"})
+      iex> update_application(application, %{name: "Updated App"}, otp_app: :my_app)
       {:ok, %OauthApplication{}}
 
-      iex> update_application(application, %{name: ""})
+      iex> update_application(application, %{name: ""}, otp_app: :my_app)
       {:error, %Ecto.Changeset{}}
 
   """
@@ -184,10 +184,10 @@ defmodule ExOauth2Provider.Applications do
 
   ## Examples
 
-      iex> delete_application(application)
+      iex> delete_application(application, otp_app: :my_app)
       {:ok, %OauthApplication{}}
 
-      iex> delete_application(application)
+      iex> delete_application(application, otp_app: :my_app)
       {:error, %Ecto.Changeset{}}
 
   """
@@ -201,7 +201,7 @@ defmodule ExOauth2Provider.Applications do
 
   ## Examples
 
-      iex> revoke_all_access_tokens_for(application, resource_owner)
+      iex> revoke_all_access_tokens_for(application, resource_owner, otp_app: :my_app)
       {:ok, [%OauthAccessToken{}]}
 
   """

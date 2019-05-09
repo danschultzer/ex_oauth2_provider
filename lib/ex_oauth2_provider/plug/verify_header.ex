@@ -5,19 +5,19 @@ defmodule ExOauth2Provider.Plug.VerifyHeader do
       Authorization: <token>
 
   ## Example
-      plug ExOauth2Provider.Plug.VerifyHeader
+      plug ExOauth2Provider.Plug.VerifyHeader, otp_app: :my_app
 
   A "realm" can be specified when using the plug.
   Realms are like the name of the token and allow many tokens
   to be sent with a single request.
 
-      plug ExOauth2Provider.Plug.VerifyHeader, realm: "Bearer"
+      plug ExOauth2Provider.Plug.VerifyHeader, otp_app: :my_app, realm: "Bearer"
 
   When a realm is not specified, the first authorization header
   found is used, and assumed to be a raw token
 
   #### example
-      plug ExOauth2Provider.Plug.VerifyHeader
+      plug ExOauth2Provider.Plug.VerifyHeader, otp_app: :my_app
 
       # will take the first auth header
       # Authorization: <token>
@@ -46,7 +46,7 @@ defmodule ExOauth2Provider.Plug.VerifyHeader do
   @spec call(Conn.t(), keyword()) :: Conn.t()
   def call(conn, opts) do
     key    = Keyword.get(opts, :key, :default)
-    config = Keyword.get(opts, :config, [])
+    config = Keyword.take(opts, [:otp_app])
 
     conn
     |> fetch_token(opts)

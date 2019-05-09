@@ -55,7 +55,7 @@ defmodule Mix.Tasks.ExOauth2Provider.Install do
 
   defp print_config_instructions(config, args) do
     [repo | _repos] = Ecto.parse_repo(args)
-    context_app     = Map.get(config, :context_app) || ProviderConfig.otp_app()
+    context_app     = Map.get(config, :context_app) || ExOauth2Provider.otp_app()
     resource_owner  = resource_owner(ProviderConfig.app_base(context_app))
 
     content = Config.gen(context_app, repo: inspect(repo), resource_owner: resource_owner)

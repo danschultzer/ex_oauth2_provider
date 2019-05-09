@@ -3,7 +3,7 @@ defmodule ExOauth2Provider.RedirectURITest do
   alias ExOauth2Provider.{Config, RedirectURI}
 
   test "validate native url" do
-    uri = Config.native_redirect_uri([])
+    uri = Config.native_redirect_uri(otp_app: :ex_oauth2_provider)
     assert RedirectURI.validate(uri, []) == {:ok, uri}
   end
 

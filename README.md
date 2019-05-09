@@ -46,7 +46,7 @@ You have to ensure that a `resource_owner` has been authenticated on the followi
 
 ```elixir
 # GET /oauth/authorize?response_type=code&client_id=CLIENT_ID&redirect_uri=CALLBACK_URL&scope=read
-case ExOauth2Provider.Authorization.preauthorize(resource_owner, params, config) do
+case ExOauth2Provider.Authorization.preauthorize(resource_owner, params, otp_app: :my_app) do
   {:ok, client, scopes}             -> # render authorization page
   {:redirect, redirect_uri}         -> # redirect to external redirect_uri
   {:native_redirect, %{code: code}} -> # redirect to local :show endpoint
@@ -54,14 +54,14 @@ case ExOauth2Provider.Authorization.preauthorize(resource_owner, params, config)
 end
 
 # POST /oauth/authorize?response_type=code&client_id=CLIENT_ID&redirect_uri=CALLBACK_URL&scope=read
-ExOauth2Provider.Authorization.authorize(resource_owner, params, config) do
+ExOauth2Provider.Authorization.authorize(resource_owner, params, otp_app: :my_app) do
   {:redirect, redirect_uri}         -> # redirect to external redirect_uri
   {:native_redirect, %{code: code}} -> # redirect to local :show endpoint
   {:error, error, http_status}      -> # render error page
 end
 
 # DELETE /oauth/authorize?response_type=code&client_id=CLIENT_ID&redirect_uri=CALLBACK_URL&scope=read
-ExOauth2Provider.Authorization.deny(resource_owner, params, config) do
+ExOauth2Provider.Authorization.deny(resource_owner, params, otp_app: :my_app) do
   {:redirect, redirect_uri}         -> # redirect to external redirect_uri
   {:error, error, http_status}      -> # render error page
 end
@@ -71,7 +71,7 @@ end
 
 ```elixir
 # POST /oauth/token?client_id=CLIENT_ID&client_secret=CLIENT_SECRET&grant_type=authorization_code&code=AUTHORIZATION_CODE&redirect_uri=CALLBACK_URL
-case ExOauth2Provider.Token.grant(params, config) do
+case ExOauth2Provider.Token.grant(params, otp_app: :my_app) do
   {:ok, access_token}               -> # JSON response
   {:error, error, http_status}      -> # JSON response
 end
@@ -81,7 +81,7 @@ end
 
 ```elixir
 # GET /oauth/revoke?client_id=CLIENT_ID&client_secret=CLIENT_SECRET&token=ACCESS_TOKEN
-case ExOauth2Provider.Token.revoke(params, config) do
+case ExOauth2Provider.Token.revoke(params, otp_app: :my_app) do
   {:ok, %{}}                        -> # JSON response
   {:error, error, http_status}      -> # JSON response
 end
@@ -99,7 +99,7 @@ ExOauth2Provider doesn't support **implicit** grant flow. Instead you should set
 
 ```elixir
 # POST /oauth/token?client_id=CLIENT_ID&client_secret=CLIENT_SECRET&grant_type=client_credentials
-case ExOauth2Provider.Token.grant(params, config) do
+case ExOauth2Provider.Token.grant(params, otp_app: :my_app) do
   {:ok, access_token}               -> # JSON response
   {:error, error, http_status}      -> # JSON response
 end
@@ -120,7 +120,7 @@ The `refresh_token` grant flow will then be enabled.
 
 ```elixir
 # POST /oauth/token?client_id=CLIENT_ID&client_secret=CLIENT_SECRET&grant_type=refresh_token&refresh_token=REFRESH_TOKEN
-case ExOauth2Provider.Token.grant(params, config) do
+case ExOauth2Provider.Token.grant(params, otp_app: :my_app) do
   {:ok, access_token}               -> # JSON response
   {:error, error, http_status}      -> # JSON response
 end
@@ -137,7 +137,7 @@ config :my_app, ExOauth2Provider,
 
 # Module example
 defmodule Auth do
-  def authenticate(username, password, config) do
+  def authenticate(username, password, otp_app: :my_app) do
     user = Repo.get_by(User, email: username)
 
     cond do
@@ -153,7 +153,7 @@ The `password` grant flow will then be enabled.
 
 ```elixir
 # POST /oauth/token?client_id=CLIENT_ID&grant_type=password&username=USERNAME&password=PASSWORD
-case ExOauth2Provider.Token.grant(params, config) do
+case ExOauth2Provider.Token.grant(params, otp_app: :my_app) do
   {:ok, access_token}               -> # JSON response
   {:error, error, http_status}      -> # JSON response
 end
@@ -224,7 +224,7 @@ end
 If the Authorization Header was verified, you'll be able to retrieve the current resource owner or access token.
 
 ```elixir
-ExOauth2Provider.Plug.current_access_token(conn, config) # access the token in the default location
+ExOauth2Provider.Plug.current_access_token(conn) # access the token in the default location
 ExOauth2Provider.Plug.current_access_token(conn, :secret) # access the token in the secret location
 ```
 

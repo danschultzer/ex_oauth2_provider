@@ -22,7 +22,7 @@ defmodule ExOauth2Provider.Plug.EnsureAuthenticated do
   alias ExOauth2Provider.Plug
 
   @doc false
-  @spec init(keyword) :: keyword()
+  @spec init(keyword()) :: keyword()
   def init(opts), do: opts
 
   @doc false

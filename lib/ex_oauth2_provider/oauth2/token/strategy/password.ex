@@ -20,7 +20,8 @@ defmodule ExOauth2Provider.Token.Password do
         "client_secret" => "secret",
         "username" => "testuser@example.com",
         "password" => "secret"
-      })
+      }, otp_app: :my_app)
+
   ## Response
       {:ok, access_token}
       {:error, %{error: error, error_description: description}, http_status}

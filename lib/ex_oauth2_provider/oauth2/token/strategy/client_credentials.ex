@@ -16,7 +16,7 @@ defmodule ExOauth2Provider.Token.ClientCredentials do
         "grant_type" => "client_credentials",
         "client_id" => "Jf5rM8hQBc",
         "client_secret" => "secret"
-      })
+      }, otp_app: :my_app)
 
   ## Response
       {:ok, access_token}

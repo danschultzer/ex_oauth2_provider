@@ -29,54 +29,54 @@ defmodule ExOauth2Provider.Authorization.CodeTest do
     {:ok, %{resource_owner: resource_owner, application: application}}
   end
 
-  test "#preauthorize/2 error when no resource owner" do
-    assert Authorization.preauthorize(nil, @valid_request) == {:error, @invalid_request, :bad_request}
+  test "#preauthorize/3 error when no resource owner" do
+    assert Authorization.preauthorize(nil, @valid_request, otp_app: :ex_oauth2_provider) == {:error, @invalid_request, :bad_request}
   end
 
-  test "#preauthorize/2 error when no client_id", %{resource_owner: resource_owner} do
+  test "#preauthorize/3 error when no client_id", %{resource_owner: resource_owner} do
     request = Map.delete(@valid_request, "client_id")
 
-    assert Authorization.preauthorize(resource_owner, request) == {:error, @invalid_request, :bad_request}
+    assert Authorization.preauthorize(resource_owner, request, otp_app: :ex_oauth2_provider) == {:error, @invalid_request, :bad_request}
   end
 
-  test "#preauthorize/2 error when invalid client", %{resource_owner: resource_owner} do
+  test "#preauthorize/3 error when invalid client", %{resource_owner: resource_owner} do
     request = Map.merge(@valid_request, %{"client_id" => "invalid"})
 
-    assert Authorization.preauthorize(resource_owner, request) == {:error, @invalid_client, :unprocessable_entity}
+    assert Authorization.preauthorize(resource_owner, request, otp_app: :ex_oauth2_provider) == {:error, @invalid_client, :unprocessable_entity}
   end
 
-  test "#preauthorize/2", %{resource_owner: resource_owner, application: application} do
+  test "#preauthorize/3", %{resource_owner: resource_owner, application: application} do
     expected_scopes = Scopes.to_list(@valid_request["scope"])
 
-    assert Authorization.preauthorize(resource_owner, @valid_request) == {:ok, application, expected_scopes}
+    assert Authorization.preauthorize(resource_owner, @valid_request, otp_app: :ex_oauth2_provider) == {:ok, application, expected_scopes}
   end
 
-  test "#preauthorize/2 when previous access token with different application scopes", %{resource_owner: resource_owner, application: application} do
+  test "#preauthorize/3 when previous access token with different application scopes", %{resource_owner: resource_owner, application: application} do
     access_token = Fixtures.access_token(resource_owner: resource_owner, application: application, scopes: "app:read")
     expected_scopes = Scopes.to_list(@valid_request["scope"])
 
-    assert Authorization.preauthorize(resource_owner, @valid_request) == {:ok, application, expected_scopes}
+    assert Authorization.preauthorize(resource_owner, @valid_request, otp_app: :ex_oauth2_provider) == {:ok, application, expected_scopes}
 
     QueryHelpers.change!(access_token, scopes: "app:read app:write")
     request = Map.merge(@valid_request, %{"scope" => "app:read"})
     expected_scopes = Scopes.to_list(request["scope"])
 
-    assert Authorization.preauthorize(resource_owner, request) == {:ok, application, expected_scopes}
+    assert Authorization.preauthorize(resource_owner, request, otp_app: :ex_oauth2_provider) == {:ok, application, expected_scopes}
   end
 
-  test "#preauthorize/2 with limited scope", %{resource_owner: resource_owner, application: application} do
+  test "#preauthorize/3 with limited scope", %{resource_owner: resource_owner, application: application} do
     request = Map.merge(@valid_request, %{"scope" => "app:read"})
 
-    assert Authorization.preauthorize(resource_owner, request) == {:ok, application, ["app:read"]}
+    assert Authorization.preauthorize(resource_owner, request, otp_app: :ex_oauth2_provider) == {:ok, application, ["app:read"]}
   end
 
-  test "#preauthorize/2 error when invalid scope", %{resource_owner: resource_owner} do
+  test "#preauthorize/3 error when invalid scope", %{resource_owner: resource_owner} do
     request = Map.merge(@valid_request, %{"scope" => "app:invalid"})
 
-    assert Authorization.preauthorize(resource_owner, request) == {:error, @invalid_scope, :unprocessable_entity}
+    assert Authorization.preauthorize(resource_owner, request, otp_app: :ex_oauth2_provider) == {:error, @invalid_scope, :unprocessable_entity}
   end
 
-  describe "#preauthorize/2 when application has no scope" do
+  describe "#preauthorize/3 when application has no scope" do
     setup %{resource_owner: resource_owner, application: application} do
       application = QueryHelpers.change!(application, scopes: "")
 
@@ -86,48 +86,48 @@ defmodule ExOauth2Provider.Authorization.CodeTest do
     test "with limited server scope", %{resource_owner: resource_owner, application: application} do
       request = Map.merge(@valid_request, %{"scope" => "read"})
 
-      assert Authorization.preauthorize(resource_owner, request) == {:ok, application, ["read"]}
+      assert Authorization.preauthorize(resource_owner, request, otp_app: :ex_oauth2_provider) == {:ok, application, ["read"]}
     end
 
     test "error when invalid server scope", %{resource_owner: resource_owner} do
       request = Map.merge(@valid_request, %{"scope" => "invalid"})
 
-      assert Authorization.preauthorize(resource_owner, request) == {:error, @invalid_scope, :unprocessable_entity}
+      assert Authorization.preauthorize(resource_owner, request, otp_app: :ex_oauth2_provider) == {:error, @invalid_scope, :unprocessable_entity}
     end
   end
 
-  test "#preauthorize/2 when previous access token with same scopes", %{resource_owner: resource_owner, application: application} do
+  test "#preauthorize/3 when previous access token with same scopes", %{resource_owner: resource_owner, application: application} do
     Fixtures.access_token(resource_owner: resource_owner, application: application, scopes: @valid_request["scope"])
 
-    assert {:native_redirect, %{code: code}} = Authorization.preauthorize(resource_owner, @valid_request)
+    assert {:native_redirect, %{code: code}} = Authorization.preauthorize(resource_owner, @valid_request, otp_app: :ex_oauth2_provider)
     access_grant = QueryHelpers.get_latest_inserted(OauthAccessGrant)
 
     assert code == access_grant.token
   end
 
-  test "#authorize/2 rejects when no resource owner" do
-    assert Authorization.authorize(nil, @valid_request) == {:error, @invalid_request, :bad_request}
+  test "#authorize/3 rejects when no resource owner" do
+    assert Authorization.authorize(nil, @valid_request, otp_app: :ex_oauth2_provider) == {:error, @invalid_request, :bad_request}
   end
 
-  test "#authorize/2 error when invalid client", %{resource_owner: resource_owner} do
+  test "#authorize/3 error when invalid client", %{resource_owner: resource_owner} do
     request = Map.merge(@valid_request, %{"client_id" => "invalid"})
 
-    assert Authorization.authorize(resource_owner, request) == {:error, @invalid_client, :unprocessable_entity}
+    assert Authorization.authorize(resource_owner, request, otp_app: :ex_oauth2_provider) == {:error, @invalid_client, :unprocessable_entity}
   end
 
-  test "#authorize/2 error when no client_id", %{resource_owner: resource_owner} do
+  test "#authorize/3 error when no client_id", %{resource_owner: resource_owner} do
     request = Map.delete(@valid_request, "client_id")
 
-    assert Authorization.authorize(resource_owner, request) == {:error, @invalid_request, :bad_request}
+    assert Authorization.authorize(resource_owner, request, otp_app: :ex_oauth2_provider) == {:error, @invalid_request, :bad_request}
   end
 
-  test "#authorize/2 error when invalid scope", %{resource_owner: resource_owner} do
+  test "#authorize/3 error when invalid scope", %{resource_owner: resource_owner} do
     request = Map.merge(@valid_request, %{"scope" => "app:read app:profile"})
 
-    assert Authorization.authorize(resource_owner, request) == {:error, @invalid_scope, :unprocessable_entity}
+    assert Authorization.authorize(resource_owner, request, otp_app: :ex_oauth2_provider) == {:error, @invalid_scope, :unprocessable_entity}
   end
 
-  describe "#authorize/2 when application has no scope" do
+  describe "#authorize/3 when application has no scope" do
     setup %{resource_owner: resource_owner, application: application} do
       application = QueryHelpers.change!(application, scopes: "")
 
@@ -136,68 +136,68 @@ defmodule ExOauth2Provider.Authorization.CodeTest do
 
     test "error when invalid server scope", %{resource_owner: resource_owner} do
       request = Map.merge(@valid_request, %{"scope" => "public profile"})
-      assert Authorization.authorize(resource_owner, request) == {:error, @invalid_scope, :unprocessable_entity}
+      assert Authorization.authorize(resource_owner, request, otp_app: :ex_oauth2_provider) == {:error, @invalid_scope, :unprocessable_entity}
     end
 
     test "generates grant", %{resource_owner: resource_owner} do
       request = Map.merge(@valid_request, %{"scope" => "public"})
-      assert {:native_redirect, %{code: code}} = Authorization.authorize(resource_owner, request)
+      assert {:native_redirect, %{code: code}} = Authorization.authorize(resource_owner, request, otp_app: :ex_oauth2_provider)
 
       access_grant = Repo.get_by(OauthAccessGrant, token: code)
       assert access_grant.resource_owner_id == resource_owner.id
     end
   end
 
-  test "#authorize/2 error when invalid redirect uri", %{resource_owner: resource_owner} do
+  test "#authorize/3 error when invalid redirect uri", %{resource_owner: resource_owner} do
     request = Map.merge(@valid_request, %{"redirect_uri" => "/invalid/path"})
 
-    assert Authorization.authorize(resource_owner, request) == {:error, @invalid_redirect_uri, :unprocessable_entity}
+    assert Authorization.authorize(resource_owner, request, otp_app: :ex_oauth2_provider) == {:error, @invalid_redirect_uri, :unprocessable_entity}
   end
 
-  test "#authorize/2 generates grant", %{resource_owner: resource_owner} do
-    assert {:native_redirect, %{code: code}} = Authorization.authorize(resource_owner, @valid_request)
+  test "#authorize/3 generates grant", %{resource_owner: resource_owner} do
+    assert {:native_redirect, %{code: code}} = Authorization.authorize(resource_owner, @valid_request, otp_app: :ex_oauth2_provider)
     access_grant = Repo.get_by(OauthAccessGrant, token: code)
 
     assert access_grant.resource_owner_id == resource_owner.id
-    assert access_grant.expires_in == Config.authorization_code_expires_in([])
+    assert access_grant.expires_in == Config.authorization_code_expires_in(otp_app: :ex_oauth2_provider)
     assert access_grant.scopes == @valid_request["scope"]
   end
 
-  test "#authorize/2 generates grant with redirect uri", %{resource_owner: resource_owner, application: application} do
+  test "#authorize/3 generates grant with redirect uri", %{resource_owner: resource_owner, application: application} do
     QueryHelpers.change!(application, redirect_uri: "#{application.redirect_uri}\nhttps://example.com/path")
 
     request = Map.merge(@valid_request, %{"redirect_uri" => "https://example.com/path?param=1", "state" => 40_612})
 
-    assert {:redirect, redirect_uri} = Authorization.authorize(resource_owner, request)
+    assert {:redirect, redirect_uri} = Authorization.authorize(resource_owner, request, otp_app: :ex_oauth2_provider)
     access_grant = QueryHelpers.get_latest_inserted(OauthAccessGrant)
 
     assert redirect_uri == "https://example.com/path?code=#{access_grant.token}&param=1&state=40612"
   end
 
-  test "#deny/2 error when no resource owner" do
-    assert Authorization.deny(nil, @valid_request) == {:error, @invalid_request, :bad_request}
+  test "#deny/3 error when no resource owner" do
+    assert Authorization.deny(nil, @valid_request, otp_app: :ex_oauth2_provider) == {:error, @invalid_request, :bad_request}
   end
 
-  test "#deny/2 error when invalid client", %{resource_owner: resource_owner} do
+  test "#deny/3 error when invalid client", %{resource_owner: resource_owner} do
     request = Map.merge(@valid_request, %{"client_id" => "invalid"})
 
-    assert Authorization.deny(resource_owner, request) == {:error, @invalid_client, :unprocessable_entity}
+    assert Authorization.deny(resource_owner, request, otp_app: :ex_oauth2_provider) == {:error, @invalid_client, :unprocessable_entity}
   end
 
-  test "#deny/2 error when no client_id", %{resource_owner: resource_owner} do
+  test "#deny/3 error when no client_id", %{resource_owner: resource_owner} do
     request = Map.delete(@valid_request, "client_id")
 
-    assert Authorization.deny(resource_owner, request) == {:error, @invalid_request, :bad_request}
+    assert Authorization.deny(resource_owner, request, otp_app: :ex_oauth2_provider) == {:error, @invalid_request, :bad_request}
   end
 
-  test "#deny/2", %{resource_owner: resource_owner} do
-    assert Authorization.deny(resource_owner, @valid_request) == {:error, @access_denied, :unauthorized}
+  test "#deny/3", %{resource_owner: resource_owner} do
+    assert Authorization.deny(resource_owner, @valid_request, otp_app: :ex_oauth2_provider) == {:error, @access_denied, :unauthorized}
   end
 
-  test "#deny/2 with redirection uri", %{application: application, resource_owner: resource_owner} do
+  test "#deny/3 with redirection uri", %{application: application, resource_owner: resource_owner} do
     QueryHelpers.change!(application, redirect_uri: "#{application.redirect_uri}\nhttps://example.com/path")
     request = Map.merge(@valid_request, %{"redirect_uri" => "https://example.com/path?param=1", "state" => 40_612})
 
-    assert Authorization.deny(resource_owner, request) == {:redirect, "https://example.com/path?error=access_denied&error_description=The+resource+owner+or+authorization+server+denied+the+request.&param=1&state=40612"}
+    assert Authorization.deny(resource_owner, request, otp_app: :ex_oauth2_provider) == {:redirect, "https://example.com/path?error=access_denied&error_description=The+resource+owner+or+authorization+server+denied+the+request.&param=1&state=40612"}
   end
 end

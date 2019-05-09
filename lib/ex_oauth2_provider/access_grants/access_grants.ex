@@ -14,10 +14,10 @@ defmodule ExOauth2Provider.AccessGrants do
 
   ## Examples
 
-      iex> get_active_grant_for(application, "jE9dk",)
+      iex> get_active_grant_for(application, "jE9dk", otp_app: :my_app)
       %OauthAccessGrant{}
 
-      iex> get_active_grant_for(application, "jE9dk")
+      iex> get_active_grant_for(application, "jE9dk", otp_app: :my_app)
       ** nil
 
   """

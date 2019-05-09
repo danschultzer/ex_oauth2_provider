@@ -12,7 +12,7 @@ defmodule ExOauth2Provider.TokenTest do
     {:ok, %{application: application}}
   end
 
-  test "#grant/1 error when invalid grant_type" do
+  test "#grant/2 error when invalid grant_type" do
     request_invalid_grant_type = Map.merge(%{"client_id" => @client_id,
                                              "client_secret" => @client_secret,
                                              "grant_type" => "client_credentials"},
@@ -20,6 +20,6 @@ defmodule ExOauth2Provider.TokenTest do
     expected_error = %{error: :unsupported_grant_type,
                        error_description: "The authorization grant type is not supported by the authorization server."}
 
-    assert Token.grant(request_invalid_grant_type) == {:error, expected_error, :unprocessable_entity}
+    assert Token.grant(request_invalid_grant_type, otp_app: :ex_oauth2_provider) == {:error, expected_error, :unprocessable_entity}
   end
 end

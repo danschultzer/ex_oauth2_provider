@@ -20,10 +20,10 @@ defmodule ExOauth2Provider.AccessTokens do
 
   ## Examples
 
-      iex> get_by_token("c341a5c7b331ef076eb4954668d54f590e0009e06b81b100191aa22c93044f3d")
+      iex> get_by_token("c341a5c7b331ef076eb4954668d54f590e0009e06b81b100191aa22c93044f3d", otp_app: :my_app)
       %OauthAccessToken{}
 
-      iex> get_by_token("75d72f326a69444a9287ea264617058dbbfe754d7071b8eef8294cbf4e7e0fdc")
+      iex> get_by_token("75d72f326a69444a9287ea264617058dbbfe754d7071b8eef8294cbf4e7e0fdc", otp_app: :my_app)
       nil
 
   """
@@ -39,10 +39,10 @@ defmodule ExOauth2Provider.AccessTokens do
 
   ## Examples
 
-      iex> get_by_refresh_token("c341a5c7b331ef076eb4954668d54f590e0009e06b81b100191aa22c93044f3d")
+      iex> get_by_refresh_token("c341a5c7b331ef076eb4954668d54f590e0009e06b81b100191aa22c93044f3d", otp_app: :my_app)
       %OauthAccessToken{}
 
-      iex> get_by_refresh_token("75d72f326a69444a9287ea264617058dbbfe754d7071b8eef8294cbf4e7e0fdc")
+      iex> get_by_refresh_token("75d72f326a69444a9287ea264617058dbbfe754d7071b8eef8294cbf4e7e0fdc", otp_app: :my_app)
       nil
   """
   @spec get_by_refresh_token(binary(), keyword()) :: AccessToken.t() | nil
@@ -57,10 +57,10 @@ defmodule ExOauth2Provider.AccessTokens do
 
   ## Examples
 
-      iex> get_by_refresh_token_for(application, "c341a5c7b331ef076eb4954668d54f590e0009e06b81b100191aa22c93044f3d")
+      iex> get_by_refresh_token_for(application, "c341a5c7b331ef076eb4954668d54f590e0009e06b81b100191aa22c93044f3d", otp_app: :my_app)
       %OauthAccessToken{}
 
-      iex> get_by_refresh_token_for(application, "75d72f326a69444a9287ea264617058dbbfe754d7071b8eef8294cbf4e7e0fdc")
+      iex> get_by_refresh_token_for(application, "75d72f326a69444a9287ea264617058dbbfe754d7071b8eef8294cbf4e7e0fdc", otp_app: :my_app)
       nil
   """
   @spec get_by_refresh_token_for(Application.t(), binary(), keyword()) :: AccessToken.t() | nil
@@ -75,10 +75,10 @@ defmodule ExOauth2Provider.AccessTokens do
 
   ## Examples
 
-      iex> get_token_for(resource_owner, application, "read write")
+      iex> get_token_for(resource_owner, application, "read write", otp_app: :my_app)
       %OauthAccessToken{}
 
-      iex> get_token_for(resource_owner, application, "read invalid")
+      iex> get_token_for(resource_owner, application, "read invalid", otp_app: :my_app)
       nil
   """
   @spec get_token_for(Schema.t(), Application.t(), binary(), keyword()) :: AccessToken.t() | nil
@@ -95,10 +95,10 @@ defmodule ExOauth2Provider.AccessTokens do
 
   ## Examples
 
-      iex> get_application_token_for(application, "read write")
+      iex> get_application_token_for(application, "read write", otp_app: :my_app)
       %OauthAccessToken{}
 
-      iex> get_application_token_for(application, "read invalid")
+      iex> get_application_token_for(application, "read invalid", otp_app: :my_app)
       nil
   """
   @spec get_application_token_for(Application.t(), binary(), keyword()) :: AccessToken.t() | nil
@@ -150,7 +150,7 @@ defmodule ExOauth2Provider.AccessTokens do
 
   ## Examples
 
-      iex> get_authorized_tokens_for(resource_owner)
+      iex> get_authorized_tokens_for(resource_owner, otp_app: :my_app)
       [%OauthAccessToken{}, ...]
   """
   @spec get_authorized_tokens_for(Schema.t(), keyword()) :: [AccessToken.t()]
@@ -167,13 +167,13 @@ defmodule ExOauth2Provider.AccessTokens do
 
   ## Examples
 
-      iex> create_token(resource_owner, %{application: application, scopes: "read write"})
+      iex> create_token(resource_owner, %{application: application, scopes: "read write"}, otp_app: :my_app)
       {:ok, %OauthAccessToken{}}
 
-      iex> create_token(resource_owner, %{scopes: "read write"})
+      iex> create_token(resource_owner, %{scopes: "read write"}, otp_app: :my_app)
       {:ok, %OauthAccessToken{}}
 
-      iex> create_token(resource_owner, %{expires_in: "invalid"})
+      iex> create_token(resource_owner, %{expires_in: "invalid"}, otp_app: :my_app)
       {:error, %Ecto.Changeset{}}
   """
   @spec create_token(Schema.t(), map(), keyword()) :: {:ok, AccessToken.t()} | {:error, Changeset.t()}
@@ -205,7 +205,7 @@ defmodule ExOauth2Provider.AccessTokens do
 
   ## Examples
 
-      iex> create_application_token(application, %{scopes: "read write"})
+      iex> create_application_token(application, %{scopes: "read write"}, otp_app: :my_app)
       {:ok, %OauthAccessToken{}}
   """
   @spec create_application_token(Schema.t() | nil, map(), keyword()) :: {:ok, AccessToken.t()} | {:error, Changeset.t()}
@@ -239,10 +239,10 @@ defmodule ExOauth2Provider.AccessTokens do
 
   ## Examples
 
-      iex> get_by_previous_refresh_token_for(new_access_token, config)
+      iex> get_by_previous_refresh_token_for(new_access_token, otp_app: :my_app)
       %OauthAccessToken{}
 
-      iex> get_by_previous_refresh_token_for(new_access_token, config)
+      iex> get_by_previous_refresh_token_for(new_access_token, otp_app: :my_app)
       nil
   """
   @spec get_by_previous_refresh_token_for(AccessToken.t(), keyword()) :: AccessToken.t() | nil
@@ -275,10 +275,10 @@ defmodule ExOauth2Provider.AccessTokens do
 
   ## Examples
 
-      iex> revoke_previous_refresh_token(data)
+      iex> revoke_previous_refresh_token(data, otp_app: :my_app)
       {:ok, %OauthAccessToken{}}
 
-      iex> revoke_previous_refresh_token(invalid_data)
+      iex> revoke_previous_refresh_token(invalid_data, otp_app: :my_app)
       {:error, %Ecto.Changeset{}}
   """
   @spec revoke_previous_refresh_token(AccessToken.t()) :: {:ok, AccessToken.t()} | {:error, Changeset.t()}

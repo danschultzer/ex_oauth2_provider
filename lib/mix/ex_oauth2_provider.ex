@@ -4,6 +4,9 @@ defmodule Mix.ExOauth2Provider do
   """
   alias Mix.Project
 
+  @spec otp_app() :: atom()
+  def otp_app(), do: Keyword.fetch!(Mix.Project.config(), :app)
+
   @doc """
   Raises an exception if the project is an umbrella app.
   """

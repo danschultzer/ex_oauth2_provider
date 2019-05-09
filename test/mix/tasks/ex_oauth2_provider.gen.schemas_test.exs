@@ -30,7 +30,7 @@ defmodule Mix.Tasks.ExOauth2Provider.Gen.SchemasTest do
         content = File.read!(path)
 
         assert content =~ "defmodule #{inspect module} do"
-        assert content =~ "use #{inspect macro}"
+        assert content =~ "use #{inspect macro}, otp_app: :test"
         assert content =~ "schema \"oauth_#{file}s\" do"
         assert content =~ "#{file}_fields()"
       end
