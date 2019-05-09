@@ -20,7 +20,7 @@ defmodule ExOauth2Provider.Token.AuthorizationCode do
         "client_secret" => "secret",
         "redirect_uri" => "https://example.com/",
         "grant_type" => "authorization_code"
-      })
+      }, otp_app: :my_app)
 
   ## Response
       {:ok, access_token}

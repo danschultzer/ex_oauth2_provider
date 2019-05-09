@@ -30,54 +30,54 @@ defmodule ExOauth2Provider.Token.Strategy.PasswordTest do
     {:ok, %{user: user, application: application}}
   end
 
-  test "#grant/1 error when invalid client" do
+  test "#grant/2 error when invalid client" do
     request_invalid_client = Map.merge(@valid_request, %{"client_id" => "invalid"})
 
-    assert Token.grant(request_invalid_client) == {:error, @invalid_client_error, :unprocessable_entity}
+    assert Token.grant(request_invalid_client, otp_app: :ex_oauth2_provider) == {:error, @invalid_client_error, :unprocessable_entity}
   end
 
-  test "#grant/1 error when invalid secret" do
+  test "#grant/2 error when invalid secret" do
     request_invalid_client = Map.merge(@valid_request, %{"client_secret" => "invalid"})
-    assert Token.grant(request_invalid_client) == {:error, @invalid_client_error, :unprocessable_entity}
+    assert Token.grant(request_invalid_client, otp_app: :ex_oauth2_provider) == {:error, @invalid_client_error, :unprocessable_entity}
 
     request_invalid_client = Map.delete(@valid_request, "client_secret")
-    assert Token.grant(request_invalid_client) == {:error, @invalid_client_error, :unprocessable_entity}
+    assert Token.grant(request_invalid_client, otp_app: :ex_oauth2_provider) == {:error, @invalid_client_error, :unprocessable_entity}
   end
 
-  test "#grant/1 error when missing required values" do
+  test "#grant/2 error when missing required values" do
     Enum.each(["username", "password"], fn(k) ->
       params = Map.delete(@valid_request, k)
-      assert Token.grant(params) == {:error, @invalid_request_error, :bad_request}
+      assert Token.grant(params, otp_app: :ex_oauth2_provider) == {:error, @invalid_request_error, :bad_request}
     end)
   end
 
-  test "#grant/1 error when invalid password" do
+  test "#grant/2 error when invalid password" do
     params = Map.merge(@valid_request, %{"password" => "invalid"})
 
-    assert Token.grant(params) == {:error, :unauthorized, :unauthorized}
+    assert Token.grant(params, otp_app: :ex_oauth2_provider) == {:error, :unauthorized, :unauthorized}
   end
 
   test "#grant/1 error when invalid scope" do
     params = Map.merge(@valid_request, %{"scope" => "invalid"})
 
-    assert Token.grant(params) == {:error, @invalid_scope, :unprocessable_entity}
+    assert Token.grant(params, otp_app: :ex_oauth2_provider) == {:error, @invalid_scope, :unprocessable_entity}
   end
 
   test "#grant/1 error when no password auth set" do
     expected_error = %{error: :unsupported_grant_type, error_description: "The authorization grant type is not supported by the authorization server."}
 
-    assert Password.grant(@valid_request, password_auth: nil) == {:error, expected_error, :unprocessable_entity}
+    assert Password.grant(@valid_request, otp_app: :ex_oauth2_provider, password_auth: nil) == {:error, expected_error, :unprocessable_entity}
   end
 
   test "#grant/1 returns access token", %{user: user, application: application} do
-    assert {:ok, body} = Token.grant(@valid_request)
+    assert {:ok, body} = Token.grant(@valid_request, otp_app: :ex_oauth2_provider)
     access_token = QueryHelpers.get_latest_inserted(OauthAccessToken)
 
     assert body.access_token == access_token.token
     assert access_token.resource_owner_id == user.id
     assert access_token.application_id == application.id
     assert access_token.scopes == application.scopes
-    assert access_token.expires_in == Config.access_token_expires_in([])
+    assert access_token.expires_in == Config.access_token_expires_in(otp_app: :ex_oauth2_provider)
     refute is_nil(access_token.refresh_token)
   end
 
@@ -86,7 +86,7 @@ defmodule ExOauth2Provider.Token.Strategy.PasswordTest do
 
     params = Map.delete(@valid_request, "client_secret")
 
-    assert {:ok, body} = Token.grant(params)
+    assert {:ok, body} = Token.grant(params, otp_app: :ex_oauth2_provider)
     access_token = QueryHelpers.get_latest_inserted(OauthAccessToken)
 
     assert body.access_token == access_token.token
@@ -95,14 +95,14 @@ defmodule ExOauth2Provider.Token.Strategy.PasswordTest do
   end
 
   test "#grant/1 returns access token with custom response handler" do
-    assert {:ok, body} = Password.grant(@valid_request, access_token_response_body_handler: {__MODULE__, :access_token_response_body_handler})
+    assert {:ok, body} = Password.grant(@valid_request, otp_app: :ex_oauth2_provider, access_token_response_body_handler: {__MODULE__, :access_token_response_body_handler})
     access_token = QueryHelpers.get_latest_inserted(OauthAccessToken)
 
     assert body.custom_attr == access_token.inserted_at
   end
 
   test "#grant/1 doesn't set refresh_token when ExOauth2Provider.Config.use_refresh_token? == false" do
-    assert {:ok, body} = Password.grant(@valid_request, use_refresh_token: false)
+    assert {:ok, body} = Password.grant(@valid_request, otp_app: :ex_oauth2_provider, use_refresh_token: false)
     access_token = QueryHelpers.get_latest_inserted(OauthAccessToken)
 
     assert body.access_token == access_token.token
@@ -111,7 +111,7 @@ defmodule ExOauth2Provider.Token.Strategy.PasswordTest do
 
   test "#grant/1 returns access token with limited scope" do
     params = Map.merge(@valid_request, %{"scope" => "app:read"})
-    assert {:ok, _} = Token.grant(params)
+    assert {:ok, _} = Token.grant(params, otp_app: :ex_oauth2_provider)
     access_token = QueryHelpers.get_latest_inserted(OauthAccessToken)
 
     assert access_token.scopes == "app:read"

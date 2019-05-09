@@ -36,7 +36,7 @@ defmodule ExOauth2Provider.Test.Fixtures do
       attrs
       |> Keyword.get(:resource_owner)
       |> Kernel.||(resource_owner())
-      |> AccessTokens.create_token(Enum.into(attrs, %{}))
+      |> AccessTokens.create_token(Enum.into(attrs, %{}), otp_app: :ex_oauth2_provider)
 
     access_token
   end
@@ -46,7 +46,7 @@ defmodule ExOauth2Provider.Test.Fixtures do
       attrs
       |> Keyword.get(:application)
       |> Kernel.||(application())
-      |> AccessTokens.create_application_token(Enum.into(attrs, %{}))
+      |> AccessTokens.create_application_token(Enum.into(attrs, %{}), otp_app: :ex_oauth2_provider)
 
     access_token
   end

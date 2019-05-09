@@ -17,7 +17,7 @@ defmodule ExOauth2Provider.Token do
         "grant_type" => "invalid",
         "client_id" => "Jf5rM8hQBc",
         "client_secret" => "secret"
-      })
+      }, otp_app: :my_app)
 
   ## Response
 
@@ -74,7 +74,7 @@ defmodule ExOauth2Provider.Token do
         "client_id" => "Jf5rM8hQBc",
         "client_secret" => "secret",
         "token" => "fi3S9u"
-      })
+      }, otp_app: :my_app)
 
   ## Response
 

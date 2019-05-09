@@ -7,7 +7,7 @@ defmodule ExOauth2Provider.Plug.VerifyHeaderTest do
   alias ExOauth2Provider.Test.Fixtures
 
   test "with no access token at a default location", %{conn: conn} do
-    opts = VerifyHeader.init([])
+    opts = VerifyHeader.init(otp_app: :ex_oauth2_provider)
     conn = VerifyHeader.call(conn, opts)
 
     refute Plug.authenticated?(conn)
@@ -15,7 +15,7 @@ defmodule ExOauth2Provider.Plug.VerifyHeaderTest do
   end
 
   test "with no access token at a specified location", %{conn: conn} do
-    opts = VerifyHeader.init(key: :secret)
+    opts = VerifyHeader.init(otp_app: :ex_oauth2_provider, key: :secret)
     conn = VerifyHeader.call(conn, opts)
 
     refute Plug.authenticated?(conn, :secret)
@@ -30,7 +30,7 @@ defmodule ExOauth2Provider.Plug.VerifyHeaderTest do
     end
 
     test "at the default location", %{conn: conn, access_token: access_token} do
-      opts = VerifyHeader.init()
+      opts = VerifyHeader.init(otp_app: :ex_oauth2_provider)
       conn =
         conn
         |> Conn.put_req_header("authorization", access_token.token)
@@ -41,7 +41,7 @@ defmodule ExOauth2Provider.Plug.VerifyHeaderTest do
     end
 
     test "at a specified location", %{conn: conn, access_token: access_token} do
-      opts = VerifyHeader.init(key: :secret)
+      opts = VerifyHeader.init(otp_app: :ex_oauth2_provider, key: :secret)
       conn =
         conn
         |> Conn.put_req_header("authorization", access_token.token)
@@ -52,7 +52,7 @@ defmodule ExOauth2Provider.Plug.VerifyHeaderTest do
     end
 
     test "with a realm specified", %{conn: conn, access_token: access_token} do
-      opts = VerifyHeader.init(realm: "Bearer")
+      opts = VerifyHeader.init(otp_app: :ex_oauth2_provider, realm: "Bearer")
       conn =
         conn
         |> Conn.put_req_header("authorization", "Bearer #{access_token.token}")
@@ -65,7 +65,7 @@ defmodule ExOauth2Provider.Plug.VerifyHeaderTest do
     test "with a realm specified and multiple auth headers", %{conn: conn, access_token: access_token} do
       another_access_token = Fixtures.access_token()
 
-      opts = VerifyHeader.init(realm: "Client")
+      opts = VerifyHeader.init(otp_app: :ex_oauth2_provider, realm: "Client")
       conn =
         conn
         |> Conn.put_req_header("authorization", "Bearer #{access_token.token}")
@@ -84,8 +84,8 @@ defmodule ExOauth2Provider.Plug.VerifyHeaderTest do
         {"authorization", "Client #{another_access_token.token}"}
       ]
 
-      opts_1 = VerifyHeader.init(realm: "Bearer")
-      opts_2 = VerifyHeader.init(realm: "Client", key: :client)
+      opts_1 = VerifyHeader.init(otp_app: :ex_oauth2_provider, realm: "Bearer")
+      opts_2 = VerifyHeader.init(otp_app: :ex_oauth2_provider, realm: "Client", key: :client)
       conn =
         conn
         |> Map.put(:req_headers, req_headers)

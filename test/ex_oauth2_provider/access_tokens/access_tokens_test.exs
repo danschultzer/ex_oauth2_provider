@@ -10,201 +10,201 @@ defmodule ExOauth2Provider.AccessTokensTest do
     {:ok, %{user: user, application: Fixtures.application(resource_owner: user)}}
   end
 
-  test "get_by_token/1", %{user: user} do
-    assert {:ok, access_token} = AccessTokens.create_token(user)
+  test "get_by_token/2", %{user: user} do
+    assert {:ok, access_token} = AccessTokens.create_token(user, %{}, otp_app: :ex_oauth2_provider)
 
-    assert %OauthAccessToken{id: id} = AccessTokens.get_by_token(access_token.token)
+    assert %OauthAccessToken{id: id} = AccessTokens.get_by_token(access_token.token, otp_app: :ex_oauth2_provider)
     assert id == access_token.id
   end
 
   test "get_by_refresh_token/2", %{user: user} do
-    assert {:ok, access_token} = AccessTokens.create_token(user, %{use_refresh_token: true})
+    assert {:ok, access_token} = AccessTokens.create_token(user, %{use_refresh_token: true}, otp_app: :ex_oauth2_provider)
 
-    assert %OauthAccessToken{id: id} = AccessTokens.get_by_refresh_token(access_token.refresh_token)
+    assert %OauthAccessToken{id: id} = AccessTokens.get_by_refresh_token(access_token.refresh_token, otp_app: :ex_oauth2_provider)
     assert id == access_token.id
   end
 
-  describe "get_by_previous_refresh_token_for/2" do
+  describe "get_by_previous_refresh_token_for/3" do
     test "with resource owner", %{user: user} do
-      {:ok, old_access_token} = AccessTokens.create_token(user, %{use_refresh_token: true})
-      {:ok, new_access_token} = AccessTokens.create_token(user, %{use_refresh_token: true, previous_refresh_token: old_access_token})
+      {:ok, old_access_token} = AccessTokens.create_token(user, %{use_refresh_token: true}, otp_app: :ex_oauth2_provider)
+      {:ok, new_access_token} = AccessTokens.create_token(user, %{use_refresh_token: true, previous_refresh_token: old_access_token}, otp_app: :ex_oauth2_provider)
 
-      assert %OauthAccessToken{id: id} = AccessTokens.get_by_previous_refresh_token_for(new_access_token, [])
+      assert %OauthAccessToken{id: id} = AccessTokens.get_by_previous_refresh_token_for(new_access_token, otp_app: :ex_oauth2_provider)
       assert id == old_access_token.id
 
-      refute AccessTokens.get_by_previous_refresh_token_for(old_access_token, [])
+      refute AccessTokens.get_by_previous_refresh_token_for(old_access_token, otp_app: :ex_oauth2_provider)
 
-      {:ok, new_access_token_different_user} = AccessTokens.create_token(Fixtures.resource_owner(), %{use_refresh_token: true, previous_refresh_token: old_access_token})
+      {:ok, new_access_token_different_user} = AccessTokens.create_token(Fixtures.resource_owner(), %{use_refresh_token: true, previous_refresh_token: old_access_token}, otp_app: :ex_oauth2_provider)
 
-      refute AccessTokens.get_by_previous_refresh_token_for(new_access_token_different_user, [])
+      refute AccessTokens.get_by_previous_refresh_token_for(new_access_token_different_user, otp_app: :ex_oauth2_provider)
     end
 
     test "with application", %{user: user, application: application} do
-      {:ok, old_access_token} = AccessTokens.create_token(user, %{application: application, use_refresh_token: true})
-      {:ok, new_access_token} = AccessTokens.create_token(user, %{application: application, use_refresh_token: true, previous_refresh_token: old_access_token})
+      {:ok, old_access_token} = AccessTokens.create_token(user, %{application: application, use_refresh_token: true}, otp_app: :ex_oauth2_provider)
+      {:ok, new_access_token} = AccessTokens.create_token(user, %{application: application, use_refresh_token: true, previous_refresh_token: old_access_token}, otp_app: :ex_oauth2_provider)
 
-      assert %OauthAccessToken{id: id} = AccessTokens.get_by_previous_refresh_token_for(new_access_token, [])
+      assert %OauthAccessToken{id: id} = AccessTokens.get_by_previous_refresh_token_for(new_access_token, otp_app: :ex_oauth2_provider)
       assert id == old_access_token.id
 
-      refute AccessTokens.get_by_previous_refresh_token_for(old_access_token, [])
+      refute AccessTokens.get_by_previous_refresh_token_for(old_access_token, otp_app: :ex_oauth2_provider)
 
-      {:ok, new_access_token_different_user} = AccessTokens.create_token(Fixtures.resource_owner(), %{application: application, use_refresh_token: true, previous_refresh_token: old_access_token})
-      refute AccessTokens.get_by_previous_refresh_token_for(new_access_token_different_user, [])
+      {:ok, new_access_token_different_user} = AccessTokens.create_token(Fixtures.resource_owner(), %{application: application, use_refresh_token: true, previous_refresh_token: old_access_token}, otp_app: :ex_oauth2_provider)
+      refute AccessTokens.get_by_previous_refresh_token_for(new_access_token_different_user, otp_app: :ex_oauth2_provider)
 
       new_application = Fixtures.application(resource_owner: user, uid: "new_app")
-      {:ok, new_access_token_different_app} = AccessTokens.create_token(user, %{application: new_application, use_refresh_token: true, previous_refresh_token: old_access_token})
+      {:ok, new_access_token_different_app} = AccessTokens.create_token(user, %{application: new_application, use_refresh_token: true, previous_refresh_token: old_access_token}, otp_app: :ex_oauth2_provider)
 
-      refute AccessTokens.get_by_previous_refresh_token_for(new_access_token_different_app, [])
+      refute AccessTokens.get_by_previous_refresh_token_for(new_access_token_different_app, otp_app: :ex_oauth2_provider)
     end
   end
 
-  describe "get_token_for/3" do
+  describe "get_token_for/4" do
     test "fetches for resource owner", %{user: user, application: application} do
-      {:ok, access_token1} = AccessTokens.create_token(user)
+      {:ok, access_token1} = AccessTokens.create_token(user, %{}, otp_app: :ex_oauth2_provider)
       inserted_at = QueryHelpers.timestamp(OauthAccessToken, :inserted_at, seconds: -1)
       QueryHelpers.change!(access_token1, inserted_at: inserted_at)
-      {:ok, access_token2} = AccessTokens.create_token(user)
-      {:ok, _access_token_with_application} = AccessTokens.create_token(user, %{application: application})
+      {:ok, access_token2} = AccessTokens.create_token(user, %{}, otp_app: :ex_oauth2_provider)
+      {:ok, _access_token_with_application} = AccessTokens.create_token(user, %{application: application}, otp_app: :ex_oauth2_provider)
 
-      assert %OauthAccessToken{id: id} = AccessTokens.get_token_for(user, nil, nil)
+      assert %OauthAccessToken{id: id} = AccessTokens.get_token_for(user, nil, nil, otp_app: :ex_oauth2_provider)
       assert id == access_token2.id
 
-      refute AccessTokens.get_token_for(Fixtures.resource_owner(), nil, nil)
+      refute AccessTokens.get_token_for(Fixtures.resource_owner(), nil, nil, otp_app: :ex_oauth2_provider)
     end
 
     test "with application", %{user: user, application: application} do
-      {:ok, access_token1} = AccessTokens.create_token(user, %{application: application})
+      {:ok, access_token1} = AccessTokens.create_token(user, %{application: application}, otp_app: :ex_oauth2_provider)
       inserted_at = QueryHelpers.timestamp(OauthAccessToken, :inserted_at, seconds: -1)
       QueryHelpers.change!(access_token1, inserted_at: inserted_at)
-      {:ok, access_token2} = AccessTokens.create_token(user, %{application: application})
-      {:ok, _access_token_without_application} = AccessTokens.create_token(user)
+      {:ok, access_token2} = AccessTokens.create_token(user, %{application: application}, otp_app: :ex_oauth2_provider)
+      {:ok, _access_token_without_application} = AccessTokens.create_token(user, %{}, otp_app: :ex_oauth2_provider)
 
-      assert %OauthAccessToken{id: id} = AccessTokens.get_token_for(user, application, nil)
+      assert %OauthAccessToken{id: id} = AccessTokens.get_token_for(user, application, nil, otp_app: :ex_oauth2_provider)
       assert id == access_token2.id
     end
 
     test "with scopes", %{user: user} do
-      {:ok, access_token1} = AccessTokens.create_token(user, %{scopes: "public"})
-      {:ok, access_token2} = AccessTokens.create_token(user, %{scopes: "read write"})
+      {:ok, access_token1} = AccessTokens.create_token(user, %{scopes: "public"}, otp_app: :ex_oauth2_provider)
+      {:ok, access_token2} = AccessTokens.create_token(user, %{scopes: "read write"}, otp_app: :ex_oauth2_provider)
 
-      assert %OauthAccessToken{id: id} = AccessTokens.get_token_for(user, nil, "public")
+      assert %OauthAccessToken{id: id} = AccessTokens.get_token_for(user, nil, "public", otp_app: :ex_oauth2_provider)
       assert id == access_token1.id
 
-      assert %OauthAccessToken{id: id} = AccessTokens.get_token_for(user, nil, "write read")
+      assert %OauthAccessToken{id: id} = AccessTokens.get_token_for(user, nil, "write read", otp_app: :ex_oauth2_provider)
       assert id == access_token2.id
 
-      refute AccessTokens.get_token_for(user, nil, "other_read")
+      refute AccessTokens.get_token_for(user, nil, "other_read", otp_app: :ex_oauth2_provider)
     end
 
     test "filters revoked", %{user: user} do
-      {:ok, access_token} = AccessTokens.create_token(user)
-      assert AccessTokens.get_token_for(user, nil, nil)
+      {:ok, access_token} = AccessTokens.create_token(user, %{}, otp_app: :ex_oauth2_provider)
+      assert AccessTokens.get_token_for(user, nil, nil, otp_app: :ex_oauth2_provider)
 
       AccessTokens.revoke(access_token)
-      refute AccessTokens.get_token_for(user, nil, nil)
+      refute AccessTokens.get_token_for(user, nil, nil, otp_app: :ex_oauth2_provider)
     end
 
     test "filters expired", %{user: user} do
-      {:ok, access_token} = AccessTokens.create_token(user)
+      {:ok, access_token} = AccessTokens.create_token(user, %{}, otp_app: :ex_oauth2_provider)
 
-      assert AccessTokens.get_token_for(user, nil, nil)
+      assert AccessTokens.get_token_for(user, nil, nil, otp_app: :ex_oauth2_provider)
 
       inserted_at = QueryHelpers.timestamp(access_token.__struct__, :inserted_at, seconds: -access_token.expires_in)
       QueryHelpers.change!(access_token, inserted_at: inserted_at)
 
-      refute AccessTokens.get_token_for(user, nil, nil)
+      refute AccessTokens.get_token_for(user, nil, nil, otp_app: :ex_oauth2_provider)
     end
   end
 
-  describe "get_application_token_for/2" do
+  describe "get_application_token_for/3" do
     test "fetches", %{application: application} do
-      {:ok, access_token1} = AccessTokens.create_application_token(application)
+      {:ok, access_token1} = AccessTokens.create_application_token(application, %{}, otp_app: :ex_oauth2_provider)
       inserted_at = QueryHelpers.timestamp(OauthAccessToken, :inserted_at, seconds: -1)
       QueryHelpers.change!(access_token1, inserted_at: inserted_at)
-      {:ok, access_token2} = AccessTokens.create_application_token(application)
+      {:ok, access_token2} = AccessTokens.create_application_token(application, %{}, otp_app: :ex_oauth2_provider)
 
-      assert %OauthAccessToken{id: id} = AccessTokens.get_application_token_for(application, nil)
+      assert %OauthAccessToken{id: id} = AccessTokens.get_application_token_for(application, nil, otp_app: :ex_oauth2_provider)
       assert id == access_token2.id
 
-      refute AccessTokens.get_application_token_for(Fixtures.application(uid: "application-2"), nil)
+      refute AccessTokens.get_application_token_for(Fixtures.application(uid: "application-2"), nil, otp_app: :ex_oauth2_provider)
     end
   end
 
-  test "get_authorized_tokens_for/1", %{user: user, application: application} do
-    {:ok, access_token} = AccessTokens.create_token(user, %{application: application})
+  test "get_authorized_tokens_for/2", %{user: user, application: application} do
+    {:ok, access_token} = AccessTokens.create_token(user, %{application: application}, otp_app: :ex_oauth2_provider)
 
-    assert [%OauthAccessToken{id: id}] = AccessTokens.get_authorized_tokens_for(user)
+    assert [%OauthAccessToken{id: id}] = AccessTokens.get_authorized_tokens_for(user, otp_app: :ex_oauth2_provider)
     assert id == access_token.id
 
     QueryHelpers.change!(access_token, expires_in: -1)
 
-    assert [%OauthAccessToken{id: id}] = AccessTokens.get_authorized_tokens_for(user)
+    assert [%OauthAccessToken{id: id}] = AccessTokens.get_authorized_tokens_for(user, otp_app: :ex_oauth2_provider)
     assert id == access_token.id
 
-    AccessTokens.revoke(access_token)
-    assert AccessTokens.get_authorized_tokens_for(user) == []
+    AccessTokens.revoke(access_token, otp_app: :ex_oauth2_provider)
+    assert AccessTokens.get_authorized_tokens_for(user, otp_app: :ex_oauth2_provider) == []
 
-    assert AccessTokens.get_authorized_tokens_for(Fixtures.resource_owner()) == []
+    assert AccessTokens.get_authorized_tokens_for(Fixtures.resource_owner(), otp_app: :ex_oauth2_provider) == []
   end
 
-  describe "create_token/2" do
+  describe "create_token/3" do
     test "with valid attributes", %{user: user} do
-      assert {:ok, access_token} = AccessTokens.create_token(user)
+      assert {:ok, access_token} = AccessTokens.create_token(user, %{}, otp_app: :ex_oauth2_provider)
       assert access_token.resource_owner_id == user.id
       assert is_nil(access_token.application_id)
     end
 
     test "with resource owner and application", %{user: user, application: application} do
-      {:ok, access_token} = AccessTokens.create_token(user, %{application: application})
+      {:ok, access_token} = AccessTokens.create_token(user, %{application: application}, otp_app: :ex_oauth2_provider)
       assert access_token.resource_owner_id == user.id
       assert access_token.application_id == application.id
     end
 
     test "adds random token", %{user: user} do
-      {:ok, access_token} = AccessTokens.create_token(user)
-      {:ok, access_token2} = AccessTokens.create_token(user)
+      {:ok, access_token} = AccessTokens.create_token(user, %{}, otp_app: :ex_oauth2_provider)
+      {:ok, access_token2} = AccessTokens.create_token(user, %{}, otp_app: :ex_oauth2_provider)
       assert access_token.token != access_token2.token
     end
 
     test "with custom access token generator", %{user: user} do
-      {:ok, access_token} = AccessTokens.create_token(user, %{}, access_token_generator: {__MODULE__, :access_token_generator})
+      {:ok, access_token} = AccessTokens.create_token(user, %{}, otp_app: :ex_oauth2_provider, access_token_generator: {__MODULE__, :access_token_generator})
       assert access_token.token == "custom_generated-#{user.id}"
     end
 
     test "adds previous_refresh_token", %{user: user} do
-      {:ok, old_access_token} = AccessTokens.create_token(user, %{use_refresh_token: true})
-      {:ok, new_access_token} = AccessTokens.create_token(user, %{use_refresh_token: true, previous_refresh_token: old_access_token})
+      {:ok, old_access_token} = AccessTokens.create_token(user, %{use_refresh_token: true}, otp_app: :ex_oauth2_provider)
+      {:ok, new_access_token} = AccessTokens.create_token(user, %{use_refresh_token: true, previous_refresh_token: old_access_token}, otp_app: :ex_oauth2_provider)
       assert new_access_token.previous_refresh_token == old_access_token.refresh_token
     end
 
     test "adds random refresh token", %{user: user} do
-      {:ok, access_token} = AccessTokens.create_token(user, %{use_refresh_token: true})
-      {:ok, access_token2} = AccessTokens.create_token(user, %{use_refresh_token: true})
+      {:ok, access_token} = AccessTokens.create_token(user, %{use_refresh_token: true}, otp_app: :ex_oauth2_provider)
+      {:ok, access_token2} = AccessTokens.create_token(user, %{use_refresh_token: true}, otp_app: :ex_oauth2_provider)
       assert access_token.refresh_token != access_token2.refresh_token
     end
 
     test "doesn't add refresh token when disabled", %{user: user} do
-      {:ok, access_token} = AccessTokens.create_token(user, %{use_refresh_token: false})
+      {:ok, access_token} = AccessTokens.create_token(user, %{use_refresh_token: false}, otp_app: :ex_oauth2_provider)
       assert is_nil(access_token.refresh_token)
     end
 
     test "with no scopes", %{user: user} do
-      assert {:ok, access_token} = AccessTokens.create_token(user)
+      assert {:ok, access_token} = AccessTokens.create_token(user, %{}, otp_app: :ex_oauth2_provider)
       assert access_token.scopes == "public"
     end
 
     test "with custom scopes", %{user: user} do
-      assert {:ok, access_token} = AccessTokens.create_token(user, %{scopes: "read"})
+      assert {:ok, access_token} = AccessTokens.create_token(user, %{scopes: "read"}, otp_app: :ex_oauth2_provider)
       assert access_token.scopes == "read"
     end
 
     test "with invalid scopes", %{user: user} do
-      assert {:error, changeset} = AccessTokens.create_token(user, %{scopes: "invalid"})
+      assert {:error, changeset} = AccessTokens.create_token(user, %{scopes: "invalid"}, otp_app: :ex_oauth2_provider)
       assert changeset.errors[:scopes] == {"not in permitted scopes list: [\"public\", \"read\", \"write\"]", []}
     end
   end
 
-  describe "create_token/2 with application scopes" do
+  describe "create_token/3 with application scopes" do
     setup %{user: user, application: application} do
        application = Map.merge(application, %{scopes: "public app:write app:read"})
 
@@ -212,43 +212,43 @@ defmodule ExOauth2Provider.AccessTokensTest do
     end
 
     test "with no scopes", %{user: user, application: application} do
-      assert {:ok, access_token} = AccessTokens.create_token(user, %{application: application})
+      assert {:ok, access_token} = AccessTokens.create_token(user, %{application: application}, otp_app: :ex_oauth2_provider)
       assert access_token.scopes == "public"
     end
 
     test "with custom scopes", %{user: user, application: application} do
       application = Map.merge(application, %{scopes: "app:read"})
-      assert {:ok, access_token} = AccessTokens.create_token(user, %{scopes: "app:read", application: application})
+      assert {:ok, access_token} = AccessTokens.create_token(user, %{scopes: "app:read", application: application}, otp_app: :ex_oauth2_provider)
       assert access_token.scopes == "app:read"
     end
 
     test "with invalid scopes", %{user: user, application: application} do
       application = Map.merge(application, %{scopes: "app:read"})
-      assert {:error, changeset} = AccessTokens.create_token(user, %{application: application, scopes: "app:write"})
+      assert {:error, changeset} = AccessTokens.create_token(user, %{application: application, scopes: "app:write"}, otp_app: :ex_oauth2_provider)
       assert changeset.errors[:scopes] == {"not in permitted scopes list: \"app:read\"", []}
     end
   end
 
-  test "create_application_token/2", %{application: application} do
-    {:ok, access_token} = AccessTokens.create_application_token(application)
+  test "create_application_token/3", %{application: application} do
+    {:ok, access_token} = AccessTokens.create_application_token(application, %{}, otp_app: :ex_oauth2_provider)
     assert is_nil(access_token.resource_owner_id)
     assert access_token.application_id == application.id
   end
 
-  describe "revoke/1" do
+  describe "revoke/2" do
     test "revokes token", %{user: user} do
-      {:ok, access_token} = AccessTokens.create_token(user)
+      {:ok, access_token} = AccessTokens.create_token(user, %{}, otp_app: :ex_oauth2_provider)
 
-      assert {:ok, access_token} = AccessTokens.revoke(access_token)
+      assert {:ok, access_token} = AccessTokens.revoke(access_token, otp_app: :ex_oauth2_provider)
       assert AccessTokens.is_revoked?(access_token) == true
     end
 
     test "doesn't revoke revoked tokens", %{user: user} do
-      {:ok, access_token} = AccessTokens.create_token(user)
+      {:ok, access_token} = AccessTokens.create_token(user, %{}, otp_app: :ex_oauth2_provider)
       revoked_at = QueryHelpers.timestamp(OauthAccessToken, :revoked_at, seconds: -86_400)
       access_token = Map.merge(access_token, %{revoked_at: revoked_at})
 
-      {:ok, access_token2} = AccessTokens.revoke(access_token)
+      {:ok, access_token2} = AccessTokens.revoke(access_token, otp_app: :ex_oauth2_provider)
       assert access_token2.revoked_at == access_token.revoked_at
     end
   end

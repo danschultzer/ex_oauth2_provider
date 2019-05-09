@@ -7,7 +7,7 @@ defmodule Mix.ExOauth2Provider.Schema do
   @template """
   defmodule <%= inspect schema.module %> do
     use Ecto.Schema
-    use <%= inspect schema.macro %>
+    use <%= inspect schema.macro %>, otp_app: :<%= otp_app %>
   <%= if schema.binary_id do %>
     @primary_key {:id, :binary_id, autogenerate: true}
     @foreign_key_type :binary_id<% end %>
@@ -35,7 +35,7 @@ defmodule Mix.ExOauth2Provider.Schema do
       binary_id    = Keyword.get(opts, :binary_id, false)
       macro        = schema
       macro_fields = "#{table}_fields"
-      content      = EEx.eval_string(@template, schema: %{module: module, table: table_name, binary_id: binary_id, macro: macro, macro_fields: macro_fields})
+      content      = EEx.eval_string(@template, schema: %{module: module, table: table_name, binary_id: binary_id, macro: macro, macro_fields: macro_fields}, otp_app: context_app)
       dir          = "lib/#{context_app}/#{Macro.underscore(context)}/"
 
       File.mkdir_p!(dir)

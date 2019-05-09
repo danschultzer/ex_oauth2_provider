@@ -22,51 +22,51 @@ defmodule ExOauth2Provider.Token.Strategy.RevokeTest do
     {:ok, %{access_token: access_token, valid_request: valid_request}}
   end
 
-  test "#revoke/1 error when invalid client", %{valid_request: valid_request} do
+  test "#revoke/2 error when invalid client", %{valid_request: valid_request} do
     params = Map.merge(valid_request, %{"client_id" => "invalid"})
 
-    assert Token.revoke(params) == {:error, @invalid_client_error, :unprocessable_entity}
+    assert Token.revoke(params, otp_app: :ex_oauth2_provider) == {:error, @invalid_client_error, :unprocessable_entity}
   end
 
-  test "#revoke/1 error when invalid secret", %{valid_request: valid_request} do
+  test "#revoke/2 error when invalid secret", %{valid_request: valid_request} do
     params = Map.merge(valid_request, %{"client_secret" => "invalid"})
 
-    assert Token.revoke(params) == {:error, @invalid_client_error, :unprocessable_entity}
+    assert Token.revoke(params, otp_app: :ex_oauth2_provider) == {:error, @invalid_client_error, :unprocessable_entity}
   end
 
-  test "#revoke/1 when missing token", %{valid_request: valid_request} do
+  test "#revoke/2 when missing token", %{valid_request: valid_request} do
     params = Map.delete(valid_request, "token")
 
-    assert Token.revoke(params) == {:ok, %{}}
+    assert Token.revoke(params, otp_app: :ex_oauth2_provider) == {:ok, %{}}
     refute AccessTokens.is_revoked?(QueryHelpers.get_latest_inserted(OauthAccessToken))
   end
 
-  test "#revoke/1 when invalid token", %{valid_request: valid_request} do
+  test "#revoke/2 when invalid token", %{valid_request: valid_request} do
     params = Map.merge(valid_request, %{"token" => "invalid"})
 
-    assert Token.revoke(params) == {:ok, %{}}
+    assert Token.revoke(params, otp_app: :ex_oauth2_provider) == {:ok, %{}}
     refute AccessTokens.is_revoked?(QueryHelpers.get_latest_inserted(OauthAccessToken))
   end
 
-  test "#revoke/1 when access token owned by another client", %{valid_request: valid_request, access_token: access_token} do
+  test "#revoke/2 when access token owned by another client", %{valid_request: valid_request, access_token: access_token} do
     new_application = Fixtures.application(uid: "new_app", client_secret: "new")
     QueryHelpers.change!(access_token, application_id: new_application.id)
 
-    assert Token.revoke(valid_request) == {:ok, %{}}
+    assert Token.revoke(valid_request, otp_app: :ex_oauth2_provider) == {:ok, %{}}
     refute AccessTokens.is_revoked?(QueryHelpers.get_latest_inserted(OauthAccessToken))
   end
 
-  test "#revoke/1 when access token not owned by a client", %{access_token: access_token} do
+  test "#revoke/2 when access token not owned by a client", %{access_token: access_token} do
     QueryHelpers.change!(access_token, application_id: nil)
 
     params = %{"token" => access_token.token}
 
-    assert Token.revoke(params) == {:ok, %{}}
+    assert Token.revoke(params, otp_app: :ex_oauth2_provider) == {:ok, %{}}
     assert AccessTokens.is_revoked?(QueryHelpers.get_latest_inserted(OauthAccessToken))
   end
 
-  test "#revoke/1", %{valid_request: valid_request} do
-    assert Token.revoke(valid_request) == {:ok, %{}}
+  test "#revoke/2", %{valid_request: valid_request} do
+    assert Token.revoke(valid_request, otp_app: :ex_oauth2_provider) == {:ok, %{}}
     assert AccessTokens.is_revoked?(QueryHelpers.get_latest_inserted(OauthAccessToken))
   end
 end

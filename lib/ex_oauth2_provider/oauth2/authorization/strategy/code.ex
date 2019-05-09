@@ -77,7 +77,8 @@ defmodule ExOauth2Provider.Authorization.Code do
       |> ExOauth2Provider.Authorization.preauthorize(%{
         "client_id" => "Jf5rM8hQBc",
         "response_type" => "code"
-      })
+      }, otp_app: :my_app)
+
   ## Response
       {:ok, client, scopes}                                         # Show request page with client and scopes
       {:error, %{error: error, error_description: _}, http_status}  # Show error page with error and http status
@@ -120,7 +121,8 @@ defmodule ExOauth2Provider.Authorization.Code do
         "scope" => "read write",                  # Optional
         "state" => "46012",                       # Optional
         "redirect_uri" => "https://example.com/"  # Optional
-      })
+      }, otp_app: :my_app)
+
   ## Response
       {:ok, code}                                                  # A grant was generated
       {:error, %{error: error, error_description: _}, http_status} # Error occurred
@@ -165,7 +167,8 @@ defmodule ExOauth2Provider.Authorization.Code do
       |> ExOauth2Provider.Authorization.deny(%{
         "client_id" => "Jf5rM8hQBc",
         "response_type" => "code"
-      })
+      }, otp_app: :my_app)
+
   ## Response type
       {:error, %{error: error, error_description: _}, http_status} # Error occurred
       {:redirect, redirect_uri}                                    # Redirect

@@ -2,14 +2,29 @@ defmodule ExOauth2Provider.Config do
   @moduledoc false
 
   @spec repo(keyword()) :: module()
-  def repo(config), do: get(config, :repo)
+  def repo(config) do
+    get(config, :repo) || raise """
+      No `:repo` found in ExOauth2Provider configuration.
+
+      Please set up the repo in your configuration:
+
+      config :ex_oauth_provider, ExOauthProvider,
+        repo: MyApp.Repo
+      """
+  end
 
   @spec resource_owner(keyword()) :: module()
   def resource_owner(config),
-    do: get(config, :resource_owner) || app_module("Users", "User")
+    do: get(config, :resource_owner) || app_module(config, "Users", "User")
 
-  defp app_module(context, module) do
-    Module.concat([app_base(otp_app()), context, module])
+  defp app_module(config, context, module) do
+    app =
+      config
+      |> Keyword.get(:otp_app)
+      |> Kernel.||(raise "No `:otp_app` found in provided configuration. Please pass `:otp_app` in configuration.")
+      |> app_base()
+
+    Module.concat([app, context, module])
   end
 
   @spec access_grant(keyword()) :: module()
@@ -30,11 +45,8 @@ defmodule ExOauth2Provider.Config do
 
     config
     |> get(name)
-    |> Kernel.||(app_module(context, module))
+    |> Kernel.||(app_module(config, context, module))
   end
-
-  @spec otp_app() :: atom()
-  def otp_app(), do: Keyword.fetch!(Mix.Project.config(), :app)
 
   @doc """
   Fetches the context base module for the app.
@@ -117,9 +129,11 @@ defmodule ExOauth2Provider.Config do
     do: get(config, :grant_flows, ~w(authorization_code client_credentials))
 
   defp get(config, key, value \\ nil) do
+    otp_app = Keyword.get(config, :otp_app)
+
     config
     |> get_from_config(key)
-    |> get_from_app_env(key)
+    |> get_from_app_env(otp_app, key)
     |> get_from_global_env(key)
     |> case do
       :not_found -> value
@@ -129,18 +143,17 @@ defmodule ExOauth2Provider.Config do
 
   defp get_from_config(config, key), do: Keyword.get(config, key, :not_found)
 
-  defp get_from_app_env(:not_found, key) do
-    app = otp_app()
-
-    app
+  defp get_from_app_env(:not_found, nil, _key), do: :not_found
+  defp get_from_app_env(:not_found, otp_app, key) do
+    otp_app
     |> Application.get_env(ExOauth2Provider, [])
     |> Keyword.get(key, :not_found)
   end
-  defp get_from_app_env(value, _key), do: value
+  defp get_from_app_env(value, _otp_app, _key), do: value
 
   defp get_from_global_env(:not_found, key) do
     :ex_oauth2_provider
-    |> Application.get_env(ExOAuth2Provider, [])
+    |> Application.get_env(ExOauth2Provider, [])
     |> Keyword.get(key, :not_found)
   end
   defp get_from_global_env(value, _key), do: value

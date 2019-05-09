@@ -42,7 +42,7 @@ defmodule ExOauth2Provider do
 
   ## Example
 
-      ExOauth2Provider.authenticate_token("Jf5rM8hQBc")
+      ExOauth2Provider.authenticate_token("Jf5rM8hQBc", otp_app: :my_app)
 
   ## Response
 
@@ -70,13 +70,13 @@ defmodule ExOauth2Provider do
   defp maybe_revoke_previous_refresh_token({:error, error}, _config), do: {:error, error}
   defp maybe_revoke_previous_refresh_token({:ok, access_token}, config) do
     case Config.refresh_token_revoked_on_use?(config) do
-      true  -> revoke_previous_refresh_token(access_token)
+      true  -> revoke_previous_refresh_token(access_token, config)
       false -> {:ok, access_token}
     end
   end
 
-  defp revoke_previous_refresh_token(access_token) do
-    case AccessTokens.revoke_previous_refresh_token(access_token) do
+  defp revoke_previous_refresh_token(access_token, config) do
+    case AccessTokens.revoke_previous_refresh_token(access_token, config) do
       {:error, _any}       -> {:error, :no_association_found}
       {:ok, _access_token} -> {:ok, access_token}
     end

@@ -19,7 +19,7 @@ defmodule ExOauth2Provider.Token.RefreshToken do
         "client_id" => "Jf5rM8hQBc",
         "client_secret" => "secret",
         "refresh_token" => "1jf6a"
-      })
+      }, otp_app: :my_app)
 
   ## Response
       {:ok, access_token}
