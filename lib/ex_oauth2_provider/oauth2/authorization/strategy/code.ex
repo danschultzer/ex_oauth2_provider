@@ -61,7 +61,6 @@ defmodule ExOauth2Provider.Authorization.Code do
     AccessGrants,
     Authorization.Utils,
     Authorization.Utils.Response,
-    RedirectURI,
     Scopes,
     Utils.Error}
   alias Ecto.Schema
@@ -213,11 +212,13 @@ defmodule ExOauth2Provider.Authorization.Code do
 
   defp validate_redirect_uri({:error, params}, _config), do: {:error, params}
   defp validate_redirect_uri({:ok, %{request: %{"redirect_uri" => redirect_uri}, client: client} = params}, config) do
+    redirect_uri_mod = Config.redirect_uri(config)
+
     cond do
-      RedirectURI.native_redirect_uri?(redirect_uri, config) ->
+      redirect_uri_mod.native_redirect_uri?(redirect_uri, config) ->
         {:ok, params}
 
-      RedirectURI.valid_for_authorization?(redirect_uri, client.redirect_uri, config) ->
+      redirect_uri_mod.valid_for_authorization?(redirect_uri, client.redirect_uri, config) ->
         {:ok, params}
 
       true ->

@@ -4,9 +4,53 @@ defmodule ExOauth2Provider.RedirectURI do
   """
   alias ExOauth2Provider.{Config, Utils}
 
+  defmodule Behaviour do
+    @moduledoc false
+    @callback validate(binary() | nil, keyword()) :: {:ok, binary()} | {:error, binary()}
+    @callback matches?(binary(), binary()) :: boolean()
+    @callback matches?(URI.t(), URI.t()) :: boolean()
+    @callback valid_for_authorization?(binary(), binary(), keyword()) :: boolean()
+    @callback native_redirect_uri?(binary(), keyword()) :: boolean()
+    @callback uri_with_query(binary() | URI.t(), map()) :: binary()
+  end
+
+  @behaviour Behaviour
+
+  @doc """
+  You can override the behaviour of RedirectURI by providing your own custom implementation.
+
+  ## Examples
+
+      defmodule MyApp.RedirectURI do
+        use ExOauth2Provider.RedirectURI
+
+        def validate(url, config) do
+          # Custom implementatation
+        end
+      end
+
+      # config.exs
+      config :my_app, ExOauth2Provider,
+        redirect_uri: MyApp.RedirectURI
+  """
+  defmacro __using__(_opts) do
+    quote do
+      @behaviour unquote(__MODULE__.Behaviour)
+
+      defdelegate validate(url, config), to: unquote(__MODULE__)
+      defdelegate matches?(url, url), to: unquote(__MODULE__)
+      defdelegate valid_for_authorization?(url, client_url, config), to: unquote(__MODULE__)
+      defdelegate native_redirect_uri?(url, config), to: unquote(__MODULE__)
+      defdelegate uri_with_query(uri, query), to: unquote(__MODULE__)
+
+      defoverridable unquote(__MODULE__)
+    end
+  end
+
   @doc """
   Validates if a url can be used as a redirect_uri
   """
+  @impl true
   @spec validate(binary() | nil, keyword()) :: {:ok, binary()} | {:error, binary()}
   def validate(nil, config), do: validate("", config)
   def validate(url, config) when is_binary(url) do
@@ -43,6 +87,7 @@ defmodule ExOauth2Provider.RedirectURI do
   @doc """
   Check if uri matches client uri
   """
+  @impl true
   @spec matches?(binary(), binary()) :: boolean()
   def matches?(uri, client_uri) when is_binary(uri) and is_binary(client_uri) do
     matches?(URI.parse(uri), URI.parse(client_uri))
@@ -55,6 +100,7 @@ defmodule ExOauth2Provider.RedirectURI do
   @doc """
   Check if a url matches a client redirect_uri
   """
+  @impl true
   @spec valid_for_authorization?(binary(), binary(), keyword()) :: boolean()
   def valid_for_authorization?(url, client_url, config) do
     url
@@ -72,6 +118,7 @@ defmodule ExOauth2Provider.RedirectURI do
   @doc """
   Check if a url is native
   """
+  @impl true
   @spec native_redirect_uri?(binary(), keyword()) :: boolean()
   def native_redirect_uri?(url, config) do
     Config.native_redirect_uri(config) == url
@@ -80,6 +127,7 @@ defmodule ExOauth2Provider.RedirectURI do
   @doc """
   Adds query parameters to uri
   """
+  @impl true
   @spec uri_with_query(binary() | URI.t(), map()) :: binary()
   def uri_with_query(uri, query) when is_binary(uri) do
     uri

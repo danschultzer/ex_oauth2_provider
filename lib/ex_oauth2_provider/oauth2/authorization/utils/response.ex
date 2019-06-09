@@ -1,7 +1,7 @@
 defmodule ExOauth2Provider.Authorization.Utils.Response do
   @moduledoc false
 
-  alias ExOauth2Provider.{RedirectURI, Scopes, Utils}
+  alias ExOauth2Provider.{Config, Scopes, Utils}
   alias Ecto.Schema
 
   @type native_redirect :: {:native_redirect, %{code: binary()}}
@@ -50,9 +50,11 @@ defmodule ExOauth2Provider.Authorization.Utils.Response do
   end
 
   defp build_redirect_response(%{request: %{"redirect_uri" => redirect_uri}}, payload, config) do
-    case RedirectURI.native_redirect_uri?(redirect_uri, config) do
+    redirect_uri_mod = Config.redirect_uri(config)
+
+    case redirect_uri_mod.native_redirect_uri?(redirect_uri, config) do
       true -> {:native_redirect, payload}
-      _    -> {:redirect, RedirectURI.uri_with_query(redirect_uri, payload)}
+      _    -> {:redirect, redirect_uri_mod.uri_with_query(redirect_uri, payload)}
     end
   end
 
@@ -68,7 +70,8 @@ defmodule ExOauth2Provider.Authorization.Utils.Response do
 
   defp can_redirect?(%{error: %{error: :invalid_redirect_uri}}, _config), do: false
   defp can_redirect?(%{error: %{error: :invalid_client}}, _config), do: false
-  defp can_redirect?(%{error: %{error: _error}, request: %{"redirect_uri" => redirect_uri}}, config), do: !RedirectURI.native_redirect_uri?(redirect_uri, config)
+  defp can_redirect?(%{error: %{error: _error}, request: %{"redirect_uri" => redirect_uri}}, config),
+    do: !Config.redirect_uri(config).native_redirect_uri?(redirect_uri, config)
   defp can_redirect?(%{error: _}, _config), do: false
   defp can_redirect?(%{request: %{}}, _config), do: true
 end
