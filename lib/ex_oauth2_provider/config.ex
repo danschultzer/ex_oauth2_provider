@@ -79,9 +79,9 @@ defmodule ExOauth2Provider.Config do
     |> Kernel.++(get(config, :optional_scopes, []))
   end
 
-  @spec redirect_uri(keyword()) :: module()
-  def redirect_uri(config),
-    do: get(config, :redirect_uri, ExOauth2Provider.RedirectURI)
+  @spec redirect_uri_match_fun(keyword()) :: function() | nil
+  def redirect_uri_match_fun(config),
+    do: get(config, :redirect_uri_match_fun)
 
   @spec native_redirect_uri(keyword()) :: binary()
   def native_redirect_uri(config),

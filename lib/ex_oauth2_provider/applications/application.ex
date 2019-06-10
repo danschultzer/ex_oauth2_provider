@@ -61,7 +61,7 @@ defmodule ExOauth2Provider.Applications.Application do
   end
 
   alias Ecto.Changeset
-  alias ExOauth2Provider.{Config, Utils}
+  alias ExOauth2Provider.{RedirectURI, Utils}
   alias ExOauth2Provider.Mixin.Scopes
 
   @spec changeset(Ecto.Schema.t(), map(), keyword()) :: Changeset.t()
@@ -106,7 +106,7 @@ defmodule ExOauth2Provider.Applications.Application do
     |> String.split()
     |> Enum.reduce(changeset, fn url, changeset ->
       url
-      |> Config.redirect_uri(config).validate(config)
+      |> RedirectURI.validate(config)
       |> case do
          {:error, error} -> Changeset.add_error(changeset, :redirect_uri, error)
          {:ok, _}        -> changeset
