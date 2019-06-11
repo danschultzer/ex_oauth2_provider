@@ -1,5 +1,9 @@
 # Changelog
 
+## v0.5.2 (2019-06-10)
+
+* Added `:redirect_uri_match_fun` configuration option for custom matching of redirect uri
+
 ## v0.5.1 (2019-05-08)
 
 * Relaxed plug requirement up to 2.0.0
