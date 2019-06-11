@@ -42,9 +42,23 @@ defmodule ExOauth2Provider.RedirectURITest do
     assert RedirectURI.validate(uri, []) == {:ok, uri}
   end
 
+  test "validates wild card subdomain" do
+    uri = "https://*.app.co/"
+    assert RedirectURI.validate(uri, []) == {:ok, uri}
+  end
+
   test "matches?#true" do
     uri = "https://app.co/aaa"
     assert RedirectURI.matches?(uri, uri)
+  end
+
+  test "matches?#true with custom match method" do
+    uri = "https://a.app.co/"
+    client_uri = "https://*.app.co/"
+
+    assert RedirectURI.matches?(uri, client_uri, redirect_uri_match_fun: fn uri, %{host: "*." <> host} = client_uri, _config ->
+      String.ends_with?(uri.host, host) && %{uri | query: nil} == %{client_uri | host: uri.host, authority: uri.authority}
+    end)
   end
 
   test "matches?#true ignores query parameter on comparison" do

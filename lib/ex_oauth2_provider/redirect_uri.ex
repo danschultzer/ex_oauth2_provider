@@ -43,13 +43,17 @@ defmodule ExOauth2Provider.RedirectURI do
   @doc """
   Check if uri matches client uri
   """
-  @spec matches?(binary(), binary()) :: boolean()
-  def matches?(uri, client_uri) when is_binary(uri) and is_binary(client_uri) do
-    matches?(URI.parse(uri), URI.parse(client_uri))
+  @spec matches?(binary(), binary(), keyword()) :: boolean()
+  def matches?(uri, client_uri, config \\ [])
+  def matches?(uri, client_uri, config) when is_binary(uri) and is_binary(client_uri) do
+    matches?(URI.parse(uri), URI.parse(client_uri), config)
   end
-  @spec matches?(URI.t(), URI.t()) :: boolean()
-  def matches?(%URI{} = uri, %URI{} = client_uri) do
-    client_uri == %{uri | query: nil}
+  @spec matches?(URI.t(), URI.t(), keyword()) :: boolean()
+  def matches?(%URI{} = uri, %URI{} = client_uri, config) do
+    case Config.redirect_uri_match_fun(config) do
+      nil -> client_uri == %{uri | query: nil}
+      fun -> fun.(uri, client_uri, config)
+    end
   end
 
   @doc """

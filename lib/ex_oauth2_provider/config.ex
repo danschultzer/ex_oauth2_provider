@@ -79,6 +79,10 @@ defmodule ExOauth2Provider.Config do
     |> Kernel.++(get(config, :optional_scopes, []))
   end
 
+  @spec redirect_uri_match_fun(keyword()) :: function() | nil
+  def redirect_uri_match_fun(config),
+    do: get(config, :redirect_uri_match_fun)
+
   @spec native_redirect_uri(keyword()) :: binary()
   def native_redirect_uri(config),
     do: get(config, :native_redirect_uri, "urn:ietf:wg:oauth:2.0:oob")
