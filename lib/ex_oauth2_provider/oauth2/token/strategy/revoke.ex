@@ -70,7 +70,7 @@ defmodule ExOauth2Provider.Token.Revoke do
     end
   end
 
-  defp get_refresh_token({:ok,%{access_token: _} = params}, _config), do: {:ok, params}
+  defp get_refresh_token({:ok, %{access_token: _} = params}, _config), do: {:ok, params}
   defp get_refresh_token({:error, %{error: _} = params}, _config), do: {:error, params}
   defp get_refresh_token({:ok, %{request: %{"token" => token}} = params}, config) do
     token

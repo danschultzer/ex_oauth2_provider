@@ -73,7 +73,8 @@ defmodule ExOauth2Provider.Authorization do
   defp response_type_to_grant_flow(_), do: nil
 
   defp fetch_module(grant_flow, config) do
-    Config.grant_flows(config)
+    config
+    |> Config.grant_flows()
     |> flow_can_be_used?(grant_flow)
     |> case do
       true  -> flow_to_mod(grant_flow)

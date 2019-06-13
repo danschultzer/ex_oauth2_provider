@@ -1,14 +1,17 @@
 language: elixir
-sudo: false
-matrix:
+elixir: 1.8
+otp_release: 22.0
+services:
+  postgresql
+jobs:
   include:
-    - elixir: 1.8
+    - stage: test
+      elixir: 1.8
       otp_release: 21.0
-      env: MIX_ENV=test
-    - elixir: 1.8
-      otp_release: 21.0
-      env: MIX_ENV=test UUID=true
-script:
-  - mix test
-after_script:
-  - mix credo
+      script: &test_scripts
+        - mix test
+        - MIX_ENV=test mix credo
+    - stage: test
+      script: *test_scripts
+      env:
+        - UUID=true

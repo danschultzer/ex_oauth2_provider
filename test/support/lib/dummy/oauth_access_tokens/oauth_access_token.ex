@@ -1,4 +1,6 @@
 defmodule Dummy.OauthAccessTokens.OauthAccessToken do
+  @moduledoc false
+
   use Ecto.Schema
   use ExOauth2Provider.AccessTokens.AccessToken, otp_app: :ex_oauth2_provider
 

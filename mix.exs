@@ -38,7 +38,7 @@ defmodule ExOauth2Provider.Mixfile do
       {:plug, ">= 1.5.0 and < 2.0.0"},
 
       # Dev and test dependencies
-      {:credo, "~> 0.10", only: [:dev, :test]},
+      {:credo, "~> 1.1.0", only: [:dev, :test]},
 
       {:ex_doc, ">= 0.0.0", only: :dev},
 

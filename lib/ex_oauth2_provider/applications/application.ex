@@ -26,7 +26,7 @@ defmodule ExOauth2Provider.Applications.Application do
     {:name, :string, null: false},
     {:uid, :string, null: false},
     {:secret, :string, null: false, default: ""},
-    {:redirect_uri, :string,null: false},
+    {:redirect_uri, :string, null: false},
     {:scopes, :string, null: false, default: ""},
     ]
   end
