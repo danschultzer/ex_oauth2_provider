@@ -138,12 +138,20 @@ config :my_app, ExOauth2Provider,
 # Module example
 defmodule Auth do
   def authenticate(username, password, otp_app: :my_app) do
-    user = Repo.get_by(User, email: username)
+    User
+    |> Repo.get_by(email: username)
+    |> verify_password(password)
+  end
 
-    cond do
-      user == nil                            -> {:error, :no_user_found}
-      check_pw(user.password_hash, password) -> {:ok, user}
-      true                                   -> {:error, :invalid_password}
+  defp verify_password(nil, password) do
+    check_pw("", password) # Prevent timing attack
+
+    {:error, :no_user_found}
+  end
+  defp verify_password(%{password_hash: password_hash} = user, password) do
+    case check_pw(password_hash, password) do
+      true  -> {:ok, user}
+      false -> {:error, :invalid_password}
     end
   end
 end
