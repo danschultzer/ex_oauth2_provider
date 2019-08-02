@@ -40,11 +40,14 @@ defmodule ExOauth2Provider.RedirectURI do
     Config.force_ssl_in_redirect_uri?(config) and uri.scheme == "http"
   end
 
+  @doc false
+  @deprecated "Use `matches?/3` instead"
+  def matches?(uri, client_uri), do: matches?(uri, client_uri, [])
+
   @doc """
   Check if uri matches client uri
   """
   @spec matches?(binary(), binary(), keyword()) :: boolean()
-  def matches?(uri, client_uri, config \\ [])
   def matches?(uri, client_uri, config) when is_binary(uri) and is_binary(client_uri) do
     matches?(URI.parse(uri), URI.parse(client_uri), config)
   end

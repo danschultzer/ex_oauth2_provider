@@ -1,5 +1,10 @@
 # Changelog
 
+## v0.5.3 (TBA)
+
+* Fixed bug in `ExOauth2Provider.RedirectURI.valid_for_authorization?/3` where the `:redirect_uri_match_fun` configuration option was not used
+* Deprecated `ExOauth2Provider.RedirectURI.matches?/2`
+
 ## v0.5.2 (2019-06-10)
 
 * Added `:redirect_uri_match_fun` configuration option for custom matching of redirect uri
