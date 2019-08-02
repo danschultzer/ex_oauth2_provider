@@ -63,14 +63,14 @@ defmodule ExOauth2Provider.RedirectURI do
   def valid_for_authorization?(url, client_url, config) do
     url
     |> validate(config)
-    |> do_valid_for_authorization?(client_url)
+    |> do_valid_for_authorization?(client_url, config)
   end
 
-  defp do_valid_for_authorization?({:error, _error}, _client_url), do: false
-  defp do_valid_for_authorization?({:ok, url}, client_url) do
+  defp do_valid_for_authorization?({:error, _error}, _client_url, _config), do: false
+  defp do_valid_for_authorization?({:ok, url}, client_url, config) do
     client_url
     |> String.split()
-    |> Enum.any?(&matches?(url, &1))
+    |> Enum.any?(&matches?(url, &1, config))
   end
 
   @doc """

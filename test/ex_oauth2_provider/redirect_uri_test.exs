@@ -52,15 +52,6 @@ defmodule ExOauth2Provider.RedirectURITest do
     assert RedirectURI.matches?(uri, uri)
   end
 
-  test "matches?#true with custom match method" do
-    uri = "https://a.app.co/"
-    client_uri = "https://*.app.co/"
-
-    assert RedirectURI.matches?(uri, client_uri, redirect_uri_match_fun: fn uri, %{host: "*." <> host} = client_uri, _config ->
-      String.ends_with?(uri.host, host) && %{uri | query: nil} == %{client_uri | host: uri.host, authority: uri.authority}
-    end)
-  end
-
   test "matches?#true ignores query parameter on comparison" do
     assert RedirectURI.matches?("https://app.co/?query=hello", "https://app.co/")
   end
@@ -77,6 +68,23 @@ defmodule ExOauth2Provider.RedirectURITest do
     uri = "https://app.co/aaa"
     assert RedirectURI.valid_for_authorization?(uri, uri, [])
   end
+
+  test "valid_for_authorization?#true with custom match method" do
+     uri = "https://a.app.co/"
+     client_uri = "https://*.app.co/"
+ 
+     config = [
+       {
+         :redirect_uri_match_fun,
+         fn uri, %{host: "*." <> host} = client_uri, _config ->
+           String.ends_with?(uri.host, host) &&
+             %{uri | query: nil} == %{client_uri | host: uri.host, authority: uri.authority}
+         end
+       }
+     ]
+ 
+     assert RedirectURI.valid_for_authorization?(uri, client_uri, config)
+   end
 
   test "valid_for_authorization?#false" do
     refute RedirectURI.valid_for_authorization?("https://app.co/aaa", "https://app.co/bbb", [])
