@@ -49,7 +49,7 @@ defmodule ExOauth2Provider.RedirectURITest do
 
   test "matches?#true" do
     uri = "https://app.co/aaa"
-    assert RedirectURI.matches?(uri, uri)
+    assert RedirectURI.matches?(uri, uri, [])
   end
 
   test "matches?#true with custom match method" do
@@ -62,15 +62,15 @@ defmodule ExOauth2Provider.RedirectURITest do
   end
 
   test "matches?#true ignores query parameter on comparison" do
-    assert RedirectURI.matches?("https://app.co/?query=hello", "https://app.co/")
+    assert RedirectURI.matches?("https://app.co/?query=hello", "https://app.co/", [])
   end
 
   test "matches?#false" do
-    refute RedirectURI.matches?("https://app.co/?query=hello", "https://app.co")
+    refute RedirectURI.matches?("https://app.co/?query=hello", "https://app.co", [])
   end
 
   test "matches?#false with domains that doesn't start at beginning" do
-    refute RedirectURI.matches?("https://app.co/?query=hello", "https://example.com?app.co=test")
+    refute RedirectURI.matches?("https://app.co/?query=hello", "https://example.com?app.co=test", [])
   end
 
   test "valid_for_authorization?#true" do

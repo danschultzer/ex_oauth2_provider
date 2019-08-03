@@ -40,11 +40,14 @@ defmodule ExOauth2Provider.RedirectURI do
     Config.force_ssl_in_redirect_uri?(config) and uri.scheme == "http"
   end
 
+  @doc false
+  @deprecated "Use `matches?/3` instead"
+  def matches?(uri, client_uri), do: matches?(uri, client_uri, [])
+
   @doc """
   Check if uri matches client uri
   """
   @spec matches?(binary(), binary(), keyword()) :: boolean()
-  def matches?(uri, client_uri, config \\ [])
   def matches?(uri, client_uri, config) when is_binary(uri) and is_binary(client_uri) do
     matches?(URI.parse(uri), URI.parse(client_uri), config)
   end
@@ -63,14 +66,14 @@ defmodule ExOauth2Provider.RedirectURI do
   def valid_for_authorization?(url, client_url, config) do
     url
     |> validate(config)
-    |> do_valid_for_authorization?(client_url)
+    |> do_valid_for_authorization?(client_url, config)
   end
 
-  defp do_valid_for_authorization?({:error, _error}, _client_url), do: false
-  defp do_valid_for_authorization?({:ok, url}, client_url) do
+  defp do_valid_for_authorization?({:error, _error}, _client_url, _config), do: false
+  defp do_valid_for_authorization?({:ok, url}, client_url, config) do
     client_url
     |> String.split()
-    |> Enum.any?(&matches?(url, &1))
+    |> Enum.any?(&matches?(url, &1, config))
   end
 
   @doc """
