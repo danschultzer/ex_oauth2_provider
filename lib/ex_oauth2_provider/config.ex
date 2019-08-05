@@ -8,7 +8,7 @@ defmodule ExOauth2Provider.Config do
 
       Please set up the repo in your configuration:
 
-      config :ex_oauth_provider, ExOauthProvider,
+      config #{inspect Keyword.get(config, :otp_app, :ex_oauth2_provider)}, ExOauth2Provider,
         repo: MyApp.Repo
       """
   end

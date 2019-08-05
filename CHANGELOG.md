@@ -1,5 +1,9 @@
 # Changelog
 
+## v0.5.4 (TBA)
+
+* Improved error message for missing repo configuration
+
 ## v0.5.3 (2019-08-02)
 
 * Fixed bug in `ExOauth2Provider.RedirectURI.valid_for_authorization?/3` where the `:redirect_uri_match_fun` configuration option was not used
