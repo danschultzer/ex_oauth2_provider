@@ -1,8 +1,9 @@
 # Changelog
 
-## v0.5.4 (TBA)
+## v0.5.4 (2019-08-05)
 
 * Improved error message for missing repo configuration
+* A server issue at hex.pm caused v0.5.3 to not be succesfully indexed. Use v0.5.4 instead.
 
 ## v0.5.3 (2019-08-02)
 
