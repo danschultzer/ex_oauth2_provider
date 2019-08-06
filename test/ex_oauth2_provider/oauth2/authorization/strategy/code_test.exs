@@ -134,12 +134,20 @@ defmodule ExOauth2Provider.Authorization.CodeTest do
       %{resource_owner: resource_owner, application: application}
     end
 
+    test "generates grant with no scope passed", %{resource_owner: resource_owner} do
+      request = Map.delete(@valid_request, "scope")
+      assert {:native_redirect, %{code: code}} = Authorization.authorize(resource_owner, request, otp_app: :ex_oauth2_provider)
+
+      access_grant = Repo.get_by(OauthAccessGrant, token: code)
+      assert access_grant.resource_owner_id == resource_owner.id
+    end
+
     test "error when invalid server scope", %{resource_owner: resource_owner} do
       request = Map.merge(@valid_request, %{"scope" => "public profile"})
       assert Authorization.authorize(resource_owner, request, otp_app: :ex_oauth2_provider) == {:error, @invalid_scope, :unprocessable_entity}
     end
 
-    test "generates grant", %{resource_owner: resource_owner} do
+    test "generates grant with public scope", %{resource_owner: resource_owner} do
       request = Map.merge(@valid_request, %{"scope" => "public"})
       assert {:native_redirect, %{code: code}} = Authorization.authorize(resource_owner, request, otp_app: :ex_oauth2_provider)
 
