@@ -6,7 +6,7 @@ defmodule ExOauth2Provider.Authorization.CodeTest do
   alias Dummy.{OauthAccessGrants.OauthAccessGrant, Repo}
 
   @client_id                "Jf5rM8hQBc"
-  @valid_request            %{"client_id" => @client_id, "response_type" => "code", "scope" => "app:read app:write"}
+  @valid_request            %{"client_id" => @client_id, "response_type" => "code"}
   @invalid_request          %{error: :invalid_request,
                               error_description: "The request is missing a required parameter, includes an unsupported parameter value, or is otherwise malformed."
                             }
@@ -174,7 +174,7 @@ defmodule ExOauth2Provider.Authorization.CodeTest do
 
     assert access_grant.resource_owner_id == resource_owner.id
     assert access_grant.expires_in == Config.authorization_code_expires_in(otp_app: :ex_oauth2_provider)
-    assert access_grant.scopes == @valid_request["scope"]
+    assert access_grant.scopes == ""
   end
 
   test "#authorize/3 generates grant with redirect uri", %{resource_owner: resource_owner, application: application} do
