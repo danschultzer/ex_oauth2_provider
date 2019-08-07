@@ -24,7 +24,7 @@ defmodule ExOauth2Provider.Authorization.CodeTest do
   @access_denied                    %{error: :access_denied,
                                       error_description: "The resource owner or authorization server denied the request."
                                     }
-  @pkce_enabled_auth_missing_fields elem(Utils.Error.invalid_pkce_auth(),1)
+  @pkce_enabled_auth_missing_fields elem(Utils.Error.invalid_pkce_auth(), 1)
 
   setup do
     resource_owner = Fixtures.resource_owner()
@@ -175,12 +175,12 @@ defmodule ExOauth2Provider.Authorization.CodeTest do
 
     test "returns an error without code_challenge", %{verifier: verifier, resource_owner: resource_owner} do
       # a valid request without a code_challenge is invalid with pkce on
-      missing_code_challenge_request = Map.delete(@valid_request,"code_challenge")
-      assert Authorization.authorize(resource_owner, missing_code_challenge_request, otp_app: :ex_oauth2_provider) == { :error, @pkce_enabled_auth_missing_fields, :bad_request }
+      missing_code_challenge_request = Map.delete(@valid_request, "code_challenge")
+      assert Authorization.authorize(resource_owner, missing_code_challenge_request, otp_app: :ex_oauth2_provider) == {:error, @pkce_enabled_auth_missing_fields, :bad_request}
     end
 
     test "generates a grant with a code_verifier", %{verifier: verifier, resource_owner: resource_owner} do
-      code_challenge= Base.url_encode64(:crypto.hash(:sha256,verifier))
+      code_challenge = Base.url_encode64(:crypto.hash(:sha256, verifier))
       request = Map.merge(@valid_request, %{"code_challenge" => code_challenge, "code_challenge_method" => @code_challenge_method })
 
       assert {:native_redirect, %{code: code}} = Authorization.authorize(resource_owner, request, otp_app: :ex_oauth2_provider)
