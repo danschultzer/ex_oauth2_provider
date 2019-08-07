@@ -1,27 +1,30 @@
 defmodule ExOauth2Provider.Authorization.CodeTest do
   use ExOauth2Provider.TestCase
 
-  alias ExOauth2Provider.{Authorization, Config, Scopes}
+  alias ExOauth2Provider.{Authorization, Config, Scopes, Utils}
   alias ExOauth2Provider.Test.{Fixtures, QueryHelpers}
   alias Dummy.{OauthAccessGrants.OauthAccessGrant, Repo}
 
-  @client_id                "Jf5rM8hQBc"
-  @valid_request            %{"client_id" => @client_id, "response_type" => "code"}
-  @invalid_request          %{error: :invalid_request,
-                              error_description: "The request is missing a required parameter, includes an unsupported parameter value, or is otherwise malformed."
-                            }
-  @invalid_client           %{error: :invalid_client,
-                              error_description: "Client authentication failed due to unknown client, no client authentication included, or unsupported authentication method."
-                            }
-  @invalid_scope            %{error: :invalid_scope,
-                              error_description: "The requested scope is invalid, unknown, or malformed."
-                            }
-  @invalid_redirect_uri     %{error: :invalid_redirect_uri,
-                              error_description: "The redirect uri included is not valid."
-                            }
-  @access_denied            %{error: :access_denied,
-                              error_description: "The resource owner or authorization server denied the request."
-                            }
+  @code_challenge_method            "S256"
+  @custom_native_redirect           "app://callback"
+  @client_id                        "Jf5rM8hQBc"
+  @valid_request                    %{"client_id" => @client_id, "response_type" => "code"}
+  @invalid_request                  %{error: :invalid_request,
+                                      error_description: "The request is missing a required parameter, includes an unsupported parameter value, or is otherwise malformed."
+                                    }
+  @invalid_client                   %{error: :invalid_client,
+                                      error_description: "Client authentication failed due to unknown client, no client authentication included, or unsupported authentication method."
+                                    }
+  @invalid_scope                    %{error: :invalid_scope,
+                                      error_description: "The requested scope is invalid, unknown, or malformed."
+                                    }
+  @invalid_redirect_uri             %{error: :invalid_redirect_uri,
+                                      error_description: "The redirect uri included is not valid."
+                                    }
+  @access_denied                    %{error: :access_denied,
+                                      error_description: "The resource owner or authorization server denied the request."
+                                    }
+  @pkce_enabled_auth_missing_fields elem(Utils.Error.invalid_pkce_auth(),1)
 
   setup do
     resource_owner = Fixtures.resource_owner()
@@ -132,6 +135,63 @@ defmodule ExOauth2Provider.Authorization.CodeTest do
 
     assert Authorization.authorize(resource_owner, request, otp_app: :ex_oauth2_provider) == {:error, @invalid_scope, :unprocessable_entity}
   end
+
+  describe "#authorize/3 custom native_redirect" do
+    setup %{resource_owner: resource_owner, application: application} do
+      config = Application.get_env(:ex_oauth2_provider, ExOauth2Provider)
+      config = [{:native_redirect_uri, @custom_native_redirect} | config]
+      config = Application.put_env(:ex_oauth2_provider, ExOauth2Provider, config)
+
+      application = QueryHelpers.change!(application, scopes: "")
+      application = QueryHelpers.change!(application, redirect_uri: @custom_native_redirect)
+
+      verifier = :crypto.strong_rand_bytes(128)
+      #code_verifier= Base.url_encode64(verifier, padding: false)
+
+      %{resource_owner: resource_owner, application: application, verifier: verifier}
+    end
+    test "generates a grant", %{verifier: verifier, resource_owner: resource_owner} do
+
+      assert {:native_redirect, %{code: code}} = Authorization.authorize(resource_owner, @valid_request, otp_app: :ex_oauth2_provider)
+      access_grant = Repo.get_by(OauthAccessGrant, token: code)
+      assert access_grant.resource_owner_id == resource_owner.id
+      assert access_grant.redirect_uri == "app://callback"
+    end
+  end
+
+  describe "#authorize/3 with PKCE enabled" do
+    setup %{resource_owner: resource_owner, application: application} do
+      config = Application.get_env(:ex_oauth2_provider, ExOauth2Provider)
+      config = [{:use_pkce, true} | config]
+      config = Application.put_env(:ex_oauth2_provider, ExOauth2Provider, config)
+
+      application = QueryHelpers.change!(application, scopes: "")
+
+      verifier = :crypto.strong_rand_bytes(128)
+      #code_verifier= Base.url_encode64(verifier, padding: false)
+
+      %{resource_owner: resource_owner, application: application, verifier: verifier}
+    end
+
+    test "returns an error without code_challenge", %{verifier: verifier, resource_owner: resource_owner} do
+      # a valid request without a code_challenge is invalid with pkce on
+      missing_code_challenge_request = Map.delete(@valid_request,"code_challenge")
+      assert Authorization.authorize(resource_owner, missing_code_challenge_request, otp_app: :ex_oauth2_provider) == { :error, @pkce_enabled_auth_missing_fields, :bad_request }
+    end
+
+    test "generates a grant with a code_verifier", %{verifier: verifier, resource_owner: resource_owner} do
+      code_challenge= Base.url_encode64(:crypto.hash(:sha256,verifier))
+      request = Map.merge(@valid_request, %{"code_challenge" => code_challenge, "code_challenge_method" => @code_challenge_method })
+
+      assert {:native_redirect, %{code: code}} = Authorization.authorize(resource_owner, request, otp_app: :ex_oauth2_provider)
+      access_grant = Repo.get_by(OauthAccessGrant, token: code)
+      assert access_grant.resource_owner_id == resource_owner.id
+      # todo
+ #     assert access_grant.code_challege_method == @code_challenge_method
+ #     assert access_grant.code_challege == code_chalenge_method
+    end
+  end
+
 
   describe "#authorize/3 when application has no scope" do
     setup %{resource_owner: resource_owner, application: application} do
