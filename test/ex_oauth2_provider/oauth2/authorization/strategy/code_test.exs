@@ -84,7 +84,7 @@ defmodule ExOauth2Provider.Authorization.CodeTest do
     end
 
     test "with no scope", %{resource_owner: resource_owner, application: application} do
-      request = Map.delete(@valid_request,"scope")
+      request = Map.delete(@valid_request, "scope")
 
       assert Authorization.preauthorize(resource_owner, request, otp_app: :ex_oauth2_provider) == {:ok, application, []}
     end
