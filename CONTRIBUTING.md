@@ -19,19 +19,15 @@ mix deps.compile
  This is fine for development but no production machine should trust any user incoming.
 
  1) start postgres via script (will download and run image)
+    ```
+    dev/postgres.zsh
+    ```
  2) stop the script (CTRL-C)
  3) change last line of priv/pg_data/pg_hba.conf to "host all all all trust"
  4) restart postgres via script
-
-```
-#!/usr/bin/env zsh
-SCRIPT_DIR=$0:a:h
-PG_NAME=postgres-oauth2-provider
-mkdir -p $SCRIPT_DIR/priv/pg_data
-docker stop $PG_NAME
-docker run --rm  --name $PG_NAME -e POSTGRES_USER=$USER -e POSTGRES_PASSWORD=secret -p 5432:5432 -v $SCRIPT_DIR/priv/pg_data:/var/lib/postgresql/data  postgres
-
-```
+    ```
+    dev/postgres.zsh
+    ```
 
 # running tests
 
