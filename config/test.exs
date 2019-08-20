@@ -6,7 +6,7 @@ config :ex_oauth2_provider, ExOauth2Provider,
   resource_owner: Dummy.Users.User,
   default_scopes: ~w(public),
   optional_scopes: ~w(read write),
-  password_auth: {Dummy.Auth, :auth},
+  password_auth: &Dummy.Auth.auth/2,
   use_refresh_token: true,
   revoke_refresh_token_on_use: true,
   grant_flows: ~w(authorization_code client_credentials)

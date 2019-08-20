@@ -102,8 +102,8 @@ defmodule ExOauth2Provider.Config do
 
   # Password auth method to use. Disabled by default. When set, it'll enable
   # password auth strategy. Set config as:
-  # `password_auth: {MyModule, :my_auth_method}`
-  @spec password_auth(keyword()) :: {atom(), atom()} | nil
+  # `password_auth: &MyModule.my_auth_method/2
+  @spec password_auth(keyword()) :: function() | {atom(), atom()} | nil
   def password_auth(config),
     do: get(config, :password_auth)
 
@@ -120,11 +120,11 @@ defmodule ExOauth2Provider.Config do
     do: get(config, :force_ssl_in_redirect_uri, Mix.env != :dev)
 
   # Use a custom access token generator
-  @spec access_token_generator(keyword()) :: {atom(), atom()} | nil
+  @spec access_token_generator(keyword()) :: function() | {atom(), atom()} | nil
   def access_token_generator(config),
     do: get(config, :access_token_generator)
 
-  @spec access_token_response_body_handler(keyword()) :: {atom(), atom()} | nil
+  @spec access_token_response_body_handler(keyword()) :: function() | {atom(), atom()} | nil
   def access_token_response_body_handler(config),
     do: get(config, :access_token_response_body_handler)
 

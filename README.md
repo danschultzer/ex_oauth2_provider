@@ -133,7 +133,7 @@ You'll need to provide an authorization method that accepts username and passwor
 ```elixir
 # Configuration in config/config.exs
 config :my_app, ExOauth2Provider,
-  password_auth: {Auth, :authenticate}
+  password_auth: &Auth.authenticate/3
 
 # Module example
 defmodule Auth do
@@ -248,7 +248,7 @@ You can add your own access token generator, as this example shows:
 ```elixir
 # config/config.exs
 config :my_app, ExOauth2Provider,
-  access_token_generator: {AccessToken, :new}
+  access_token_generator: &AccessToken.new/1
 
 defmodule AccessToken
   def new(access_token) do
@@ -272,7 +272,7 @@ You can add extra values to the response body.
 ```elixir
 # config/config.exs
 config :my_app, ExOauth2Provider,
-  access_token_response_body_handler: {CustomResponse, :response}
+  access_token_response_body_handler: &CustomResponse.response/2
 
 defmodule CustomResponse
   def response(response_body, access_token) do
