@@ -95,7 +95,7 @@ defmodule ExOauth2Provider.Token.Strategy.PasswordTest do
   end
 
   test "#grant/1 returns access token with custom response handler" do
-    assert {:ok, body} = Password.grant(@valid_request, otp_app: :ex_oauth2_provider, access_token_response_body_handler: {__MODULE__, :access_token_response_body_handler})
+    assert {:ok, body} = Password.grant(@valid_request, otp_app: :ex_oauth2_provider, access_token_response_body_handler: &__MODULE__.access_token_response_body_handler/2)
     access_token = QueryHelpers.get_latest_inserted(OauthAccessToken)
 
     assert body.custom_attr == access_token.inserted_at

@@ -1,5 +1,9 @@
 # Changelog
 
+## v0.5.5 (TBA)
+
+* Allow for anonymous functions to be used for `:password_auth`, `:access_token_generator` and `:access_token_response_body_handler` configuration options
+
 ## v0.5.4 (2019-08-05)
 
 * Improved error message for missing repo configuration

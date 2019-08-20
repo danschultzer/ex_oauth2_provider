@@ -40,14 +40,15 @@ defmodule ExOauth2Provider.Token.Password do
 
   defp get_password_auth_method({:ok, params}, config) do
     case Config.password_auth(config) do
-      {module, method} -> {:ok, Map.put(params, :password_auth, {module, method})}
-      _                -> Error.add_error({:ok, params}, Error.unsupported_grant_type())
+      nil              -> Error.add_error({:ok, params}, Error.unsupported_grant_type())
+      {module, method} -> {:ok, Map.put(params, :password_auth, &apply(module, method, [&1, &1]))}
+      method           -> {:ok, Map.put(params, :password_auth, method)}
     end
   end
 
   defp load_resource_owner({:error, params}), do: {:error, params}
-  defp load_resource_owner({:ok, %{password_auth: {module, method}, request: %{"username" => username, "password" => password}} = params}) do
-    case apply(module, method, [username, password]) do
+  defp load_resource_owner({:ok, %{password_auth: auth_method, request: %{"username" => username, "password" => password}} = params}) do
+    case auth_method.(username, password) do
       {:ok, resource_owner} ->
         {:ok, Map.put(params, :resource_owner, resource_owner)}
 

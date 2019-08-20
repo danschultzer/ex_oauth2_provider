@@ -132,6 +132,7 @@ defmodule ExOauth2Provider.AccessTokens.AccessToken do
     case Config.access_token_generator(config) do
       nil              -> Utils.generate_token(opts)
       {module, method} -> apply(module, method, [opts])
+      method           -> method.(opts)
     end
   end
 

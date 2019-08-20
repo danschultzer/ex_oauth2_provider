@@ -167,7 +167,7 @@ defmodule ExOauth2Provider.AccessTokensTest do
     end
 
     test "with custom access token generator", %{user: user} do
-      {:ok, access_token} = AccessTokens.create_token(user, %{}, otp_app: :ex_oauth2_provider, access_token_generator: {__MODULE__, :access_token_generator})
+      {:ok, access_token} = AccessTokens.create_token(user, %{}, otp_app: :ex_oauth2_provider, access_token_generator: &__MODULE__.access_token_generator/1)
       assert access_token.token == "custom_generated-#{user.id}"
     end
 
