@@ -35,9 +35,8 @@ defmodule ExOauth2Provider.Token.Utils.Response do
 
   defp customize_access_token_response(response_body, access_token, config) do
     case Config.access_token_response_body_handler(config) do
-      nil              -> response_body
       {module, method} -> apply(module, method, [response_body, access_token])
-      method           -> method.(response_body, access_token)
+      _                -> response_body
     end
   end
 end

@@ -28,7 +28,7 @@ defmodule ExOauth2Provider do
   If `use_refresh_token` is set to true, the refresh_token grant flow
   is automatically enabled.
 
-  If `password_auth` is set to an anonymous function, the password
+  If `password_auth` is set to a {module, method} tuple, the password
   grant flow is automatically enabled.
 
   If access_token_expires_in is set to nil, access tokens will never
