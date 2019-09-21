@@ -79,7 +79,7 @@ defmodule ExOauth2Provider.Token.Strategy.RefreshTokenTest do
   end
 
   test "#grant/2 returns access token with custom response handler", %{valid_request: valid_request} do
-    assert {:ok, body} = RefreshToken.grant(valid_request, otp_app: :ex_oauth2_provider, access_token_response_body_handler: &__MODULE__.access_token_response_body_handler/2)
+    assert {:ok, body} = RefreshToken.grant(valid_request, otp_app: :ex_oauth2_provider, access_token_response_body_handler: {__MODULE__, :access_token_response_body_handler})
     access_token = Repo.get_by(OauthAccessToken, token: body.access_token)
     assert body.custom_attr == access_token.inserted_at
   end

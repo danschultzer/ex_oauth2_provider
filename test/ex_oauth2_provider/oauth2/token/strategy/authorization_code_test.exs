@@ -58,7 +58,7 @@ defmodule ExOauth2Provider.Token.Strategy.AuthorizationCodeTest do
   end
 
   test "#grant/2 returns access token with custom response handler" do
-    assert {:ok, body} = AuthorizationCode.grant(@valid_request, otp_app: :ex_oauth2_provider, access_token_response_body_handler: &__MODULE__.access_token_response_body_handler/2)
+    assert {:ok, body} = AuthorizationCode.grant(@valid_request, otp_app: :ex_oauth2_provider, access_token_response_body_handler: {__MODULE__, :access_token_response_body_handler})
     access_token = QueryHelpers.get_latest_inserted(OauthAccessToken)
 
     assert body.custom_attr == access_token.inserted_at
