@@ -117,7 +117,7 @@ defmodule ExOauth2Provider.Config do
   # wise to keep this enabled.
   @spec force_ssl_in_redirect_uri?(keyword()) :: boolean()
   def force_ssl_in_redirect_uri?(config),
-    do: get(config, :force_ssl_in_redirect_uri, Mix.env != :dev)
+    do: get(config, :force_ssl_in_redirect_uri, unquote(Mix.env != :dev))
 
   # Use a custom access token generator
   @spec access_token_generator(keyword()) :: {atom(), atom()} | nil
