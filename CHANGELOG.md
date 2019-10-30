@@ -1,5 +1,9 @@
 # Changelog
 
+## v0.5.5 (TBA)
+
+* Fixed bug where `Mix.env` is called on runtime rather than compile time
+
 ## v0.5.4 (2019-08-05)
 
 * Improved error message for missing repo configuration
