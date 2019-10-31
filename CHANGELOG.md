@@ -1,6 +1,6 @@
 # Changelog
 
-## v0.5.5 (TBA)
+## v0.5.5 (2019-10-31)
 
 * Fixed bug where `Mix.env` is called on runtime rather than compile time
 
