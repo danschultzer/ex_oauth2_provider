@@ -43,6 +43,8 @@ defmodule ExOauth2Provider.Schema do
   @doc false
   def __assocs_with_queryable__(assocs, config) do
     Enum.map(assocs, fn
+      {:belongs_to, :owner, table} -> {:belongs_to, :owner, Config.application_owner(config)}
+      {:belongs_to, :owner, table, defaults} -> {:belongs_to, :owner, Config.application_owner(config), defaults}
       {:belongs_to, name, table} -> {:belongs_to, name, table_to_queryable(config, table)}
       {:belongs_to, name, table, defaults} -> {:belongs_to, name, table_to_queryable(config, table), defaults}
       {:has_many, name, table} -> {:has_many, name, table_to_queryable(config, table)}
