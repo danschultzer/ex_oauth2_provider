@@ -24,6 +24,7 @@ defmodule ExOauth2Provider.Schema do
 
       unquote(module).assocs()
       |> unquote(__MODULE__).__assocs_with_queryable__(@config)
+      |> unquote(__MODULE__).__filter_new_assocs__(@ecto_assocs)
       |> Enum.each(fn
         {:belongs_to, name, queryable} ->
           belongs_to(name, queryable)
@@ -55,14 +56,26 @@ defmodule ExOauth2Provider.Schema do
   defp table_to_queryable(config, :applications), do: Config.application(config)
   defp table_to_queryable(config, :users), do: Config.resource_owner(config)
 
-    @doc false
-    def __timestamp_for__(struct, column) do
-      type = struct.__schema__(:type, column)
+  @doc false
+  def __filter_new_assocs__(assocs, existing_assocs) do
+    Enum.reject(assocs, fn assoc ->
+      Enum.any?(existing_assocs, &assocs_match?(elem(assoc, 0), elem(assoc, 1), &1))
+    end)
+  end
 
-      __timestamp__(type)
-    end
+  defp assocs_match?(:has_many, name, {name, %Ecto.Association.Has{cardinality: :many}}), do: true
+  defp assocs_match?(:belongs_to, name, {name, %Ecto.Association.BelongsTo{}}), do: true
+  defp assocs_match?(_type, _name, _existing_assoc), do: false
 
-    @doc false
+
+  @doc false
+  def __timestamp_for__(struct, column) do
+    type = struct.__schema__(:type, column)
+
+    __timestamp__(type)
+  end
+
+  @doc false
   def __timestamp__(:naive_datetime) do
     %{NaiveDateTime.utc_now() | microsecond: {0, 0}}
   end

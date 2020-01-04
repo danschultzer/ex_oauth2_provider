@@ -1,5 +1,10 @@
 # Changelog
 
+## v0.5.6 (TBA)
+
+* Permit associations to be overridden
+* Updated the documentation for how to set application resource owner
+
 ## v0.5.5 (2019-10-31)
 
 * Fixed bug where `Mix.env` is called on runtime rather than compile time
