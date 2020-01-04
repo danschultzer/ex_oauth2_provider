@@ -17,10 +17,6 @@ defmodule ExOauth2Provider.Config do
   def resource_owner(config),
     do: get(config, :resource_owner) || app_module(config, "Users", "User")
 
-  @spec application_owner(keyword()) :: module()
-  def application_owner(config),
-    do: get(config, :application_owner) || app_module(config, "Users", "User")
-
   defp app_module(config, context, module) do
     app =
       config

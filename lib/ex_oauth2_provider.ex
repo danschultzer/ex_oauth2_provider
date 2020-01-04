@@ -6,7 +6,6 @@ defmodule ExOauth2Provider do
       config :my_app, ExOauth2Provider,
         repo: App.Repo,
         resource_owner: App.Users.User,
-        application_owner: App.Users.User,
         default_scopes: ~w(public),
         optional_scopes: ~w(write update),
         native_redirect_uri: "urn:ietf:wg:oauth:2.0:oob",
