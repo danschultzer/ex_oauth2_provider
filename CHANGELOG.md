@@ -1,6 +1,6 @@
 # Changelog
 
-## v0.5.6 (TBA)
+## v0.5.6 (2020-01-07)
 
 * Permit associations to be overridden
 * Updated the documentation for how to set application resource owner
