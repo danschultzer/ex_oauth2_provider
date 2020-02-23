@@ -1,5 +1,9 @@
 # Changelog
 
+## v0.5.7 (TBA)
+
+* Permit native application redirect uri
+
 ## v0.5.6 (2020-01-07)
 
 * Permit associations to be overridden

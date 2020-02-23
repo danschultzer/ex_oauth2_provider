@@ -2,38 +2,36 @@ defmodule ExOauth2Provider.RedirectURITest do
   use ExUnit.Case
   alias ExOauth2Provider.{Config, RedirectURI}
 
-  test "validate native url" do
+  test "validate/2 native url" do
     uri = Config.native_redirect_uri(otp_app: :ex_oauth2_provider)
     assert RedirectURI.validate(uri, []) == {:ok, uri}
   end
 
-  test "validate rejects blank" do
+  test "validate/2 rejects blank" do
     assert RedirectURI.validate("", []) == {:error, "Redirect URI cannot be blank"}
     assert RedirectURI.validate(nil, []) == {:error, "Redirect URI cannot be blank"}
     assert RedirectURI.validate("  ", []) == {:error, "Redirect URI cannot be blank"}
   end
 
-  test "validate rejects with fragment" do
+  test "validate/2 rejects uri with fragment" do
     assert RedirectURI.validate("https://app.co/test#fragment", []) == {:error, "Redirect URI cannot contain fragments"}
   end
 
-  test "validate rejects with missing scheme" do
+  test "validate/2 rejects uri with missing scheme" do
     assert RedirectURI.validate("app.co", []) == {:error, "Redirect URI must be an absolute URI"}
   end
 
-  test "validate rejects relative url" do
+  test "validate/2 rejects relative uri" do
     assert RedirectURI.validate("/abc/123", []) == {:error, "Redirect URI must be an absolute URI"}
   end
 
-  test "validate rejects scheme only" do
-    assert RedirectURI.validate("https://", []) == {:error, "Redirect URI must be an absolute URI"}
+  test "validate/2 requires https scheme with `:force_ssl_in_redirect_uri` setting" do
+    uri = "http://app.co/"
+    assert RedirectURI.validate(uri, []) == {:error, "Redirect URI must be an HTTPS/SSL URI"}
+    assert RedirectURI.validate(uri, [force_ssl_in_redirect_uri: false]) == {:ok, uri}
   end
 
-  test "validate https scheme" do
-    assert RedirectURI.validate("http://app.co/", []) == {:error, "Redirect URI must be an HTTPS/SSL URI"}
-  end
-
-  test "validate" do
+  test "validate/2 accepts absolute uri" do
     uri = "https://app.co"
     assert RedirectURI.validate(uri, []) == {:ok, uri}
     uri = "https://app.co/path"
@@ -42,8 +40,16 @@ defmodule ExOauth2Provider.RedirectURITest do
     assert RedirectURI.validate(uri, []) == {:ok, uri}
   end
 
-  test "validates wild card subdomain" do
+  test "validate/2 with wild card subdomain" do
     uri = "https://*.app.co/"
+    assert RedirectURI.validate(uri, []) == {:ok, uri}
+  end
+
+  test "validate/2 with private-use uri" do
+    # RFC Spec - OAuth 2.0 for Native Apps
+    # https://tools.ietf.org/html/rfc8252#section-7.1
+
+    uri = "com.example.app:/oauth2redirect/example-provider"
     assert RedirectURI.validate(uri, []) == {:ok, uri}
   end
 

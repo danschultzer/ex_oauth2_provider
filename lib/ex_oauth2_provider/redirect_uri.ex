@@ -5,7 +5,12 @@ defmodule ExOauth2Provider.RedirectURI do
   alias ExOauth2Provider.{Config, Utils}
 
   @doc """
-  Validates if a url can be used as a redirect_uri
+  Validates if a url can be used as a redirect_uri.
+
+  Validates according to [RFC 6749 3.1.2](https://tools.ietf.org/html/rfc6749#section-3.1.2)
+  and [RFC 8252 7.1](https://tools.ietf.org/html/rfc8252#section-7.1). The validation is
+  skipped if the redirect uri is the same as the `:native_redirect_uri` configuration
+  setting.
   """
   @spec validate(binary() | nil, keyword()) :: {:ok, binary()} | {:error, binary()}
   def validate(nil, config), do: validate("", config)
@@ -26,19 +31,17 @@ defmodule ExOauth2Provider.RedirectURI do
 
   defp do_validate(_url, %{fragment: fragment}, _config) when not is_nil(fragment),
     do: {:error, "Redirect URI cannot contain fragments"}
-  defp do_validate(_url, %{scheme: schema, host: host}, _config) when is_nil(schema) or is_nil(host),
-    do: {:error, "Redirect URI must be an absolute URI"}
-  defp do_validate(url, uri, config) do
-    if invalid_ssl_uri?(uri, config) do
-      {:error, "Redirect URI must be an HTTPS/SSL URI"}
-    else
-      {:ok, url}
+  defp do_validate(url, %{scheme: scheme} = uri, config) when not is_nil(scheme) do
+    case invalid_ssl_uri?(uri, config) do
+      true  -> {:error, "Redirect URI must be an HTTPS/SSL URI"}
+      false -> {:ok, url}
     end
   end
+  defp do_validate(_url, _uri, _config),
+    do: {:error, "Redirect URI must be an absolute URI"}
 
-  defp invalid_ssl_uri?(uri, config) do
-    Config.force_ssl_in_redirect_uri?(config) and uri.scheme == "http"
-  end
+  defp invalid_ssl_uri?(%{scheme: "http"}, config), do: Config.force_ssl_in_redirect_uri?(config)
+  defp invalid_ssl_uri?(_uri, _config), do: false
 
   @doc false
   @deprecated "Use `matches?/3` instead"
