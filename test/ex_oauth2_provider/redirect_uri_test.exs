@@ -33,6 +33,18 @@ defmodule ExOauth2Provider.RedirectURITest do
     assert RedirectURI.validate("http://app.co/", []) == {:error, "Redirect URI must be an HTTPS/SSL URI"}
   end
 
+  test "validate http scheme when not required" do
+    uri = "http://app.co/"
+    assert RedirectURI.validate(uri, [force_ssl_in_redirect_uri: false]) == {:ok, uri}
+  end
+
+  test "validate custom url scheme" do
+    # RFC Spec - OAuth 2.0 for Native Apps
+    # https://tools.ietf.org/html/rfc8252#section-7.1
+    uri = "com.example.app:/oauth2redirect/example-provider"
+    assert RedirectURI.validate(uri, []) == {:ok, uri}
+  end
+
   test "validate" do
     uri = "https://app.co"
     assert RedirectURI.validate(uri, []) == {:ok, uri}

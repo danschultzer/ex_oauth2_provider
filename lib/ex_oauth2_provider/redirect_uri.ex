@@ -26,19 +26,25 @@ defmodule ExOauth2Provider.RedirectURI do
 
   defp do_validate(_url, %{fragment: fragment}, _config) when not is_nil(fragment),
     do: {:error, "Redirect URI cannot contain fragments"}
-  defp do_validate(_url, %{scheme: schema, host: host}, _config) when is_nil(schema) or is_nil(host),
+  defp do_validate(_url, %{scheme: scheme, host: _host}, _config) when is_nil(scheme),
     do: {:error, "Redirect URI must be an absolute URI"}
-  defp do_validate(url, uri, config) do
-    if invalid_ssl_uri?(uri, config) do
+  defp do_validate(_url, %{scheme: "https", host: host}, _config) when is_nil(host),
+    do: {:error, "Redirect URI must be an absolute URI"}
+  defp do_validate(_url, %{scheme: "http", host: host}, _config) when is_nil(host),
+    do: {:error, "Redirect URI must be an absolute URI"}
+  defp do_validate(url, %{scheme: "https", host: _host}, _config),
+    do: {:ok, url}
+
+  defp do_validate(url, %{scheme: "http", host: _host}, config) do
+    if Config.force_ssl_in_redirect_uri?(config) do
       {:error, "Redirect URI must be an HTTPS/SSL URI"}
     else
       {:ok, url}
     end
   end
 
-  defp invalid_ssl_uri?(uri, config) do
-    Config.force_ssl_in_redirect_uri?(config) and uri.scheme == "http"
-  end
+  defp do_validate(url, _uri, _config),
+    do: {:ok, url}
 
   @doc false
   @deprecated "Use `matches?/3` instead"
