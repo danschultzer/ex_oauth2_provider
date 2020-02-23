@@ -1,5 +1,5 @@
 language: elixir
-elixir: 1.8
+elixir: 1.10
 otp_release: 22.0
 services:
   postgresql
@@ -11,6 +11,8 @@ jobs:
       script: &test_scripts
         - mix test
         - MIX_ENV=test mix credo
+    - stage: test
+      script: *test_scripts
     - stage: test
       script: *test_scripts
       env:
