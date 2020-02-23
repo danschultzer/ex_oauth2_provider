@@ -28,9 +28,9 @@ defmodule ExOauth2Provider.RedirectURI do
     do: {:error, "Redirect URI cannot contain fragments"}
   defp do_validate(_url, %{scheme: scheme, host: _host}, _config) when is_nil(scheme),
     do: {:error, "Redirect URI must be an absolute URI"}
-  defp do_validate(_url, %{scheme: "https", host: host}, _config) when is_nil(host),
+  defp do_validate(_url, %{scheme: "https", host: host}, _config) when is_nil(host) or host == "",
     do: {:error, "Redirect URI must be an absolute URI"}
-  defp do_validate(_url, %{scheme: "http", host: host}, _config) when is_nil(host),
+  defp do_validate(_url, %{scheme: "http", host: host}, _config) when is_nil(host) or host == "",
     do: {:error, "Redirect URI must be an absolute URI"}
   defp do_validate(url, %{scheme: "https", host: _host}, _config),
     do: {:ok, url}

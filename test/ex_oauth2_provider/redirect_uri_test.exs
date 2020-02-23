@@ -43,6 +43,14 @@ defmodule ExOauth2Provider.RedirectURITest do
     # https://tools.ietf.org/html/rfc8252#section-7.1
     uri = "com.example.app:/oauth2redirect/example-provider"
     assert RedirectURI.validate(uri, []) == {:ok, uri}
+    uri = "com.example.app://oauth2redirect/example-provider"
+    assert RedirectURI.validate(uri, []) == {:ok, uri}
+    uri = "com.example.app:/com.example.app/oauth2redirect/example-provider"
+    assert RedirectURI.validate(uri, []) == {:ok, uri}
+    uri = "com.example.app://com.example.app/oauth2redirect/example-provider"
+    assert RedirectURI.validate(uri, []) == {:ok, uri}
+    uri = "com.example.App://com.example.app/oauth2redirect/example-provider"
+    assert RedirectURI.validate(uri, []) == {:ok, uri}
   end
 
   test "validate" do
