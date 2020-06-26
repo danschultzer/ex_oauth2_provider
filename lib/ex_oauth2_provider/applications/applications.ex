@@ -178,7 +178,7 @@ defmodule ExOauth2Provider.Applications do
           {:ok, Application.t()} | {:error, Changeset.t()}
   def update_application(application, attrs, config \\ []) do
     application
-    |> Application.changeset(attrs, config)
+    |> Config.application(config).changeset(attrs, config)
     |> Config.repo(config).update()
   end
 
