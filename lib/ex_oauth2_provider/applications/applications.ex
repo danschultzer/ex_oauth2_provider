@@ -151,12 +151,14 @@ defmodule ExOauth2Provider.Applications do
       {:error, %Ecto.Changeset{}}
 
   """
-  @spec create_application(Schema.t(), map(), keyword()) :: {:ok, Application.t()} | {:error, Changeset.t()}
+  @spec create_application(Schema.t(), map(), keyword()) ::
+          {:ok, Application.t()} | {:error, Changeset.t()}
   def create_application(owner, attrs \\ %{}, config \\ []) do
-    config
-    |> Config.application()
+    application_module = Config.application(config)
+
+    application_module
     |> struct(owner: owner)
-    |> Application.changeset(attrs, config)
+    |> application_module.changeset(attrs, config)
     |> Config.repo(config).insert()
   end
 
@@ -172,7 +174,8 @@ defmodule ExOauth2Provider.Applications do
       {:error, %Ecto.Changeset{}}
 
   """
-  @spec update_application(Application.t(), map(), keyword()) :: {:ok, Application.t()} | {:error, Changeset.t()}
+  @spec update_application(Application.t(), map(), keyword()) ::
+          {:ok, Application.t()} | {:error, Changeset.t()}
   def update_application(application, attrs, config \\ []) do
     application
     |> Application.changeset(attrs, config)
@@ -191,7 +194,8 @@ defmodule ExOauth2Provider.Applications do
       {:error, %Ecto.Changeset{}}
 
   """
-  @spec delete_application(Application.t(), keyword()) :: {:ok, Application.t()} | {:error, Changeset.t()}
+  @spec delete_application(Application.t(), keyword()) ::
+          {:ok, Application.t()} | {:error, Changeset.t()}
   def delete_application(application, config \\ []) do
     Config.repo(config).delete(application)
   end
@@ -209,7 +213,7 @@ defmodule ExOauth2Provider.Applications do
   def revoke_all_access_tokens_for(application, resource_owner, config \\ []) do
     repo = Config.repo(config)
 
-    repo.transaction fn ->
+    repo.transaction(fn ->
       config
       |> Config.access_token()
       |> where([a], a.resource_owner_id == ^resource_owner.id)
@@ -217,6 +221,6 @@ defmodule ExOauth2Provider.Applications do
       |> where([o], is_nil(o.revoked_at))
       |> repo.all()
       |> Enum.map(&AccessTokens.revoke(&1, config))
-    end
+    end)
   end
 end
