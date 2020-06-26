@@ -34,7 +34,9 @@ defmodule ExOauth2Provider.PlugTest do
   end
 
   test "current_resource_owner/2 with resource", context do
-    new_conn = Plug.set_current_access_token(context.conn, {:ok, %{resource_owner: "user"}}, :secret)
+    new_conn =
+      Plug.set_current_access_token(context.conn, {:ok, %{resource_owner: "user"}}, :secret)
+
     assert Plug.current_resource_owner(new_conn, :secret) == "user"
   end
 

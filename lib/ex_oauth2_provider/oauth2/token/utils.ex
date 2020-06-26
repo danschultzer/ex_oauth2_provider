@@ -9,10 +9,13 @@ defmodule ExOauth2Provider.Token.Utils do
     client_secret = Map.get(request, "client_secret", "")
 
     case Applications.load_application(client_id, client_secret, config) do
-      nil    -> Error.add_error({:ok, params}, Error.invalid_client())
+      nil -> Error.add_error({:ok, params}, Error.invalid_client())
       client -> {:ok, Map.merge(params, %{client: client})}
     end
   end
-  def load_client({:ok, params}, _config), do: Error.add_error({:ok, params}, Error.invalid_request())
+
+  def load_client({:ok, params}, _config),
+    do: Error.add_error({:ok, params}, Error.invalid_request())
+
   def load_client({:error, params}, _config), do: {:error, params}
 end
