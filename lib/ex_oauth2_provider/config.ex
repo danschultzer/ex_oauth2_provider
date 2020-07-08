@@ -132,6 +132,10 @@ defmodule ExOauth2Provider.Config do
   def grant_flows(config),
     do: get(config, :grant_flows, ~w(authorization_code client_credentials))
 
+  @spec response_params(keyword()) :: [binary()]
+  def response_params(config),
+    do: get(config, :response_params, ~w(state))
+
   defp get(config, key, value \\ nil) do
     otp_app = Keyword.get(config, :otp_app)
 

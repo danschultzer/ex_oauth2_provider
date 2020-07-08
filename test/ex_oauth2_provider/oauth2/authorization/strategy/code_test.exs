@@ -200,4 +200,33 @@ defmodule ExOauth2Provider.Authorization.CodeTest do
 
     assert Authorization.deny(resource_owner, request, otp_app: :ex_oauth2_provider) == {:redirect, "https://example.com/path?error=access_denied&error_description=The+resource+owner+or+authorization+server+denied+the+request.&param=1&state=40612"}
   end
+
+  describe "redirect uri w/ additional response params" do
+    setup do
+      config = Application.get_env(:ex_oauth2_provider, ExOauth2Provider)
+      Application.put_env(:ex_oauth2_provider, ExOauth2Provider, Keyword.put(config, :response_params, ["whatever"]))
+
+      on_exit(fn ->
+        Application.put_env(:ex_oauth2_provider, ExOauth2Provider, config)
+      end)
+    end
+
+    test "#authorize/3 generates grant with redirect uri", %{resource_owner: resource_owner, application: application} do
+      QueryHelpers.change!(application, redirect_uri: "#{application.redirect_uri}\nhttps://example.com/path")
+
+      request = Map.merge(@valid_request, %{"redirect_uri" => "https://example.com/path?param=1", "state" => 40_612, "whatever" => "test"})
+
+      assert {:redirect, redirect_uri} = Authorization.authorize(resource_owner, request, otp_app: :ex_oauth2_provider)
+      access_grant = QueryHelpers.get_latest_inserted(OauthAccessGrant)
+
+      assert redirect_uri == "https://example.com/path?code=#{access_grant.token}&param=1&whatever=test"
+    end
+
+    test "#deny/3 with redirection uri", %{application: application, resource_owner: resource_owner} do
+      QueryHelpers.change!(application, redirect_uri: "#{application.redirect_uri}\nhttps://example.com/path")
+      request = Map.merge(@valid_request, %{"redirect_uri" => "https://example.com/path?param=1", "state" => 40_612, "whatever" => "test"})
+
+      assert Authorization.deny(resource_owner, request, otp_app: :ex_oauth2_provider) == {:redirect, "https://example.com/path?error=access_denied&error_description=The+resource+owner+or+authorization+server+denied+the+request.&param=1&whatever=test"}
+    end
+  end
 end

@@ -1,7 +1,7 @@
 defmodule ExOauth2Provider.Authorization.Utils.Response do
   @moduledoc false
 
-  alias ExOauth2Provider.{RedirectURI, Scopes, Utils}
+  alias ExOauth2Provider.{Config, RedirectURI, Scopes, Utils}
   alias Ecto.Schema
 
   @type native_redirect :: {:native_redirect, %{code: binary()}}
@@ -29,7 +29,7 @@ defmodule ExOauth2Provider.Authorization.Utils.Response do
   def deny_response({:error, %{error: error} = params}, config), do: build_response(params, error, config)
 
   defp build_response(%{request: request} = params, payload, config) do
-    payload = add_state(payload, request)
+    payload = add_params(payload, request, config)
 
     case can_redirect?(params, config) do
       true -> build_redirect_response(params, payload, config)
@@ -37,16 +37,12 @@ defmodule ExOauth2Provider.Authorization.Utils.Response do
     end
   end
 
-  defp add_state(payload, request) do
-    case request["state"] do
-      nil ->
-        payload
-
-      state ->
-        %{"state" => state}
-        |> Map.merge(payload)
-        |> Utils.remove_empty_values()
-    end
+  defp add_params(payload, request, config) do
+    Config.response_params(config)
+    |>Enum.into(payload, fn param ->
+      {param, request[param]}
+    end)
+    |> Utils.remove_empty_values()
   end
 
   defp build_redirect_response(%{request: %{"redirect_uri" => redirect_uri}}, payload, config) do
