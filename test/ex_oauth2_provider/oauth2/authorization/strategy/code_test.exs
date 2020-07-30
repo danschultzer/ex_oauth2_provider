@@ -165,13 +165,27 @@ defmodule ExOauth2Provider.Authorization.CodeTest do
 
   test "#authorize/3 generates grant with redirect uri", %{resource_owner: resource_owner, application: application} do
     QueryHelpers.change!(application, redirect_uri: "#{application.redirect_uri}\nhttps://example.com/path")
-
     request = Map.merge(@valid_request, %{"redirect_uri" => "https://example.com/path?param=1", "state" => 40_612})
 
     assert {:redirect, redirect_uri} = Authorization.authorize(resource_owner, request, otp_app: :ex_oauth2_provider)
     access_grant = QueryHelpers.get_latest_inserted(OauthAccessGrant)
 
     assert redirect_uri == "https://example.com/path?code=#{access_grant.token}&param=1&state=40612"
+  end
+
+  test "#authorize/3 with custom response params", %{application: application, resource_owner: resource_owner} do
+    QueryHelpers.change!(application, redirect_uri: "#{application.redirect_uri}\nhttps://example.com/path")
+    request = Map.merge(@valid_request, %{"redirect_uri" => "https://example.com/path?param=1", "a" => 1, "b" => 2})
+
+    assert {:redirect, redirect_uri} = Authorization.authorize(resource_owner, request, otp_app: :ex_oauth2_provider, response_params: ~w(a b))
+    access_grant = QueryHelpers.get_latest_inserted(OauthAccessGrant)
+
+    assert redirect_uri == "https://example.com/path?code=#{access_grant.token}&a=1&b=2&param=1"
+
+    assert {:redirect, redirect_uri} = Authorization.authorize(resource_owner, request, otp_app: :ex_oauth2_provider, response_params: ~w(b))
+    access_grant = QueryHelpers.get_latest_inserted(OauthAccessGrant)
+
+    assert redirect_uri == "https://example.com/path?code=#{access_grant.token}&b=2&param=1"
   end
 
   test "#deny/3 error when no resource owner" do
@@ -201,32 +215,11 @@ defmodule ExOauth2Provider.Authorization.CodeTest do
     assert Authorization.deny(resource_owner, request, otp_app: :ex_oauth2_provider) == {:redirect, "https://example.com/path?error=access_denied&error_description=The+resource+owner+or+authorization+server+denied+the+request.&param=1&state=40612"}
   end
 
-  describe "redirect uri w/ additional response params" do
-    setup do
-      config = Application.get_env(:ex_oauth2_provider, ExOauth2Provider)
-      Application.put_env(:ex_oauth2_provider, ExOauth2Provider, Keyword.put(config, :response_params, ["whatever"]))
+  test "#deny/3 with custom response params", %{application: application, resource_owner: resource_owner} do
+    QueryHelpers.change!(application, redirect_uri: "#{application.redirect_uri}\nhttps://example.com/path")
+    request = Map.merge(@valid_request, %{"redirect_uri" => "https://example.com/path?param=1", "a" => 1, "b" => 2})
 
-      on_exit(fn ->
-        Application.put_env(:ex_oauth2_provider, ExOauth2Provider, config)
-      end)
-    end
-
-    test "#authorize/3 generates grant with redirect uri", %{resource_owner: resource_owner, application: application} do
-      QueryHelpers.change!(application, redirect_uri: "#{application.redirect_uri}\nhttps://example.com/path")
-
-      request = Map.merge(@valid_request, %{"redirect_uri" => "https://example.com/path?param=1", "state" => 40_612, "whatever" => "test"})
-
-      assert {:redirect, redirect_uri} = Authorization.authorize(resource_owner, request, otp_app: :ex_oauth2_provider)
-      access_grant = QueryHelpers.get_latest_inserted(OauthAccessGrant)
-
-      assert redirect_uri == "https://example.com/path?code=#{access_grant.token}&param=1&whatever=test"
-    end
-
-    test "#deny/3 with redirection uri", %{application: application, resource_owner: resource_owner} do
-      QueryHelpers.change!(application, redirect_uri: "#{application.redirect_uri}\nhttps://example.com/path")
-      request = Map.merge(@valid_request, %{"redirect_uri" => "https://example.com/path?param=1", "state" => 40_612, "whatever" => "test"})
-
-      assert Authorization.deny(resource_owner, request, otp_app: :ex_oauth2_provider) == {:redirect, "https://example.com/path?error=access_denied&error_description=The+resource+owner+or+authorization+server+denied+the+request.&param=1&whatever=test"}
-    end
+    assert Authorization.deny(resource_owner, request, otp_app: :ex_oauth2_provider, response_params: ~w(a b)) == {:redirect, "https://example.com/path?error=access_denied&error_description=The+resource+owner+or+authorization+server+denied+the+request.&a=1&b=2&param=1"}
+    assert Authorization.deny(resource_owner, request, otp_app: :ex_oauth2_provider, response_params: ~w(b)) == {:redirect, "https://example.com/path?error=access_denied&error_description=The+resource+owner+or+authorization+server+denied+the+request.&b=2&param=1"}
   end
 end

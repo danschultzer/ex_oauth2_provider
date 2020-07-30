@@ -38,10 +38,11 @@ defmodule ExOauth2Provider.Authorization.Utils.Response do
   end
 
   defp add_params(payload, request, config) do
-    Config.response_params(config)
-    |>Enum.into(payload, fn param ->
-      {param, request[param]}
-    end)
+    keys = Config.response_params(config)
+
+    request
+    |> Map.take(keys)
+    |> Map.merge(payload)
     |> Utils.remove_empty_values()
   end
 
