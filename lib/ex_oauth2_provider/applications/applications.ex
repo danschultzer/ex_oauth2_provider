@@ -202,10 +202,10 @@ defmodule ExOauth2Provider.Applications do
   ## Examples
 
       iex> revoke_all_access_tokens_for(application, resource_owner, otp_app: :my_app)
-      {:ok, [%OauthAccessToken{}]}
+      {:ok, [ok: %OauthAccessToken{}]}
 
   """
-  @spec revoke_all_access_tokens_for(Application.t(), Schema.t(), keyword()) :: [AccessToken.t()]
+  @spec revoke_all_access_tokens_for(Application.t(), Schema.t(), keyword()) :: {:ok, [ok: AccessToken.t()]} | {:error, any()}
   def revoke_all_access_tokens_for(application, resource_owner, config \\ []) do
     repo = Config.repo(config)
 
