@@ -28,9 +28,9 @@ defmodule Mix.Tasks.ExOauth2Provider.Gen.Migration do
 
   alias Mix.{Ecto, ExOauth2Provider, ExOauth2Provider.Migration}
 
-  @switches     [binary_id: :boolean, namespace: :string]
+  @switches [binary_id: :boolean, namespace: :string]
   @default_opts [binary_id: false, namespace: "oauth"]
-  @mix_task     "ex_oauth2_provider.gen.migrations"
+  @mix_task "ex_oauth2_provider.gen.migrations"
 
   @impl true
   def run(args) do
@@ -53,8 +53,8 @@ defmodule Mix.Tasks.ExOauth2Provider.Gen.Migration do
   end
 
   defp create_migration_files(%{repo: repo, namespace: namespace} = config) do
-    name         = "Create#{Macro.camelize(namespace)}Tables"
-    content      = Migration.gen(name, namespace, config)
+    name = "Create#{Macro.camelize(namespace)}Tables"
+    content = Migration.gen(name, namespace, config)
 
     Migration.create_migration_file(repo, name, content)
   end

@@ -42,7 +42,8 @@ defmodule ExOauth2Provider.AccessGrants do
       {:error, %Ecto.Changeset{}}
 
   """
-  @spec create_grant(Ecto.Schema.t(), Application.t(), map(), keyword()) :: {:ok, AccessGrant.t()} | {:error, term()}
+  @spec create_grant(Ecto.Schema.t(), Application.t(), map(), keyword()) ::
+          {:ok, AccessGrant.t()} | {:error, term()}
   def create_grant(resource_owner, application, attrs, config \\ []) do
     config
     |> Config.access_grant()

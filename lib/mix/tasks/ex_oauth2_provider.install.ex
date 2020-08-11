@@ -21,9 +21,9 @@ defmodule Mix.Tasks.ExOauth2Provider.Install do
   alias Mix.{Ecto, ExOauth2Provider, ExOauth2Provider.Config}
   alias Mix.Tasks.ExOauth2Provider.Gen.{Migration, Schemas}
 
-  @switches     [context_app: :string, migration: :boolean, schemas: :boolean]
+  @switches [context_app: :string, migration: :boolean, schemas: :boolean]
   @default_opts [migration: true, schemas: true]
-  @mix_task     "ex_oauth2_provider.install"
+  @mix_task "ex_oauth2_provider.install"
 
   @impl true
   def run(args) do
@@ -44,6 +44,7 @@ defmodule Mix.Tasks.ExOauth2Provider.Install do
 
     config
   end
+
   defp run_migration(config, _args), do: config
 
   defp run_schemas(%{schemas: true} = config, args) do
@@ -51,24 +52,24 @@ defmodule Mix.Tasks.ExOauth2Provider.Install do
 
     config
   end
+
   defp run_schemas(config, _args), do: config
 
   defp print_config_instructions(config, args) do
     [repo | _repos] = Ecto.parse_repo(args)
-    context_app     = Map.get(config, :context_app) || ExOauth2Provider.otp_app()
-    resource_owner  = resource_owner(ProviderConfig.app_base(context_app))
+    context_app = Map.get(config, :context_app) || ExOauth2Provider.otp_app()
+    resource_owner = resource_owner(ProviderConfig.app_base(context_app))
 
     content = Config.gen(context_app, repo: inspect(repo), resource_owner: resource_owner)
 
-    Mix.shell.info(
-      """
-      ExOauth2Provider has been installed! Please append the following to `config/config.ex`:
+    Mix.shell().info("""
+    ExOauth2Provider has been installed! Please append the following to `config/config.ex`:
 
-      #{content}
-      """)
+    #{content}
+    """)
 
     config
   end
 
-  defp resource_owner(base), do: inspect Module.concat([base, "Users", "User"])
+  defp resource_owner(base), do: inspect(Module.concat([base, "Users", "User"]))
 end

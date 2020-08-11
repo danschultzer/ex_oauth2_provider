@@ -14,7 +14,8 @@ defmodule ExOauth2Provider.RedirectURITest do
   end
 
   test "validate/2 rejects uri with fragment" do
-    assert RedirectURI.validate("https://app.co/test#fragment", []) == {:error, "Redirect URI cannot contain fragments"}
+    assert RedirectURI.validate("https://app.co/test#fragment", []) ==
+             {:error, "Redirect URI cannot contain fragments"}
   end
 
   test "validate/2 rejects uri with missing scheme" do
@@ -22,13 +23,14 @@ defmodule ExOauth2Provider.RedirectURITest do
   end
 
   test "validate/2 rejects relative uri" do
-    assert RedirectURI.validate("/abc/123", []) == {:error, "Redirect URI must be an absolute URI"}
+    assert RedirectURI.validate("/abc/123", []) ==
+             {:error, "Redirect URI must be an absolute URI"}
   end
 
   test "validate/2 requires https scheme with `:force_ssl_in_redirect_uri` setting" do
     uri = "http://app.co/"
     assert RedirectURI.validate(uri, []) == {:error, "Redirect URI must be an HTTPS/SSL URI"}
-    assert RedirectURI.validate(uri, [force_ssl_in_redirect_uri: false]) == {:ok, uri}
+    assert RedirectURI.validate(uri, force_ssl_in_redirect_uri: false) == {:ok, uri}
   end
 
   test "validate/2 accepts absolute uri" do
@@ -62,9 +64,12 @@ defmodule ExOauth2Provider.RedirectURITest do
     uri = "https://a.app.co/"
     client_uri = "https://*.app.co/"
 
-    assert RedirectURI.matches?(uri, client_uri, redirect_uri_match_fun: fn uri, %{host: "*." <> host} = client_uri, _config ->
-      String.ends_with?(uri.host, host) && %{uri | query: nil} == %{client_uri | host: uri.host, authority: uri.authority}
-    end)
+    assert RedirectURI.matches?(uri, client_uri,
+             redirect_uri_match_fun: fn uri, %{host: "*." <> host} = client_uri, _config ->
+               String.ends_with?(uri.host, host) &&
+                 %{uri | query: nil} == %{client_uri | host: uri.host, authority: uri.authority}
+             end
+           )
   end
 
   test "matches?#true ignores query parameter on comparison" do
@@ -76,7 +81,11 @@ defmodule ExOauth2Provider.RedirectURITest do
   end
 
   test "matches?#false with domains that doesn't start at beginning" do
-    refute RedirectURI.matches?("https://app.co/?query=hello", "https://example.com?app.co=test", [])
+    refute RedirectURI.matches?(
+             "https://app.co/?query=hello",
+             "https://example.com?app.co=test",
+             []
+           )
   end
 
   test "valid_for_authorization?#true" do
@@ -89,7 +98,11 @@ defmodule ExOauth2Provider.RedirectURITest do
   end
 
   test "valid_for_authorization?#true with array" do
-    assert RedirectURI.valid_for_authorization?("https://app.co/aaa", "https://example.com/bbb\nhttps://app.co/aaa", [])
+    assert RedirectURI.valid_for_authorization?(
+             "https://app.co/aaa",
+             "https://example.com/bbb\nhttps://app.co/aaa",
+             []
+           )
   end
 
   test "valid_for_authorization?#false with invalid uri" do
@@ -98,11 +111,13 @@ defmodule ExOauth2Provider.RedirectURITest do
   end
 
   test "uri_with_query/2" do
-    assert RedirectURI.uri_with_query("https://example.com/", %{parameter: "value"}) == "https://example.com/?parameter=value"
+    assert RedirectURI.uri_with_query("https://example.com/", %{parameter: "value"}) ==
+             "https://example.com/?parameter=value"
   end
 
   test "uri_with_query/2 rejects nil values" do
-    assert RedirectURI.uri_with_query("https://example.com/", %{parameter: nil}) == "https://example.com/?"
+    assert RedirectURI.uri_with_query("https://example.com/", %{parameter: nil}) ==
+             "https://example.com/?"
   end
 
   test "uri_with_query/2 preserves original query parameters" do

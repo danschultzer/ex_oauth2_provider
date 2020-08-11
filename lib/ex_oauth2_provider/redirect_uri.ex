@@ -14,6 +14,7 @@ defmodule ExOauth2Provider.RedirectURI do
   """
   @spec validate(binary() | nil, keyword()) :: {:ok, binary()} | {:error, binary()}
   def validate(nil, config), do: validate("", config)
+
   def validate(url, config) when is_binary(url) do
     url
     |> String.trim()
@@ -23,7 +24,7 @@ defmodule ExOauth2Provider.RedirectURI do
 
       url ->
         case native_redirect_uri?(url, config) do
-          true  -> {:ok, url}
+          true -> {:ok, url}
           false -> do_validate(url, URI.parse(url), config)
         end
     end
@@ -31,12 +32,14 @@ defmodule ExOauth2Provider.RedirectURI do
 
   defp do_validate(_url, %{fragment: fragment}, _config) when not is_nil(fragment),
     do: {:error, "Redirect URI cannot contain fragments"}
+
   defp do_validate(url, %{scheme: scheme} = uri, config) when not is_nil(scheme) do
     case invalid_ssl_uri?(uri, config) do
-      true  -> {:error, "Redirect URI must be an HTTPS/SSL URI"}
+      true -> {:error, "Redirect URI must be an HTTPS/SSL URI"}
       false -> {:ok, url}
     end
   end
+
   defp do_validate(_url, _uri, _config),
     do: {:error, "Redirect URI must be an absolute URI"}
 
@@ -54,6 +57,7 @@ defmodule ExOauth2Provider.RedirectURI do
   def matches?(uri, client_uri, config) when is_binary(uri) and is_binary(client_uri) do
     matches?(URI.parse(uri), URI.parse(client_uri), config)
   end
+
   @spec matches?(URI.t(), URI.t(), keyword()) :: boolean()
   def matches?(%URI{} = uri, %URI{} = client_uri, config) do
     case Config.redirect_uri_match_fun(config) do
@@ -73,6 +77,7 @@ defmodule ExOauth2Provider.RedirectURI do
   end
 
   defp do_valid_for_authorization?({:error, _error}, _client_url, _config), do: false
+
   defp do_valid_for_authorization?({:ok, url}, client_url, config) do
     client_url
     |> String.split()
@@ -96,6 +101,7 @@ defmodule ExOauth2Provider.RedirectURI do
     |> URI.parse()
     |> uri_with_query(query)
   end
+
   def uri_with_query(%URI{} = uri, query) do
     query = add_query_params(uri.query || "", query)
 

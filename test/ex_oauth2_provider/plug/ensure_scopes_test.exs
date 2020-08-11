@@ -61,7 +61,7 @@ defmodule ExOauth2Provider.Plug.EnsureScopesTest do
 
   defp run_plug(conn, scopes, opts) do
     access_token = %OauthAccessToken{token: "secret", scopes: scopes}
-    opts         = Keyword.merge([handler: TestHandler], opts)
+    opts = Keyword.merge([handler: TestHandler], opts)
 
     conn
     |> Plug.set_current_access_token({:ok, access_token})

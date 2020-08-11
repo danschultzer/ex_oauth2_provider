@@ -19,20 +19,24 @@ defmodule ExOauth2Provider.Authorization.Utils do
 
   defp load_client({:ok, %{request: %{"client_id" => client_id}} = params}, config) do
     case Applications.get_application(client_id, config) do
-      nil    -> Error.add_error({:ok, params}, Error.invalid_client())
+      nil -> Error.add_error({:ok, params}, Error.invalid_client())
       client -> {:ok, Map.put(params, :client, client)}
     end
   end
-  defp load_client({:ok, params}, _config), do: Error.add_error({:ok, params}, Error.invalid_request())
+
+  defp load_client({:ok, params}, _config),
+    do: Error.add_error({:ok, params}, Error.invalid_request())
 
   defp set_defaults({:error, params}), do: {:error, params}
+
   defp set_defaults({:ok, %{request: request, client: client} = params}) do
     [redirect_uri | _rest] = String.split(client.redirect_uri)
 
-    request = Map.new()
-    |> Map.put("redirect_uri", redirect_uri)
-    |> Map.put("scope", nil)
-    |> Map.merge(request)
+    request =
+      Map.new()
+      |> Map.put("redirect_uri", redirect_uri)
+      |> Map.put("scope", nil)
+      |> Map.merge(request)
 
     {:ok, Map.put(params, :request, request)}
   end

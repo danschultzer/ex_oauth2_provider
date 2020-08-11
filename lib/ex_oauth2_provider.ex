@@ -51,6 +51,7 @@ defmodule ExOauth2Provider do
   @spec authenticate_token(binary(), keyword()) :: {:ok, map()} | {:error, any()}
   def authenticate_token(token, config \\ [])
   def authenticate_token(nil, _config), do: {:error, :token_inaccessible}
+
   def authenticate_token(token, config) do
     token
     |> load_access_token(config)
@@ -61,37 +62,40 @@ defmodule ExOauth2Provider do
 
   defp load_access_token(token, config) do
     case AccessTokens.get_by_token(token, config) do
-      nil          -> {:error, :token_not_found}
+      nil -> {:error, :token_not_found}
       access_token -> {:ok, access_token}
     end
   end
 
   defp maybe_revoke_previous_refresh_token({:error, error}, _config), do: {:error, error}
+
   defp maybe_revoke_previous_refresh_token({:ok, access_token}, config) do
     case Config.refresh_token_revoked_on_use?(config) do
-      true  -> revoke_previous_refresh_token(access_token, config)
+      true -> revoke_previous_refresh_token(access_token, config)
       false -> {:ok, access_token}
     end
   end
 
   defp revoke_previous_refresh_token(access_token, config) do
     case AccessTokens.revoke_previous_refresh_token(access_token, config) do
-      {:error, _any}       -> {:error, :no_association_found}
+      {:error, _any} -> {:error, :no_association_found}
       {:ok, _access_token} -> {:ok, access_token}
     end
   end
 
   defp validate_access_token({:error, error}), do: {:error, error}
+
   defp validate_access_token({:ok, access_token}) do
     case AccessTokens.is_accessible?(access_token) do
-      true  -> {:ok, access_token}
+      true -> {:ok, access_token}
       false -> {:error, :token_inaccessible}
     end
   end
 
   defp load_resource_owner({:error, error}, _config), do: {:error, error}
+
   defp load_resource_owner({:ok, access_token}, config) do
-    repo         = Config.repo(config)
+    repo = Config.repo(config)
     access_token = repo.preload(access_token, :resource_owner)
 
     {:ok, access_token}

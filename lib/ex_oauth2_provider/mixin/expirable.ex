@@ -18,7 +18,7 @@ defmodule ExOauth2Provider.Mixin.Expirable do
   @spec filter_expired(Schema.t()) :: Schema.t() | nil
   def filter_expired(data) do
     case is_expired?(data) do
-      true  -> nil
+      true -> nil
       false -> data
     end
   end
@@ -40,8 +40,9 @@ defmodule ExOauth2Provider.Mixin.Expirable do
   @spec is_expired?(Schema.t() | nil) :: boolean()
   def is_expired?(nil), do: true
   def is_expired?(%{expires_in: nil, inserted_at: _}), do: false
+
   def is_expired?(%struct{expires_in: expires_in, inserted_at: inserted_at}) do
-    now  = SchemaHelpers.__timestamp_for__(struct, :inserted_at)
+    now = SchemaHelpers.__timestamp_for__(struct, :inserted_at)
     type = now.__struct__()
 
     inserted_at

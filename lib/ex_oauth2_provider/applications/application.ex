@@ -42,11 +42,11 @@ defmodule ExOauth2Provider.Applications.Application do
   @doc false
   def attrs() do
     [
-    {:name, :string, null: false},
-    {:uid, :string, null: false},
-    {:secret, :string, null: false, default: ""},
-    {:redirect_uri, :string, null: false},
-    {:scopes, :string, null: false, default: ""},
+      {:name, :string, null: false},
+      {:uid, :string, null: false},
+      {:secret, :string, null: false, default: ""},
+      {:redirect_uri, :string, null: false},
+      {:scopes, :string, null: false, default: ""}
     ]
   end
 
@@ -67,7 +67,7 @@ defmodule ExOauth2Provider.Applications.Application do
       use ExOauth2Provider.Schema, unquote(config)
 
       # For Phoenix integrations
-      if Code.ensure_loaded?(Phoenix.Param), do: @derive {Phoenix.Param, key: :uid}
+      if Code.ensure_loaded?(Phoenix.Param), do: @derive({Phoenix.Param, key: :uid})
 
       import unquote(__MODULE__), only: [application_fields: 0]
     end
@@ -98,13 +98,13 @@ defmodule ExOauth2Provider.Applications.Application do
   defp validate_secret_not_nil(changeset) do
     case Changeset.get_field(changeset, :secret) do
       nil -> Changeset.add_error(changeset, :secret, "can't be blank")
-      _   -> changeset
+      _ -> changeset
     end
   end
 
   defp maybe_new_application_changeset(application, params, config) do
     case Ecto.get_meta(application, :state) do
-      :built  -> new_application_changeset(application, params, config)
+      :built -> new_application_changeset(application, params, config)
       :loaded -> application
     end
   end
@@ -127,18 +127,20 @@ defmodule ExOauth2Provider.Applications.Application do
       url
       |> RedirectURI.validate(config)
       |> case do
-         {:error, error} -> Changeset.add_error(changeset, :redirect_uri, error)
-         {:ok, _}        -> changeset
-       end
+        {:error, error} -> Changeset.add_error(changeset, :redirect_uri, error)
+        {:ok, _} -> changeset
+      end
     end)
   end
 
   defp put_uid(%{changes: %{uid: _}} = changeset), do: changeset
+
   defp put_uid(%{} = changeset) do
     Changeset.change(changeset, %{uid: Utils.generate_token()})
   end
 
   defp put_secret(%{changes: %{secret: _}} = changeset), do: changeset
+
   defp put_secret(%{} = changeset) do
     Changeset.change(changeset, %{secret: Utils.generate_token()})
   end

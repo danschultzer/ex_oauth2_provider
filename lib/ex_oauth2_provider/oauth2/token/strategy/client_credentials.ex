@@ -6,7 +6,8 @@ defmodule ExOauth2Provider.Token.ClientCredentials do
     AccessTokens,
     Token.Utils,
     Token.Utils.Response,
-    Utils.Error}
+    Utils.Error
+  }
 
   @doc """
   Will grant access token by client credentials.
@@ -31,22 +32,28 @@ defmodule ExOauth2Provider.Token.ClientCredentials do
   end
 
   defp issue_access_token_by_creds({:error, params}, _config), do: {:error, params}
-  defp issue_access_token_by_creds({:ok, %{client: application, request: request} = params}, config) do
+
+  defp issue_access_token_by_creds(
+         {:ok, %{client: application, request: request} = params},
+         config
+       ) do
     scopes = request["scope"]
+
     token_params = %{
-      use_refresh_token: false, # client_credentials MUST NOT use refresh tokens
+      # client_credentials MUST NOT use refresh tokens
+      use_refresh_token: false,
       scopes: scopes
     }
 
     application
     |> AccessTokens.get_application_token_for(scopes, config)
     |> case do
-      nil          -> AccessTokens.create_application_token(application, token_params, config)
+      nil -> AccessTokens.create_application_token(application, token_params, config)
       access_token -> {:ok, access_token}
     end
     |> case do
       {:ok, access_token} -> {:ok, Map.merge(params, %{access_token: access_token})}
-      {:error, error}     -> Error.add_error({:ok, params}, error)
+      {:error, error} -> Error.add_error({:ok, params}, error)
     end
   end
 end

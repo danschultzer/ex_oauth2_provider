@@ -8,7 +8,8 @@ defmodule ExOauth2Provider.Token.RefreshToken do
     Config,
     Token.Utils,
     Token.Utils.Response,
-    Utils.Error}
+    Utils.Error
+  }
 
   @doc """
   Will grant access token by refresh token.
@@ -34,7 +35,10 @@ defmodule ExOauth2Provider.Token.RefreshToken do
     |> Response.response(config)
   end
 
-  defp load_access_token_by_refresh_token({:ok, %{client: client, request: %{"refresh_token" => refresh_token}} = params}, config) do
+  defp load_access_token_by_refresh_token(
+         {:ok, %{client: client, request: %{"refresh_token" => refresh_token}} = params},
+         config
+       ) do
     access_token =
       client
       |> AccessTokens.get_by_refresh_token_for(refresh_token, config)
@@ -42,29 +46,39 @@ defmodule ExOauth2Provider.Token.RefreshToken do
       |> Config.repo(config).preload(:application)
 
     case access_token do
-      nil          -> Error.add_error({:ok, params}, Error.invalid_request())
+      nil -> Error.add_error({:ok, params}, Error.invalid_request())
       access_token -> {:ok, Map.put(params, :refresh_token, access_token)}
     end
   end
-  defp load_access_token_by_refresh_token(params, _config), do: Error.add_error(params, Error.invalid_request())
+
+  defp load_access_token_by_refresh_token(params, _config),
+    do: Error.add_error(params, Error.invalid_request())
 
   defp issue_access_token_by_refresh_token({:error, params}, _config), do: {:error, params}
-  defp issue_access_token_by_refresh_token({:ok, %{refresh_token: refresh_token, request: _} = params}, config) do
-    result = Config.repo(config).transaction(fn ->
-      token_params = token_params(refresh_token, config)
 
-      refresh_token
-      |> revoke_access_token(config)
-      |> case do
-        {:ok, %{resource_owner: resource_owner}} -> AccessTokens.create_token(resource_owner, token_params, config)
-        {:error, error}     -> {:error, error}
-      end
-    end)
+  defp issue_access_token_by_refresh_token(
+         {:ok, %{refresh_token: refresh_token, request: _} = params},
+         config
+       ) do
+    result =
+      Config.repo(config).transaction(fn ->
+        token_params = token_params(refresh_token, config)
+
+        refresh_token
+        |> revoke_access_token(config)
+        |> case do
+          {:ok, %{resource_owner: resource_owner}} ->
+            AccessTokens.create_token(resource_owner, token_params, config)
+
+          {:error, error} ->
+            {:error, error}
+        end
+      end)
 
     case result do
-      {:ok, {:error, error}}     -> Error.add_error({:ok, params}, error)
+      {:ok, {:error, error}} -> Error.add_error({:ok, params}, error)
       {:ok, {:ok, access_token}} -> {:ok, Map.merge(params, %{access_token: access_token})}
-      {:error, error}            -> Error.add_error({:ok, params}, error)
+      {:error, error} -> Error.add_error({:ok, params}, error)
     end
   end
 
@@ -72,7 +86,7 @@ defmodule ExOauth2Provider.Token.RefreshToken do
     params = %{scopes: scopes, application: application, use_refresh_token: true}
 
     case Config.refresh_token_revoked_on_use?(config) do
-      true  -> Map.put(params, :previous_refresh_token, refresh_token)
+      true -> Map.put(params, :previous_refresh_token, refresh_token)
       false -> params
     end
   end

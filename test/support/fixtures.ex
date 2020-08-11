@@ -2,7 +2,14 @@ defmodule ExOauth2Provider.Test.Fixtures do
   @moduledoc false
 
   alias ExOauth2Provider.AccessTokens
-  alias Dummy.{OauthApplications.OauthApplication, OauthAccessGrants.OauthAccessGrant, Repo, Users.User}
+
+  alias Dummy.{
+    OauthApplications.OauthApplication,
+    OauthAccessGrants.OauthAccessGrant,
+    Repo,
+    Users.User
+  }
+
   alias Ecto.Changeset
 
   def resource_owner(attrs \\ []) do
@@ -16,13 +23,16 @@ defmodule ExOauth2Provider.Test.Fixtures do
 
   def application(attrs \\ []) do
     resource_owner = Keyword.get(attrs, :resource_owner) || resource_owner()
-    attrs          = [
-      owner_id: resource_owner.id,
-      uid: "test",
-      secret: "secret",
-      name: "OAuth Application",
-      redirect_uri: "urn:ietf:wg:oauth:2.0:oob",
-      scopes: "public read write"]
+
+    attrs =
+      [
+        owner_id: resource_owner.id,
+        uid: "test",
+        secret: "secret",
+        name: "OAuth Application",
+        redirect_uri: "urn:ietf:wg:oauth:2.0:oob",
+        scopes: "public read write"
+      ]
       |> Keyword.merge(attrs)
       |> Keyword.drop([:resource_owner])
 
@@ -50,7 +60,6 @@ defmodule ExOauth2Provider.Test.Fixtures do
 
     access_token
   end
-
 
   def access_grant(application, user, code, redirect_uri) do
     attrs = [

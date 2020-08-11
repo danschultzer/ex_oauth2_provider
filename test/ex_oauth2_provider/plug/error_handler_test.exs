@@ -84,8 +84,8 @@ defmodule ExOauth2Provider.Plug.ErrorHandlerTest do
 
   defp content_type(headers) do
     headers
-    |> Enum.filter(fn({k, _}) -> k == "content-type" end)
-    |> Enum.map(fn({_, v}) -> v end)
+    |> Enum.filter(fn {k, _} -> k == "content-type" end)
+    |> Enum.map(fn {_, v} -> v end)
     |> List.first()
   end
 end

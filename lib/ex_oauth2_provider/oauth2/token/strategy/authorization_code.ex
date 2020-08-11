@@ -8,7 +8,8 @@ defmodule ExOauth2Provider.Token.AuthorizationCode do
     Config,
     Token.Utils,
     Token.Utils.Response,
-    Utils.Error}
+    Utils.Error
+  }
 
   @doc """
   Will grant access token by client credentials.
@@ -37,19 +38,24 @@ defmodule ExOauth2Provider.Token.AuthorizationCode do
   end
 
   defp issue_access_token_by_grant({:error, params}, _config), do: {:error, params}
-  defp issue_access_token_by_grant({:ok, %{access_grant: access_grant, request: _} = params}, config) do
+
+  defp issue_access_token_by_grant(
+         {:ok, %{access_grant: access_grant, request: _} = params},
+         config
+       ) do
     token_params = %{use_refresh_token: Config.use_refresh_token?(config)}
 
-    result = Config.repo(config).transaction(fn ->
-      access_grant
-      |> revoke_grant(config)
-      |> maybe_create_access_token(token_params, config)
-    end)
+    result =
+      Config.repo(config).transaction(fn ->
+        access_grant
+        |> revoke_grant(config)
+        |> maybe_create_access_token(token_params, config)
+      end)
 
     case result do
-      {:ok, {:error, error}}     -> Error.add_error({:ok, params}, error)
+      {:ok, {:error, error}} -> Error.add_error({:ok, params}, error)
       {:ok, {:ok, access_token}} -> {:ok, Map.put(params, :access_token, access_token)}
-      {:error, error}            -> Error.add_error({:ok, params}, error)
+      {:error, error} -> Error.add_error({:ok, params}, error)
     end
   end
 
@@ -57,36 +63,52 @@ defmodule ExOauth2Provider.Token.AuthorizationCode do
     do: AccessGrants.revoke(access_grant, config)
 
   defp maybe_create_access_token({:error, _} = error, _token_params, _config), do: error
-  defp maybe_create_access_token({:ok, %{resource_owner: resource_owner, application: application, scopes: scopes}}, token_params, config) do
+
+  defp maybe_create_access_token(
+         {:ok, %{resource_owner: resource_owner, application: application, scopes: scopes}},
+         token_params,
+         config
+       ) do
     token_params = Map.merge(token_params, %{scopes: scopes, application: application})
 
     resource_owner
     |> AccessTokens.get_token_for(application, scopes, config)
     |> case do
-      nil          -> AccessTokens.create_token(resource_owner, token_params, config)
+      nil -> AccessTokens.create_token(resource_owner, token_params, config)
       access_token -> {:ok, access_token}
     end
   end
 
-  defp load_active_access_grant({:ok, %{client: client, request: %{"code" => code}} = params}, config) do
+  defp load_active_access_grant(
+         {:ok, %{client: client, request: %{"code" => code}} = params},
+         config
+       ) do
     client
     |> AccessGrants.get_active_grant_for(code, config)
     |> Config.repo(config).preload(:resource_owner)
     |> Config.repo(config).preload(:application)
     |> case do
-      nil          -> Error.add_error({:ok, params}, Error.invalid_grant())
+      nil -> Error.add_error({:ok, params}, Error.invalid_grant())
       access_grant -> {:ok, Map.put(params, :access_grant, access_grant)}
     end
   end
-  defp load_active_access_grant({:ok, params}, _config), do: Error.add_error({:ok, params}, Error.invalid_grant())
+
+  defp load_active_access_grant({:ok, params}, _config),
+    do: Error.add_error({:ok, params}, Error.invalid_grant())
+
   defp load_active_access_grant({:error, error}, _config), do: {:error, error}
 
   defp validate_redirect_uri({:error, params}), do: {:error, params}
-  defp validate_redirect_uri({:ok, %{request: %{"redirect_uri" => redirect_uri}, access_grant: grant} = params}) do
+
+  defp validate_redirect_uri(
+         {:ok, %{request: %{"redirect_uri" => redirect_uri}, access_grant: grant} = params}
+       ) do
     case grant.redirect_uri == redirect_uri do
-      true  -> {:ok, params}
+      true -> {:ok, params}
       false -> Error.add_error({:ok, params}, Error.invalid_grant())
     end
   end
-  defp validate_redirect_uri({:ok, params}), do: Error.add_error({:ok, params}, Error.invalid_grant())
+
+  defp validate_redirect_uri({:ok, params}),
+    do: Error.add_error({:ok, params}, Error.invalid_grant())
 end

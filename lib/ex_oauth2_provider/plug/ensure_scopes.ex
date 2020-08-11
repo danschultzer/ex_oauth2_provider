@@ -44,11 +44,12 @@ defmodule ExOauth2Provider.Plug.EnsureScopes do
   end
 
   defp check_scopes(nil, conn, opts), do: {:error, conn, opts}
+
   defp check_scopes(token, conn, opts) do
     scopes_set = fetch_scopes(opts)
 
     case matches_any_scopes_set?(token, scopes_set) do
-      true  -> {:ok, conn, opts}
+      true -> {:ok, conn, opts}
       false -> {:error, conn, opts}
     end
   end
@@ -61,6 +62,7 @@ defmodule ExOauth2Provider.Plug.EnsureScopes do
   defp fetch_scopes(_opts, scopes), do: scopes
 
   defp matches_any_scopes_set?(_, []), do: true
+
   defp matches_any_scopes_set?(access_token, scopes_sets) do
     Enum.any?(scopes_sets, &matches_scopes?(access_token, &1))
   end
@@ -72,6 +74,7 @@ defmodule ExOauth2Provider.Plug.EnsureScopes do
   end
 
   defp handle_error({:ok, conn, _}), do: conn
+
   defp handle_error({:error, %Conn{params: params} = conn, opts}) do
     module = Keyword.get(opts, :handler, Plug.ErrorHandler)
     params = Map.put(params, :reason, :unauthorized)

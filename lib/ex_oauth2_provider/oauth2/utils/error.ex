@@ -4,34 +4,43 @@ defmodule ExOauth2Provider.Utils.Error do
   @doc false
   @spec add_error({:ok, map()} | {:error, map()}, {:error, map(), atom()}) :: {:error, map()}
   def add_error({:error, params}, _), do: {:error, params}
+
   def add_error({:ok, params}, {:error, error, http_status}) do
     {:error, Map.merge(params, %{error: error, error_http_status: http_status})}
   end
 
   @spec server_error() :: {:error, map(), atom()}
   def server_error do
-    msg = "The authorization server encountered an unexpected condition which prevented it from fulfilling the request."
+    msg =
+      "The authorization server encountered an unexpected condition which prevented it from fulfilling the request."
+
     {:error, %{error: :internal_server_error, error_description: msg}, :internal_server_error}
   end
 
   @doc false
   @spec invalid_request() :: {:error, map(), atom()}
   def invalid_request do
-    msg = "The request is missing a required parameter, includes an unsupported parameter value, or is otherwise malformed."
+    msg =
+      "The request is missing a required parameter, includes an unsupported parameter value, or is otherwise malformed."
+
     {:error, %{error: :invalid_request, error_description: msg}, :bad_request}
   end
 
   @doc false
   @spec invalid_client() :: {:error, map(), atom()}
   def invalid_client do
-    msg = "Client authentication failed due to unknown client, no client authentication included, or unsupported authentication method."
+    msg =
+      "Client authentication failed due to unknown client, no client authentication included, or unsupported authentication method."
+
     {:error, %{error: :invalid_client, error_description: msg}, :unprocessable_entity}
   end
 
   @doc false
   @spec invalid_grant() :: {:error, map(), atom()}
   def invalid_grant do
-    msg = "The provided authorization grant is invalid, expired, revoked, does not match the redirection URI used in the authorization request, or was issued to another client."
+    msg =
+      "The provided authorization grant is invalid, expired, revoked, does not match the redirection URI used in the authorization request, or was issued to another client."
+
     {:error, %{error: :invalid_grant, error_description: msg}, :unprocessable_entity}
   end
 

@@ -10,11 +10,13 @@ defmodule Mix.ExOauth2Provider.Migration do
   @spec create_migration_file(atom(), binary(), binary()) :: any()
   def create_migration_file(repo, name, content) do
     base_name = "#{Macro.underscore(name)}.exs"
-    path      =
+
+    path =
       repo
       |> Mix.EctoSQL.source_repo_priv()
       |> Path.join("migrations")
       |> maybe_create_directory()
+
     timestamp = timestamp(path)
 
     path
@@ -34,8 +36,13 @@ defmodule Mix.ExOauth2Provider.Migration do
     |> Path.join("*_#{base_name}")
     |> Path.wildcard()
     |> case do
-      [] -> path
-      _  -> Mix.raise("migration can't be created, there is already a migration file with name #{name}.")
+      [] ->
+        path
+
+      _ ->
+        Mix.raise(
+          "migration can't be created, there is already a migration file with name #{name}."
+        )
     end
   end
 
@@ -47,7 +54,7 @@ defmodule Mix.ExOauth2Provider.Migration do
     |> Path.wildcard()
     |> case do
       [] -> timestamp
-      _  -> timestamp(path, seconds + 1)
+      _ -> timestamp(path, seconds + 1)
     end
   end
 
@@ -61,7 +68,7 @@ defmodule Mix.ExOauth2Provider.Migration do
     "#{y}#{pad(m)}#{pad(d)}#{pad(hh)}#{pad(mm)}#{pad(ss)}"
   end
 
-  defp pad(i) when i < 10, do: << ?0, ?0 + i >>
+  defp pad(i) when i < 10, do: <<?0, ?0 + i>>
   defp pad(i), do: to_string(i)
 
   @template """
@@ -84,28 +91,37 @@ defmodule Mix.ExOauth2Provider.Migration do
   end
   """
 
-  alias ExOauth2Provider.{AccessGrants.AccessGrant, AccessTokens.AccessToken, Applications.Application}
+  alias ExOauth2Provider.{
+    AccessGrants.AccessGrant,
+    AccessTokens.AccessToken,
+    Applications.Application
+  }
 
-  @schemas [{"applications", Application}, {"access_grants", AccessGrant}, {"access_tokens", AccessToken}]
+  @schemas [
+    {"applications", Application},
+    {"access_grants", AccessGrant},
+    {"access_tokens", AccessToken}
+  ]
 
   @spec gen(binary(), binary(), map()) :: binary()
   def gen(name, namespace, %{repo: repo} = config) do
     schemas =
       for {table, module} <- @schemas,
-        do: schema(module, table, namespace, config)
+          do: schema(module, table, namespace, config)
 
     EEx.eval_string(@template, migration: %{repo: repo, name: name, schemas: schemas})
   end
 
   defp schema(module, table, namespace, %{binary_id: binary_id}) do
-    attrs           =
+    attrs =
       module.attrs()
       |> Kernel.++(attrs_from_assocs(module.assocs(), namespace))
       |> migration_attrs()
-    defaults        = defaults(attrs)
+
+    defaults = defaults(attrs)
     {assocs, attrs} = partition_attrs(attrs)
-    table           = "#{namespace}_#{table}"
-    indexes         = migration_indexes(module.indexes(), table)
+    table = "#{namespace}_#{table}"
+    indexes = migration_indexes(module.indexes(), table)
 
     %{
       table: table,
@@ -126,10 +142,14 @@ defmodule Mix.ExOauth2Provider.Migration do
   defp attr_from_assoc({:belongs_to, name, :users}, _namespace) do
     {String.to_atom("#{name}_id"), {:references, :users}}
   end
+
   defp attr_from_assoc({:belongs_to, name, table}, namespace) do
     {String.to_atom("#{name}_id"), {:references, String.to_atom("#{namespace}_#{table}")}}
   end
-  defp attr_from_assoc({:belongs_to, name, table, _defaults}, namespace), do: attr_from_assoc({:belongs_to, name, table}, namespace)
+
+  defp attr_from_assoc({:belongs_to, name, table, _defaults}, namespace),
+    do: attr_from_assoc({:belongs_to, name, table}, namespace)
+
   defp attr_from_assoc(_assoc, _opts), do: nil
 
   defp migration_attrs(attrs) do
@@ -139,11 +159,13 @@ defmodule Mix.ExOauth2Provider.Migration do
   defp to_migration_attr({name, type}) do
     {name, type, ""}
   end
+
   defp to_migration_attr({name, type, []}) do
     to_migration_attr({name, type})
   end
+
   defp to_migration_attr({name, type, defaults}) do
-    defaults = Enum.map_join(defaults, ", ", fn {k, v} -> "#{k}: #{inspect v}" end)
+    defaults = Enum.map_join(defaults, ", ", fn {k, v} -> "#{k}: #{inspect(v)}" end)
 
     {name, type, ", #{defaults}"}
   end
@@ -161,7 +183,8 @@ defmodule Mix.ExOauth2Provider.Migration do
         _ -> false
       end)
 
-    attrs  = Enum.map(attrs, fn {key_id, type, _defaults} -> {key_id, type} end)
+    attrs = Enum.map(attrs, fn {key_id, type, _defaults} -> {key_id, type} end)
+
     assocs =
       Enum.map(assocs, fn {key_id, {:references, source}, _} ->
         key = String.replace(Atom.to_string(key_id), "_id", "")

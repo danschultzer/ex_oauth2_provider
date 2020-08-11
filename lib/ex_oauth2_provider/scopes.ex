@@ -10,7 +10,7 @@ defmodule ExOauth2Provider.Scopes do
   """
   @spec all?([binary()], [binary()]) :: boolean()
   def all?(scopes, required_scopes) do
-    (required_scopes -- scopes) == []
+    required_scopes -- scopes == []
   end
 
   @doc """

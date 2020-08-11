@@ -21,7 +21,7 @@ defmodule ExOauth2Provider.Plug do
   @spec authenticated?(Conn.t(), atom()) :: boolean()
   def authenticated?(conn, type \\ :default) do
     case get_current_access_token(conn, type) do
-      {:error, _error}     -> false
+      {:error, _error} -> false
       {:ok, _access_token} -> true
     end
   end
@@ -35,7 +35,7 @@ defmodule ExOauth2Provider.Plug do
     conn
     |> current_access_token(the_key)
     |> case do
-      nil          -> nil
+      nil -> nil
       access_token -> access_token.resource_owner
     end
   end
@@ -47,7 +47,7 @@ defmodule ExOauth2Provider.Plug do
   @spec current_access_token(Conn.t(), atom()) :: AccessToken.t() | nil
   def current_access_token(conn, the_key \\ :default) do
     case get_current_access_token(conn, the_key) do
-      {:error, _error}    -> nil
+      {:error, _error} -> nil
       {:ok, access_token} -> access_token
     end
   end
@@ -57,8 +57,8 @@ defmodule ExOauth2Provider.Plug do
   def get_current_access_token(conn, the_key \\ :default) do
     case conn.private[Keys.access_token_key(the_key)] do
       {:ok, access_token} -> {:ok, access_token}
-      {:error, error}     -> {:error, error}
-      _                   -> {:error, :no_session}
+      {:error, error} -> {:error, error}
+      _ -> {:error, :no_session}
     end
   end
 

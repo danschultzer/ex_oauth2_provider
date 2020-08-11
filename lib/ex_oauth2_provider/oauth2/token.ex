@@ -5,7 +5,9 @@ defmodule ExOauth2Provider.Token do
   alias ExOauth2Provider.{
     Config,
     Token.Revoke,
-    Utils.Error}
+    Utils.Error
+  }
+
   alias Ecto.Schema
 
   @doc """
@@ -28,7 +30,7 @@ defmodule ExOauth2Provider.Token do
     case validate_grant_type(request, config) do
       {:error, :invalid_grant_type} -> Error.unsupported_grant_type()
       {:error, :missing_grant_type} -> Error.invalid_request()
-      {:ok, token_module}           -> token_module.grant(request, config)
+      {:ok, token_module} -> token_module.grant(request, config)
     end
   end
 
@@ -40,6 +42,7 @@ defmodule ExOauth2Provider.Token do
       mod -> {:ok, mod}
     end
   end
+
   defp validate_grant_type(_, _config), do: {:error, :missing_grant_type}
 
   defp fetch_module(type, config) do
@@ -47,15 +50,17 @@ defmodule ExOauth2Provider.Token do
     |> Config.grant_flows()
     |> grant_type_can_be_used?(type, config)
     |> case do
-      true  -> grant_type_to_mod(type)
+      true -> grant_type_to_mod(type)
       false -> nil
     end
   end
 
   defp grant_type_can_be_used?(_, "refresh_token", config),
     do: Config.use_refresh_token?(config)
+
   defp grant_type_can_be_used?(_, "password", config),
     do: not is_nil(Config.password_auth(config))
+
   defp grant_type_can_be_used?(grant_flows, grant_type, _config) do
     Enum.member?(grant_flows, grant_type)
   end
