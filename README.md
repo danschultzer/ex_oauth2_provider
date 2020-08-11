@@ -293,6 +293,21 @@ You'll need to create the migration file and schema modules with the argument `-
 mix ex_oauth2_provider.install --binary-id
 ```
 
+## Development 
+
+Starting postgrest for test
+( one will need to modify the pg_hba.conf after booting postges for the first time)
+( notes are in the script below )
+```bash
+./postgres.zsh
+```
+
+Testing binary_id
+```bash
+mix clean && UUID=1 mix test
+```
+
+
 ## Acknowledgement
 
 This library was made thanks to [doorkeeper](https://github.com/doorkeeper-gem/doorkeeper), [guardian](https://github.com/ueberauth/guardian) and [authable](https://github.com/mustafaturan/authable), that gave the conceptual building blocks.

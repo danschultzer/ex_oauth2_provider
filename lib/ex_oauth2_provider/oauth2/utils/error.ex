@@ -22,6 +22,14 @@ defmodule ExOauth2Provider.Utils.Error do
   end
 
   @doc false
+  @spec invalid_pkce_auth() :: {:error, map(), atom()}
+  def invalid_pkce_auth do
+    msg = "PKCE enabled: The request is missing required parameters"
+    {:error, %{error: :invalid_pkce, error_description: msg}, :bad_request}
+  end
+
+
+  @doc false
   @spec invalid_client() :: {:error, map(), atom()}
   def invalid_client do
     msg = "Client authentication failed due to unknown client, no client authentication included, or unsupported authentication method."

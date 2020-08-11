@@ -8,3 +8,5 @@ erl_crash.dump
 /tmp
 .DS_Store
 /.elixir_ls
+.tool-versions
+/priv/pg_data

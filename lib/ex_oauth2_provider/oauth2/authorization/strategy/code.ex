@@ -184,12 +184,22 @@ defmodule ExOauth2Provider.Authorization.Code do
 
   defp validate_request({:error, params}, _config), do: {:error, params}
   defp validate_request({:ok, params}, config) do
+    # TODO smells like railway pattern here - meta opportunity
     {:ok, params}
+    |> validate_pkce_params(Config.use_pkce?(config))
     |> validate_resource_owner()
     |> validate_redirect_uri(config)
     |> validate_scopes(config)
   end
 
+
+  defp validate_pkce_params({:error, params} , _), do: {:error, params}
+  defp validate_pkce_params({:ok, params}, false), do: {:ok, params}
+  defp validate_pkce_params({:ok, %{request: %{"code_challenge" => _code_challenge, "code_challenge_method" => _code_challenge_method}}} = input, true), do: input
+  defp validate_pkce_params({:ok, params}, true), do: Error.add_error({:ok, params}, Error.invalid_pkce_auth())
+
+
+  defp validate_resource_owner({:error, params}), do: {:error, params}
   defp validate_resource_owner({:ok, %{resource_owner: resource_owner} = params}) do
     case resource_owner do
       %{__struct__: _} -> {:ok, params}

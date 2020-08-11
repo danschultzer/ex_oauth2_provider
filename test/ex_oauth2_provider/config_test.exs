@@ -13,9 +13,9 @@ defmodule ExOauth2Provider.ConfigTest do
     assert Config.repo(otp_app: :my_app) == Dummy.Repo
 
     Application.delete_env(:ex_oauth2_provider, ExOauth2Provider)
-    Application.put_env(:my_app, ExOauth2Provider, repo: Dummy.Repo)
+    Application.put_env(:my_app, ExOauth2Provider, repo: :different_repo)
 
-    assert Config.repo(otp_app: :my_app) == Dummy.Repo
+    assert Config.repo(otp_app: :my_app) == :different_repo
 
     Application.delete_env(:my_app, ExOauth2Provider)
 
