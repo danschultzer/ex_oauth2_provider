@@ -46,11 +46,33 @@ defmodule ExOauth2Provider.AccessGrants.AccessGrant do
     ]
   end
 
+  @doc false
+  def access_grant_allowed_fields do
+    [:redirect_uri, :expires_in, :scopes]
+  end
+
+  @doc false
+  def access_grant_required_fields do
+    [:redirect_uri, :expires_in, :token, :resource_owner, :application]
+  end
+
+  @doc false
+  def access_grant_request_fields do
+    ["redirect_uri", "scope"]
+  end
+
   defmacro __using__(config) do
     quote do
+      use ExOauth2Provider.Changeset
       use ExOauth2Provider.Schema, unquote(config)
 
-      import unquote(__MODULE__), only: [access_grant_fields: 0]
+      import unquote(__MODULE__),
+        only: [
+          access_grant_fields: 0,
+          access_grant_allowed_fields: 0,
+          access_grant_required_fields: 0,
+          access_grant_request_fields: 0
+        ]
     end
   end
 
@@ -61,18 +83,18 @@ defmodule ExOauth2Provider.AccessGrants.AccessGrant do
   end
 
   alias Ecto.Changeset
-  alias ExOauth2Provider.{Mixin.Scopes, Utils}
+  alias ExOauth2Provider.{Config, Mixin.Scopes, Utils}
 
   @spec changeset(Ecto.Schema.t(), map(), keyword()) :: Changeset.t()
   def changeset(grant, params, config) do
     grant
-    |> Changeset.cast(params, [:redirect_uri, :expires_in, :scopes])
+    |> Changeset.cast(params, Config.access_grant(config).allowed_fields())
     |> Changeset.assoc_constraint(:application)
     |> Changeset.assoc_constraint(:resource_owner)
     |> put_token()
     |> Scopes.put_scopes(grant.application.scopes, config)
     |> Scopes.validate_scopes(grant.application.scopes, config)
-    |> Changeset.validate_required([:redirect_uri, :expires_in, :token, :resource_owner, :application])
+    |> Changeset.validate_required(Config.access_grant(config).required_fields())
     |> Changeset.unique_constraint(:token)
   end
 

@@ -49,11 +49,33 @@ defmodule ExOauth2Provider.AccessTokens.AccessToken do
     ]
   end
 
+  @doc false
+  def access_token_allowed_fields do
+    [:expires_in, :scopes]
+  end
+
+  @doc false
+  def access_token_required_fields do
+    [:expires_in]
+  end
+
+  @doc false
+  def access_token_request_fields do
+    []
+  end
+
   defmacro __using__(config) do
     quote do
+      use ExOauth2Provider.Changeset
       use ExOauth2Provider.Schema, unquote(config)
 
-      import unquote(__MODULE__), only: [access_token_fields: 0]
+      import unquote(__MODULE__),
+        only: [
+          access_token_fields: 0,
+          access_token_allowed_fields: 0,
+          access_token_required_fields: 0,
+          access_token_request_fields: 0
+        ]
     end
   end
 
@@ -71,13 +93,14 @@ defmodule ExOauth2Provider.AccessTokens.AccessToken do
     server_scopes = server_scopes(token)
 
     token
-    |> Changeset.cast(params, [:expires_in, :scopes])
+    |> Changeset.cast(params, Config.access_token(config).allowed_fields())
     |> validate_application_or_resource_owner()
     |> put_previous_refresh_token(params[:previous_refresh_token])
     |> put_refresh_token(params[:use_refresh_token])
     |> Scopes.put_scopes(server_scopes, config)
     |> Scopes.validate_scopes(server_scopes, config)
     |> put_token(config)
+    |> Changeset.validate_required(Config.access_token(config).required_fields())
   end
 
   defp server_scopes(%{application: %{scopes: scopes}}), do: scopes

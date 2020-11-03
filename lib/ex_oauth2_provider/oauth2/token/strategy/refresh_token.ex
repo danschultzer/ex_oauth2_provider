@@ -49,17 +49,29 @@ defmodule ExOauth2Provider.Token.RefreshToken do
   defp load_access_token_by_refresh_token(params, _config), do: Error.add_error(params, Error.invalid_request())
 
   defp issue_access_token_by_refresh_token({:error, params}, _config), do: {:error, params}
-  defp issue_access_token_by_refresh_token({:ok, %{refresh_token: refresh_token, request: _} = params}, config) do
-    result = Config.repo(config).transaction(fn ->
-      token_params = token_params(refresh_token, config)
 
-      refresh_token
-      |> revoke_access_token(config)
-      |> case do
-        {:ok, %{resource_owner: resource_owner}} -> AccessTokens.create_token(resource_owner, token_params, config)
-        {:error, error}     -> {:error, error}
-      end
-    end)
+  defp issue_access_token_by_refresh_token(
+         {:ok, %{refresh_token: refresh_token, request: request} = params},
+         config
+       ) do
+    result =
+      Config.repo(config).transaction(fn ->
+        token_params =
+          request
+          |> Map.take(Config.access_token(config).request_fields())
+          |> Map.new(fn {k, v} -> {String.to_atom(k), v} end)
+          |> Map.merge(token_params(refresh_token, config))
+
+        refresh_token
+        |> revoke_access_token(config)
+        |> case do
+          {:ok, %{resource_owner: resource_owner}} ->
+            AccessTokens.create_token(resource_owner, token_params, config)
+
+          {:error, error} ->
+            {:error, error}
+        end
+      end)
 
     case result do
       {:ok, {:error, error}}     -> Error.add_error({:ok, params}, error)
@@ -69,7 +81,11 @@ defmodule ExOauth2Provider.Token.RefreshToken do
   end
 
   defp token_params(%{scopes: scopes, application: application} = refresh_token, config) do
-    params = %{scopes: scopes, application: application, use_refresh_token: true}
+    params =
+      refresh_token
+      |> Map.drop([:expires_in])
+      |> Map.take(Config.access_token(config).required_fields())
+      |> Map.merge(%{scopes: scopes, application: application, use_refresh_token: true})
 
     case Config.refresh_token_revoked_on_use?(config) do
       true  -> Map.put(params, :previous_refresh_token, refresh_token)

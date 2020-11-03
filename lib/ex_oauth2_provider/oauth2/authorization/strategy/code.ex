@@ -142,7 +142,7 @@ defmodule ExOauth2Provider.Authorization.Code do
   defp issue_grant({:ok, %{resource_owner: resource_owner, client: application, request: request} = params}, config) do
     grant_params =
       request
-      |> Map.take(["redirect_uri", "scope"])
+      |> Map.take(Config.access_grant(config).request_fields())
       |> Map.new(fn {k, v} ->
         case k do
           "scope" -> {:scopes, v}
@@ -153,7 +153,8 @@ defmodule ExOauth2Provider.Authorization.Code do
 
     case AccessGrants.create_grant(resource_owner, application, grant_params, config) do
       {:ok, grant}    -> {:ok, Map.put(params, :grant, grant)}
-      {:error, error} -> Error.add_error({:ok, params}, error)
+      {:error, {:error, _, _} = error} -> Error.add_error({:ok, params}, error)
+      {:error, _} -> Error.add_error({:ok, params}, Error.server_error())
     end
   end
 
