@@ -75,8 +75,8 @@ defmodule ExOauth2Provider.Token.AuthorizationCode do
        ) do
     token_params =
       grant
-      |> Map.drop([:expires_in])
-      |> Map.take(Config.access_token(config).required_fields())
+      |> Map.drop([:expires_in, :scopes])
+      |> Map.take(Config.access_token(config).allowed_fields())
       |> Map.merge(token_params)
       |> Map.merge(%{scopes: scopes, application: application})
 

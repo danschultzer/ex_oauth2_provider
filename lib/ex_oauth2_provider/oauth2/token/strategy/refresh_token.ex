@@ -83,8 +83,8 @@ defmodule ExOauth2Provider.Token.RefreshToken do
   defp token_params(%{scopes: scopes, application: application} = refresh_token, config) do
     params =
       refresh_token
-      |> Map.drop([:expires_in])
-      |> Map.take(Config.access_token(config).required_fields())
+      |> Map.drop([:expires_in, :scopes])
+      |> Map.take(Config.access_token(config).allowed_fields())
       |> Map.merge(%{scopes: scopes, application: application, use_refresh_token: true})
 
     case Config.refresh_token_revoked_on_use?(config) do
