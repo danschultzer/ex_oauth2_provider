@@ -37,14 +37,23 @@ defmodule ExOauth2Provider.Token.AuthorizationCode do
   end
 
   defp issue_access_token_by_grant({:error, params}, _config), do: {:error, params}
-  defp issue_access_token_by_grant({:ok, %{access_grant: access_grant, request: _} = params}, config) do
-    token_params = %{use_refresh_token: Config.use_refresh_token?(config)}
 
-    result = Config.repo(config).transaction(fn ->
-      access_grant
-      |> revoke_grant(config)
-      |> maybe_create_access_token(token_params, config)
-    end)
+  defp issue_access_token_by_grant(
+         {:ok, %{access_grant: access_grant, request: request} = params},
+         config
+       ) do
+    token_params =
+      request
+      |> Map.take(Config.access_token(config).request_fields())
+      |> Map.new(fn {k, v} -> {String.to_atom(k), v} end)
+      |> Map.put(:use_refresh_token, Config.use_refresh_token?(config))
+
+    result =
+      Config.repo(config).transaction(fn ->
+        access_grant
+        |> revoke_grant(config)
+        |> maybe_create_access_token(token_params, config)
+      end)
 
     case result do
       {:ok, {:error, error}}     -> Error.add_error({:ok, params}, error)
@@ -57,8 +66,19 @@ defmodule ExOauth2Provider.Token.AuthorizationCode do
     do: AccessGrants.revoke(access_grant, config)
 
   defp maybe_create_access_token({:error, _} = error, _token_params, _config), do: error
-  defp maybe_create_access_token({:ok, %{resource_owner: resource_owner, application: application, scopes: scopes}}, token_params, config) do
-    token_params = Map.merge(token_params, %{scopes: scopes, application: application})
+
+  defp maybe_create_access_token(
+         {:ok,
+          %{resource_owner: resource_owner, application: application, scopes: scopes} = grant},
+         token_params,
+         config
+       ) do
+    token_params =
+      grant
+      |> Map.drop([:expires_in, :scopes])
+      |> Map.take(Config.access_token(config).allowed_fields())
+      |> Map.merge(token_params)
+      |> Map.merge(%{scopes: scopes, application: application})
 
     resource_owner
     |> AccessTokens.get_token_for(application, scopes, config)

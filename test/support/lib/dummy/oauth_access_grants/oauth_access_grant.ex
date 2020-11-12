@@ -13,4 +13,19 @@ defmodule Dummy.OauthAccessGrants.OauthAccessGrant do
     access_grant_fields()
     timestamps()
   end
+
+  @impl ExOauth2Provider.Changeset
+  def allowed_fields do
+    access_grant_allowed_fields()
+  end
+
+  @impl ExOauth2Provider.Changeset
+  def required_fields do
+    access_grant_required_fields()
+  end
+
+  @impl ExOauth2Provider.Changeset
+  def request_fields do
+    access_grant_request_fields()
+  end
 end

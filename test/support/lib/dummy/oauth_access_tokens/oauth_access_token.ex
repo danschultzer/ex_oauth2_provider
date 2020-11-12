@@ -13,4 +13,19 @@ defmodule Dummy.OauthAccessTokens.OauthAccessToken do
     access_token_fields()
     timestamps()
   end
+
+  @impl ExOauth2Provider.Changeset
+  def allowed_fields do
+    access_token_allowed_fields()
+  end
+
+  @impl ExOauth2Provider.Changeset
+  def required_fields do
+    access_token_required_fields()
+  end
+
+  @impl ExOauth2Provider.Changeset
+  def request_fields do
+    access_token_request_fields()
+  end
 end
