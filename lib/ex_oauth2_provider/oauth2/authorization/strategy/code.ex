@@ -104,7 +104,13 @@ defmodule ExOauth2Provider.Authorization.Code do
   end
 
   defp reissue_grant({:error, params}, _config), do: {:error, params}
-  defp reissue_grant({:ok, %{access_token: _access_token} = params}, config), do: issue_grant({:ok, params}, config)
+  defp reissue_grant({:ok, %{access_token: access_token} = params}, config) do
+    params =
+      access_token
+      |> Map.take(Config.access_token(config).allowed_fields())
+      |> Map.merge(params)
+    issue_grant({:ok, params}, config)
+  end
   defp reissue_grant({:ok, params}, _config), do: {:ok, params}
 
   @doc """
@@ -143,10 +149,12 @@ defmodule ExOauth2Provider.Authorization.Code do
     grant_params =
       request
       |> Map.take(Config.access_grant(config).request_fields())
+      |> Map.merge(Map.take(params, Config.access_grant(config).allowed_fields()))
       |> Map.new(fn {k, v} ->
         case k do
           "scope" -> {:scopes, v}
-          _       -> {String.to_atom(k), v}
+          "" <> _ -> {String.to_atom(k), v}
+          _       -> {k, v}
         end
       end)
       |> Map.put(:expires_in, Config.authorization_code_expires_in(config))
