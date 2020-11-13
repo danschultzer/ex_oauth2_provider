@@ -3,7 +3,7 @@ defmodule ExOauth2Provider.AccessTokens.Behaviours.Basic do
   Ecto schema for oauth access tokens
   """
 
-  @behaviour ExOauth2Provider.AccessTokens.Behaviour
+  @behaviour ExOauth2Provider.AccessTokens
 
   import Ecto.Query
   alias ExOauth2Provider.Mixin.{Expirable, Revocable, Scopes}
@@ -14,7 +14,11 @@ defmodule ExOauth2Provider.AccessTokens.Behaviours.Basic do
 
   defdelegate revoke!(data, config \\ []), to: Revocable
   defdelegate revoke(data, config \\ []), to: Revocable
+
+  def is_expired?(token, _config), do: is_expired?(token)
   defdelegate is_expired?(token), to: Expirable
+
+  def is_revoked?(token, _config), do: is_revoked?(token)
   defdelegate is_revoked?(token), to: Revocable
 
   @doc """
