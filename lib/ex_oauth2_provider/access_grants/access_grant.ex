@@ -42,7 +42,7 @@ defmodule ExOauth2Provider.AccessGrants.AccessGrant do
   @doc false
   def indexes() do
     [
-      {:token, true},
+      {:token, true}
     ]
   end
 
@@ -50,13 +50,13 @@ defmodule ExOauth2Provider.AccessGrants.AccessGrant do
     quote do
       use ExOauth2Provider.Schema, unquote(config)
 
-      import unquote(__MODULE__), only: [access_grant_fields: 0]
+      import unquote(__MODULE__), only: [access_grant_fields: 0, access_grant_fields: 1]
     end
   end
 
-  defmacro access_grant_fields do
+  defmacro access_grant_fields(opts \\ []) do
     quote do
-      ExOauth2Provider.Schema.fields(unquote(__MODULE__))
+      ExOauth2Provider.Schema.fields(unquote(__MODULE__), unquote(opts))
     end
   end
 
@@ -72,7 +72,13 @@ defmodule ExOauth2Provider.AccessGrants.AccessGrant do
     |> put_token()
     |> Scopes.put_scopes(grant.application.scopes, config)
     |> Scopes.validate_scopes(grant.application.scopes, config)
-    |> Changeset.validate_required([:redirect_uri, :expires_in, :token, :resource_owner, :application])
+    |> Changeset.validate_required([
+      :redirect_uri,
+      :expires_in,
+      :token,
+      :resource_owner,
+      :application
+    ])
     |> Changeset.unique_constraint(:token)
   end
 
