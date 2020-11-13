@@ -17,6 +17,10 @@ defmodule ExOauth2Provider.Config do
   def resource_owner(config),
     do: get(config, :resource_owner) || app_module(config, "Users", "User")
 
+  def access_token_strategy(config),
+    do: get(config, :access_token_strategy) || ExOauth2Provider.AccessTokens.Behaviours.Basic
+
+
   defp app_module(config, context, module) do
     app =
       config
@@ -117,7 +121,7 @@ defmodule ExOauth2Provider.Config do
   # wise to keep this enabled.
   @spec force_ssl_in_redirect_uri?(keyword()) :: boolean()
   def force_ssl_in_redirect_uri?(config),
-    do: get(config, :force_ssl_in_redirect_uri, unquote(Mix.env != :dev))
+    do: get(config, :force_ssl_in_redirect_uri, unquote(Mix.env() != :dev))
 
   # Use a custom access token generator
   @spec access_token_generator(keyword()) :: {atom(), atom()} | nil
@@ -141,18 +145,20 @@ defmodule ExOauth2Provider.Config do
     |> get_from_global_env(key)
     |> case do
       :not_found -> value
-      value      -> value
+      value -> value
     end
   end
 
   defp get_from_config(config, key), do: Keyword.get(config, key, :not_found)
 
   defp get_from_app_env(:not_found, nil, _key), do: :not_found
+
   defp get_from_app_env(:not_found, otp_app, key) do
     otp_app
     |> Application.get_env(ExOauth2Provider, [])
     |> Keyword.get(key, :not_found)
   end
+
   defp get_from_app_env(value, _otp_app, _key), do: value
 
   defp get_from_global_env(:not_found, key) do
@@ -160,5 +166,6 @@ defmodule ExOauth2Provider.Config do
     |> Application.get_env(ExOauth2Provider, [])
     |> Keyword.get(key, :not_found)
   end
+
   defp get_from_global_env(value, _key), do: value
 end
