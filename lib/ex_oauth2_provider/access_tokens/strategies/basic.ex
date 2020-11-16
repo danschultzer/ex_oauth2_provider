@@ -1,6 +1,6 @@
-defmodule ExOauth2Provider.AccessTokens.Behaviours.Basic do
+defmodule ExOauth2Provider.AccessTokens.Strategy.Basic do
   @moduledoc """
-  Ecto schema for oauth access tokens
+  Standard Postgres-based access token implementation strategy
   """
 
   @behaviour ExOauth2Provider.AccessTokens
