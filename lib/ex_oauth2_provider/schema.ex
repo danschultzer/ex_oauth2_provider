@@ -32,17 +32,20 @@ defmodule ExOauth2Provider.Schema do
       |> unquote(__MODULE__).__assocs_with_queryable__(@config)
       |> unquote(__MODULE__).__filter_new_assocs__(@ecto_assocs)
       |> Enum.each(fn
-        {:belongs_to, name, queryable} ->
+        {:belongs_to, name, queryable} when name not in unquote(except) ->
           belongs_to(name, queryable)
 
-        {:belongs_to, name, queryable, defaults} ->
+        {:belongs_to, name, queryable, defaults} when name not in unquote(except) ->
           belongs_to(name, queryable, defaults)
 
-        {:has_many, name, queryable} ->
+        {:has_many, name, queryable} when name not in unquote(except) ->
           has_many(name, queryable)
 
-        {:has_many, name, queryable, defaults} ->
+        {:has_many, name, queryable, defaults} when name not in unquote(except) ->
           has_many(name, queryable, defaults)
+
+        _ ->
+          nil
       end)
     end
   end

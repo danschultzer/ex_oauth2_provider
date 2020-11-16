@@ -69,13 +69,13 @@ defmodule ExOauth2Provider.Applications.Application do
       # For Phoenix integrations
       if Code.ensure_loaded?(Phoenix.Param), do: @derive {Phoenix.Param, key: :uid}
 
-      import unquote(__MODULE__), only: [application_fields: 0]
+      import unquote(__MODULE__), only: [application_fields: 0, application_fields: 1]
     end
   end
 
-  defmacro application_fields do
+  defmacro application_fields(opts \\ []) do
     quote do
-      ExOauth2Provider.Schema.fields(unquote(__MODULE__))
+      ExOauth2Provider.Schema.fields(unquote(__MODULE__), unquote(opts))
     end
   end
 
