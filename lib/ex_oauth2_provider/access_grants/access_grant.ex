@@ -50,13 +50,13 @@ defmodule ExOauth2Provider.AccessGrants.AccessGrant do
     quote do
       use ExOauth2Provider.Schema, unquote(config)
 
-      import unquote(__MODULE__), only: [access_grant_fields: 0, access_grant_fields: 1]
+      import unquote(__MODULE__), only: [access_grant_fields: 0]
     end
   end
 
-  defmacro access_grant_fields(opts \\ []) do
+  defmacro access_grant_fields do
     quote do
-      ExOauth2Provider.Schema.fields(unquote(__MODULE__), unquote(opts))
+      ExOauth2Provider.Schema.fields(unquote(__MODULE__), [])
     end
   end
 
