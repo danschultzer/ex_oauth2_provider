@@ -53,13 +53,15 @@ defmodule ExOauth2Provider.AccessTokens.AccessToken do
     quote do
       use ExOauth2Provider.Schema, unquote(config)
 
-      import unquote(__MODULE__), only: [access_token_fields: 0, access_token_fields: 1]
+      import unquote(__MODULE__), only: [access_token_fields: 0]
     end
   end
 
   defmacro access_token_fields(opts \\ []) do
+    except = ExOauth2Provider.Config.access_token_except_fields(opts)
+
     quote do
-      ExOauth2Provider.Schema.fields(unquote(__MODULE__), unquote(opts))
+      ExOauth2Provider.Schema.fields(unquote(__MODULE__), except: unquote(except))
     end
   end
 
@@ -79,6 +81,8 @@ defmodule ExOauth2Provider.AccessTokens.AccessToken do
     |> Scopes.validate_scopes(server_scopes, config)
     |> put_token(config)
   end
+
+  defp except_fields(config), do: Config.access_token_except_fields(config)
 
   defp server_scopes(%{application: %{scopes: scopes}}), do: scopes
   defp server_scopes(_), do: nil
@@ -111,9 +115,11 @@ defmodule ExOauth2Provider.AccessTokens.AccessToken do
   end
 
   defp put_token(changeset, config) do
+    required_fields = [:token] -- except_fields(config)
+
     changeset
     |> Changeset.change(%{token: gen_token(changeset, config)})
-    |> Changeset.validate_required([:token])
+    |> Changeset.validate_required(required_fields)
     |> Changeset.unique_constraint(:token)
   end
 

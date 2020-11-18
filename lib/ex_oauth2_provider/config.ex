@@ -3,12 +3,13 @@ defmodule ExOauth2Provider.Config do
 
   @spec repo(keyword()) :: module()
   def repo(config) do
-    get(config, :repo) || raise """
+    get(config, :repo) ||
+      raise """
       No `:repo` found in ExOauth2Provider configuration.
 
       Please set up the repo in your configuration:
 
-      config #{inspect Keyword.get(config, :otp_app, :ex_oauth2_provider)}, ExOauth2Provider,
+      config #{inspect(Keyword.get(config, :otp_app, :ex_oauth2_provider))}, ExOauth2Provider,
         repo: MyApp.Repo
       """
   end
@@ -20,12 +21,13 @@ defmodule ExOauth2Provider.Config do
   def access_token_strategy(config),
     do: get(config, :access_token_strategy) || ExOauth2Provider.AccessTokens.Strategy.Basic
 
-
   defp app_module(config, context, module) do
     app =
       config
       |> Keyword.get(:otp_app)
-      |> Kernel.||(raise "No `:otp_app` found in provided configuration. Please pass `:otp_app` in configuration.")
+      |> Kernel.||(
+        raise "No `:otp_app` found in provided configuration. Please pass `:otp_app` in configuration."
+      )
       |> app_base()
 
     Module.concat([app, context, module])
@@ -39,13 +41,21 @@ defmodule ExOauth2Provider.Config do
   def access_token(config),
     do: get_oauth_struct(config, :access_token)
 
+  @spec access_token_except_fields(keyword()) :: keyword()
+  def access_token_except_fields(config),
+    do: get(config, :access_token_except_fields, [])
+
   @spec application(keyword()) :: module()
   def application(config),
     do: get_oauth_struct(config, :application)
 
+  @spec application_except_fields(keyword()) :: keyword()
+  def application_except_fields(config),
+    do: get(config, :application_except_fields, [])
+
   defp get_oauth_struct(config, name, namespace \\ "oauth") do
     context = Macro.camelize("#{namespace}_#{name}s")
-    module  = Macro.camelize("#{namespace}_#{name}")
+    module = Macro.camelize("#{namespace}_#{name}")
 
     config
     |> get(name)
