@@ -53,7 +53,7 @@ defmodule ExOauth2Provider.AccessTokens.AccessToken do
     quote do
       use ExOauth2Provider.Schema, unquote(config)
 
-      import unquote(__MODULE__), only: [access_token_fields: 0]
+      import unquote(__MODULE__), only: [access_token_fields: 0, access_token_fields: 1]
     end
   end
 

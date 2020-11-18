@@ -35,11 +35,8 @@ defmodule ExOauth2Provider.Applications.ApplicationTest do
     end
 
     test "require valid redirect uri", %{application: application} do
-      ["",
-      "invalid",
-      "https://example.com invalid",
-      "https://example.com http://example.com"]
-      |> Enum.each(fn(redirect_uri) ->
+      ["", "invalid", "https://example.com invalid", "https://example.com http://example.com"]
+      |> Enum.each(fn redirect_uri ->
         changeset = Application.changeset(application, %{redirect_uri: redirect_uri})
         assert changeset.errors[:redirect_uri]
       end)
@@ -63,7 +60,7 @@ defmodule ExOauth2Provider.Applications.ApplicationTest do
     end
 
     schema "oauth_applications" do
-      belongs_to :owner, __MODULE__
+      belongs_to(:owner, __MODULE__)
 
       application_fields()
       timestamps()
@@ -71,6 +68,28 @@ defmodule ExOauth2Provider.Applications.ApplicationTest do
   end
 
   test "with overridden `:owner`" do
-    assert %Ecto.Association.BelongsTo{owner: OverrideOwner} = OverrideOwner.__schema__(:association, :owner)
+    assert %Ecto.Association.BelongsTo{owner: OverrideOwner} =
+             OverrideOwner.__schema__(:association, :owner)
+  end
+
+  defmodule WithoutSecret do
+    @moduledoc false
+
+    use Ecto.Schema
+    use ExOauth2Provider.Applications.Application, otp_app: :ex_oauth2_provider
+
+    if System.get_env("UUID") do
+      @primary_key {:id, :binary_id, autogenerate: true}
+      @foreign_key_type :binary_id
+    end
+
+    schema "oauth_applications" do
+      application_fields(application_except_fields: [:secret])
+      timestamps()
+    end
+  end
+
+  test "doesn't have :secret field" do
+    assert Map.get(%WithoutSecret{}, :secret, :undefined) == :undefined
   end
 end

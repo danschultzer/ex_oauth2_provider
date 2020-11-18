@@ -69,7 +69,7 @@ defmodule ExOauth2Provider.Applications.Application do
       # For Phoenix integrations
       if Code.ensure_loaded?(Phoenix.Param), do: @derive({Phoenix.Param, key: :uid})
 
-      import unquote(__MODULE__), only: [application_fields: 0]
+      import unquote(__MODULE__), only: [application_fields: 0, application_fields: 1]
     end
   end
 
@@ -134,7 +134,13 @@ defmodule ExOauth2Provider.Applications.Application do
     application
     |> Changeset.cast(params, cast_fields)
     |> put_uid()
-    |> put_secret()
+    |> (fn changeset ->
+          if :secret in except_fields(config) do
+            changeset
+          else
+            put_secret(changeset)
+          end
+        end).()
     |> Scopes.put_scopes(nil, config)
     |> Changeset.assoc_constraint(:owner)
   end
