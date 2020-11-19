@@ -8,8 +8,8 @@ defmodule Dummy.Users.User do
   end
 
   schema "users" do
-    field :email, :string
-    has_many :tokens, Dummy.OauthAccessTokens.OauthAccessToken, foreign_key: :resource_owner_id
+    field(:email, :string)
+    has_many(:tokens, Dummy.OauthAccessTokens.OauthAccessToken, foreign_key: :resource_owner_id)
 
     timestamps()
   end

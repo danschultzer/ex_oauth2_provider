@@ -1,6 +1,7 @@
 use Mix.Config
 
 config :ex_oauth2_provider, namespace: Dummy
+
 config :ex_oauth2_provider, ExOauth2Provider,
   repo: Dummy.Repo,
   resource_owner: Dummy.Users.User,

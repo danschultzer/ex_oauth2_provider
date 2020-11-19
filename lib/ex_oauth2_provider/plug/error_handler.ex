@@ -36,10 +36,11 @@ defmodule ExOauth2Provider.Plug.ErrorHandler do
     |> Conn.configure_session(drop: true)
     |> Conn.put_resp_content_type("application/json")
     |> Conn.send_resp(status, Jason.encode!(%{errors: [msg]}))
-  rescue ArgumentError ->
-    conn
-    |> Conn.put_resp_content_type("application/json")
-    |> Conn.send_resp(status, Jason.encode!(%{errors: [msg]}))
+  rescue
+    ArgumentError ->
+      conn
+      |> Conn.put_resp_content_type("application/json")
+      |> Conn.send_resp(status, Jason.encode!(%{errors: [msg]}))
   end
 
   defp respond(conn, :html, status, msg) do
@@ -47,22 +48,23 @@ defmodule ExOauth2Provider.Plug.ErrorHandler do
     |> Conn.configure_session(drop: true)
     |> Conn.put_resp_content_type("text/plain")
     |> Conn.send_resp(status, msg)
-  rescue ArgumentError ->
-    conn
-    |> Conn.put_resp_content_type("text/plain")
-    |> Conn.send_resp(status, msg)
+  rescue
+    ArgumentError ->
+      conn
+      |> Conn.put_resp_content_type("text/plain")
+      |> Conn.send_resp(status, msg)
   end
 
   defp response_type(conn) do
     accept = accept_header(conn)
 
     case Regex.match?(~r/json/, accept) do
-      true  -> :json
+      true -> :json
       false -> :html
     end
   end
 
-  defp accept_header(conn)  do
+  defp accept_header(conn) do
     conn
     |> Conn.get_req_header("accept")
     |> List.first()

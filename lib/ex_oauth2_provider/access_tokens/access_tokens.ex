@@ -1,10 +1,9 @@
 defmodule ExOauth2Provider.AccessTokens do
   @moduledoc """
   Defines a behaviour for interacting with an access_token.
-
-  This can be useful when implementing stateless, or partially stateless
-  access tokens.
   """
+
+  alias Ecto.Schema
   alias ExOauth2Provider.Config
 
   @callback revoke(Schema.t(), keyword()) :: {:ok, Schema.t()} | {:error, Changeset.t()}

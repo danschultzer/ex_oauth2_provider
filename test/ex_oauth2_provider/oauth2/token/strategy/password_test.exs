@@ -5,68 +5,92 @@ defmodule ExOauth2Provider.Token.Strategy.PasswordTest do
   alias ExOauth2Provider.Test.{Fixtures, QueryHelpers}
   alias Dummy.OauthAccessTokens.OauthAccessToken
 
-  @client_id            "Jf5rM8hQBc"
-  @client_secret        "secret"
-  @username             "testuser@example.com"
-  @password             "secret"
-  @valid_request        %{"client_id" => @client_id,
-                          "client_secret" => @client_secret,
-                          "grant_type" => "password",
-                          "username" => @username,
-                          "password" => @password}
-  @invalid_client_error  %{error: :invalid_client,
-                           error_description: "Client authentication failed due to unknown client, no client authentication included, or unsupported authentication method."
-                         }
-  @invalid_request_error %{error: :invalid_request,
-                           error_description: "The request is missing a required parameter, includes an unsupported parameter value, or is otherwise malformed."
-                         }
-  @invalid_scope         %{error: :invalid_scope,
-                           error_description: "The requested scope is invalid, unknown, or malformed."
-                         }
+  @client_id "Jf5rM8hQBc"
+  @client_secret "secret"
+  @username "testuser@example.com"
+  @password "secret"
+  @valid_request %{
+    "client_id" => @client_id,
+    "client_secret" => @client_secret,
+    "grant_type" => "password",
+    "username" => @username,
+    "password" => @password
+  }
+  @invalid_client_error %{
+    error: :invalid_client,
+    error_description:
+      "Client authentication failed due to unknown client, no client authentication included, or unsupported authentication method."
+  }
+  @invalid_request_error %{
+    error: :invalid_request,
+    error_description:
+      "The request is missing a required parameter, includes an unsupported parameter value, or is otherwise malformed."
+  }
+  @invalid_scope %{
+    error: :invalid_scope,
+    error_description: "The requested scope is invalid, unknown, or malformed."
+  }
 
   setup do
     user = Fixtures.resource_owner(email: @username)
-    application = Fixtures.application(uid: @client_id, secret: @client_secret, scopes: "app:read app:write")
+
+    application =
+      Fixtures.application(uid: @client_id, secret: @client_secret, scopes: "app:read app:write")
+
     {:ok, %{user: user, application: application}}
   end
 
   test "#grant/2 error when invalid client" do
     request_invalid_client = Map.merge(@valid_request, %{"client_id" => "invalid"})
 
-    assert Token.grant(request_invalid_client, otp_app: :ex_oauth2_provider) == {:error, @invalid_client_error, :unprocessable_entity}
+    assert Token.grant(request_invalid_client, otp_app: :ex_oauth2_provider) ==
+             {:error, @invalid_client_error, :unprocessable_entity}
   end
 
   test "#grant/2 error when invalid secret" do
     request_invalid_client = Map.merge(@valid_request, %{"client_secret" => "invalid"})
-    assert Token.grant(request_invalid_client, otp_app: :ex_oauth2_provider) == {:error, @invalid_client_error, :unprocessable_entity}
+
+    assert Token.grant(request_invalid_client, otp_app: :ex_oauth2_provider) ==
+             {:error, @invalid_client_error, :unprocessable_entity}
 
     request_invalid_client = Map.delete(@valid_request, "client_secret")
-    assert Token.grant(request_invalid_client, otp_app: :ex_oauth2_provider) == {:error, @invalid_client_error, :unprocessable_entity}
+
+    assert Token.grant(request_invalid_client, otp_app: :ex_oauth2_provider) ==
+             {:error, @invalid_client_error, :unprocessable_entity}
   end
 
   test "#grant/2 error when missing required values" do
-    Enum.each(["username", "password"], fn(k) ->
+    Enum.each(["username", "password"], fn k ->
       params = Map.delete(@valid_request, k)
-      assert Token.grant(params, otp_app: :ex_oauth2_provider) == {:error, @invalid_request_error, :bad_request}
+
+      assert Token.grant(params, otp_app: :ex_oauth2_provider) ==
+               {:error, @invalid_request_error, :bad_request}
     end)
   end
 
   test "#grant/2 error when invalid password" do
     params = Map.merge(@valid_request, %{"password" => "invalid"})
 
-    assert Token.grant(params, otp_app: :ex_oauth2_provider) == {:error, :unauthorized, :unauthorized}
+    assert Token.grant(params, otp_app: :ex_oauth2_provider) ==
+             {:error, :unauthorized, :unauthorized}
   end
 
   test "#grant/1 error when invalid scope" do
     params = Map.merge(@valid_request, %{"scope" => "invalid"})
 
-    assert Token.grant(params, otp_app: :ex_oauth2_provider) == {:error, @invalid_scope, :unprocessable_entity}
+    assert Token.grant(params, otp_app: :ex_oauth2_provider) ==
+             {:error, @invalid_scope, :unprocessable_entity}
   end
 
   test "#grant/1 error when no password auth set" do
-    expected_error = %{error: :unsupported_grant_type, error_description: "The authorization grant type is not supported by the authorization server."}
+    expected_error = %{
+      error: :unsupported_grant_type,
+      error_description:
+        "The authorization grant type is not supported by the authorization server."
+    }
 
-    assert Password.grant(@valid_request, otp_app: :ex_oauth2_provider, password_auth: nil) == {:error, expected_error, :unprocessable_entity}
+    assert Password.grant(@valid_request, otp_app: :ex_oauth2_provider, password_auth: nil) ==
+             {:error, expected_error, :unprocessable_entity}
   end
 
   test "#grant/1 returns access token", %{user: user, application: application} do
@@ -81,7 +105,10 @@ defmodule ExOauth2Provider.Token.Strategy.PasswordTest do
     refute is_nil(access_token.refresh_token)
   end
 
-  test "#grant/1 returns access token when only client_id required", %{user: user, application: application} do
+  test "#grant/1 returns access token when only client_id required", %{
+    user: user,
+    application: application
+  } do
     QueryHelpers.change!(application, secret: "")
 
     params = Map.delete(@valid_request, "client_secret")
@@ -95,14 +122,22 @@ defmodule ExOauth2Provider.Token.Strategy.PasswordTest do
   end
 
   test "#grant/1 returns access token with custom response handler" do
-    assert {:ok, body} = Password.grant(@valid_request, otp_app: :ex_oauth2_provider, access_token_response_body_handler: {__MODULE__, :access_token_response_body_handler})
+    assert {:ok, body} =
+             Password.grant(@valid_request,
+               otp_app: :ex_oauth2_provider,
+               access_token_response_body_handler:
+                 {__MODULE__, :access_token_response_body_handler}
+             )
+
     access_token = QueryHelpers.get_latest_inserted(OauthAccessToken)
 
     assert body.custom_attr == access_token.inserted_at
   end
 
   test "#grant/1 doesn't set refresh_token when ExOauth2Provider.Config.use_refresh_token? == false" do
-    assert {:ok, body} = Password.grant(@valid_request, otp_app: :ex_oauth2_provider, use_refresh_token: false)
+    assert {:ok, body} =
+             Password.grant(@valid_request, otp_app: :ex_oauth2_provider, use_refresh_token: false)
+
     access_token = QueryHelpers.get_latest_inserted(OauthAccessToken)
 
     assert body.access_token == access_token.token

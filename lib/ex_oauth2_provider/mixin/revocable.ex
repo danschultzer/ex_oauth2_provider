@@ -42,6 +42,7 @@ defmodule ExOauth2Provider.Mixin.Revocable do
   defp revoke_query(%struct{revoked_at: nil} = data) do
     Changeset.change(data, revoked_at: SchemaHelpers.__timestamp_for__(struct, :revoked_at))
   end
+
   defp revoke_query(_data), do: nil
 
   @doc """
@@ -58,7 +59,7 @@ defmodule ExOauth2Provider.Mixin.Revocable do
   @spec filter_revoked(Schema.t()) :: Schema.t() | nil
   def filter_revoked(data) do
     case is_revoked?(data) do
-      true  -> nil
+      true -> nil
       false -> data
     end
   end

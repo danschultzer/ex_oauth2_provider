@@ -4,6 +4,7 @@ defmodule ExOauth2Provider.ConfigTest do
 
   setup do
     config = Application.get_env(:ex_oauth2_provider, ExOauth2Provider)
+
     on_exit(fn ->
       Application.put_env(:ex_oauth2_provider, ExOauth2Provider, config)
     end)
