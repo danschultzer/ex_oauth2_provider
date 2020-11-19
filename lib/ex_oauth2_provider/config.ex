@@ -21,6 +21,9 @@ defmodule ExOauth2Provider.Config do
   def access_token_strategy(config),
     do: get(config, :access_token_strategy) || ExOauth2Provider.AccessTokens.Strategy.Basic
 
+  def application_strategy(config),
+    do: get(config, :application_strategy) || ExOauth2Provider.Applications.Strategy.Basic
+
   defp app_module(config, context, module) do
     app =
       config
