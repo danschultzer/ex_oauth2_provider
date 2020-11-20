@@ -115,12 +115,14 @@ defmodule ExOauth2Provider.AccessTokens.AccessToken do
   end
 
   defp put_token(changeset, config) do
-    required_fields = [:token] -- except_fields(config)
-
-    changeset
-    |> Changeset.change(%{token: gen_token(changeset, config)})
-    |> Changeset.validate_required(required_fields)
-    |> Changeset.unique_constraint(:token)
+    if :token in except_fields(config) do
+      changeset
+    else
+      changeset
+      |> Changeset.change(%{token: gen_token(changeset, config)})
+      |> Changeset.validate_required([:token])
+      |> Changeset.unique_constraint(:token)
+    end
   end
 
   defp gen_token(%{data: %struct{}} = changeset, config) do
