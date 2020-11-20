@@ -1,6 +1,6 @@
 defmodule ExOauth2Provider.Applications.Strategy.Basic do
   @moduledoc """
-  The boundary for the applications system.
+  The basic postgres-based client_secret application strategy.
   """
 
   @behaviour ExOauth2Provider.Applications

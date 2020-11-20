@@ -17,7 +17,7 @@ defmodule ExOauth2Provider.Applications do
   def get_application(uid, config \\ []), do: strategy(config).get_application(uid, config)
 
   @callback load_application(binary(), binary(), keyword()) :: Application.t() | nil
-  def load_application(uid, secret \\ "", config \\ []),
+  def load_application(uid, secret, config \\ []),
     do: strategy(config).load_application(uid, secret, config)
 
   @callback get_applications_for(Schema.t(), keyword()) :: [Application.t()]
