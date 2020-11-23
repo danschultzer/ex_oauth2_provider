@@ -6,9 +6,22 @@ defmodule ExOauth2Provider.Token.Utils do
   @doc false
   @spec load_client({:ok, map()}, keyword()) :: {:ok, map()} | {:error, map()}
   def load_client({:ok, %{request: request = %{"client_id" => client_id}} = params}, config) do
-    client_secret = Map.get(request, "client_secret", "")
+    secret =
+      case Map.get(request, "client_secret") do
+        nil ->
+          case Map.get(request, "code_verifier") do
+            nil ->
+              {:client_secret, ""}
 
-    case Applications.load_application(client_id, client_secret, config) do
+            code_verifier ->
+              {:code_verifier, code_verifier}
+          end
+
+        client_secret ->
+          {:client_secret, client_secret}
+      end
+
+    case Applications.load_application(client_id, secret, config) do
       nil -> Error.add_error({:ok, params}, Error.invalid_client())
       client -> {:ok, Map.merge(params, %{client: client})}
     end

@@ -86,11 +86,30 @@ defmodule ExOauth2Provider.Applications.Strategy.Basic do
 
   """
   @impl true
-  @spec load_application(binary(), binary(), keyword()) :: Application.t() | nil
-  def load_application(uid, secret, config \\ []) do
+  @spec load_application(
+          binary(),
+          {:client_secret, binary()} | {:code_verifier, binary()},
+          keyword()
+        ) :: Application.t() | nil
+  def load_application(uid, secret, config \\ [])
+
+  def load_application(uid, {:client_secret, client_secret}, config) do
     config
     |> Config.application()
-    |> Config.repo(config).get_by(uid: uid, secret: secret)
+    |> Config.repo(config).get_by(uid: uid, secret: client_secret)
+  end
+
+  def load_application(uid, {:code_verifier, code_verifier}, config) do
+    application =
+      config
+      |> Config.application()
+      |> Config.repo(config).get_by(uid: uid)
+
+    if Config.pkce_module(config).verify(application, code_verifier) do
+      application
+    else
+      nil
+    end
   end
 
   @doc """

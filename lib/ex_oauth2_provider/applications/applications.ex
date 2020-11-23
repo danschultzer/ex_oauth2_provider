@@ -16,7 +16,11 @@ defmodule ExOauth2Provider.Applications do
   @callback get_application(binary(), keyword()) :: Application.t() | nil
   def get_application(uid, config \\ []), do: strategy(config).get_application(uid, config)
 
-  @callback load_application(binary(), binary(), keyword()) :: Application.t() | nil
+  @callback load_application(
+              binary(),
+              {:client_secret, binary()} | {:code_verifier, binary()},
+              keyword()
+            ) :: Application.t() | nil
   def load_application(uid, secret, config \\ []),
     do: strategy(config).load_application(uid, secret, config)
 
