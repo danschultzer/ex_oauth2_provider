@@ -45,7 +45,8 @@ defmodule ExOauth2Provider.Config do
     do: get_oauth_struct(config, :access_token)
 
   @spec pkce_module(keyword()) :: module()
-  def pkce_module(config), do: get(config, :pkce_module, ExOauth2Provider.Authorization.Utils.Pkce)
+  def pkce_module(config),
+    do: get(config, :pkce_module, ExOauth2Provider.Authorization.Utils.Pkce)
 
   @spec access_token_except_fields(keyword()) :: keyword()
   def access_token_except_fields(config),

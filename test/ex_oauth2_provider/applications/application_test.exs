@@ -12,38 +12,44 @@ defmodule ExOauth2Provider.Applications.ApplicationTest do
     end
 
     test "validates", %{application: application} do
-      changeset = OauthApplication.changeset(application, %{name: ""})
+      changeset = Application.changeset(application, %{name: ""}, otp_app: :ex_oauth2_provider)
       assert changeset.errors[:name]
     end
 
     test "validates uid", %{application: application} do
-      changeset = OauthApplication.changeset(application, %{uid: ""})
+      changeset = Application.changeset(application, %{uid: ""}, otp_app: :ex_oauth2_provider)
       assert changeset.errors[:uid]
     end
 
     test "validates secret", %{application: application} do
-      changeset = OauthApplication.changeset(application, %{secret: nil})
+      changeset = Application.changeset(application, %{secret: nil}, otp_app: :ex_oauth2_provider)
       assert changeset.errors[:secret] == {"can't be blank", []}
 
-      changeset = OauthApplication.changeset(application, %{secret: ""})
+      changeset = Application.changeset(application, %{secret: ""}, otp_app: :ex_oauth2_provider)
       assert is_nil(changeset.errors[:secret])
     end
 
     test "requires valid redirect uri", %{application: application} do
-      changeset = OauthApplication.changeset(application, %{redirect_uri: ""})
+      changeset =
+        Application.changeset(application, %{redirect_uri: ""}, otp_app: :ex_oauth2_provider)
+
       assert changeset.errors[:redirect_uri]
     end
 
     test "require valid redirect uri", %{application: application} do
       ["", "invalid", "https://example.com invalid", "https://example.com http://example.com"]
       |> Enum.each(fn redirect_uri ->
-        changeset = OauthApplication.changeset(application, %{redirect_uri: redirect_uri})
+        changeset =
+          Application.changeset(application, %{redirect_uri: redirect_uri},
+            otp_app: :ex_oauth2_provider
+          )
+
         assert changeset.errors[:redirect_uri]
       end)
     end
 
     test "doesn't require scopes", %{application: application} do
-      changeset = OauthApplication.changeset(application, %{scopes: ""})
+      changeset = Application.changeset(application, %{scopes: ""}, otp_app: :ex_oauth2_provider)
       refute changeset.errors[:scopes]
     end
   end

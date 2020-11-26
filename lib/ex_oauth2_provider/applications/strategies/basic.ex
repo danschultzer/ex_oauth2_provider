@@ -164,9 +164,7 @@ defmodule ExOauth2Provider.Applications.Strategy.Basic do
   @impl true
   @spec change_application(Application.t(), map(), keyword()) :: Changeset.t()
   def change_application(application, attrs \\ %{}, config \\ []) do
-    application_module = Config.application(config)
-
-    application_module.changeset(application, attrs, config)
+    Application.changeset(application, attrs, config)
   end
 
   @doc """
@@ -185,11 +183,10 @@ defmodule ExOauth2Provider.Applications.Strategy.Basic do
   @spec create_application(Schema.t(), map(), keyword()) ::
           {:ok, Application.t()} | {:error, Changeset.t()}
   def create_application(owner, attrs \\ %{}, config \\ []) do
-    application_module = Config.application(config)
-
-    application_module
+    config
+    |> Config.application()
     |> struct(owner: owner)
-    |> application_module.changeset(attrs, config)
+    |> Application.changeset(attrs, config)
     |> Config.repo(config).insert()
   end
 
@@ -209,10 +206,8 @@ defmodule ExOauth2Provider.Applications.Strategy.Basic do
   @spec update_application(Application.t(), map(), keyword()) ::
           {:ok, Application.t()} | {:error, Changeset.t()}
   def update_application(application, attrs, config \\ []) do
-    application_module = Config.application(config)
-
     application
-    |> application_module.changeset(attrs, config)
+    |> Application.changeset(attrs, config)
     |> Config.repo(config).update()
   end
 
