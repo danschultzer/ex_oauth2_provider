@@ -148,7 +148,7 @@ defmodule ExOauth2Provider.Token.Strategy.RefreshTokenTest do
     refute AccessTokens.is_revoked?(access_token)
   end
 
-  def access_token_response_body_handler(body, access_token) do
+  def access_token_response_body_handler(body, access_token, _access_grant) do
     Map.merge(body, %{custom_attr: access_token.inserted_at})
   end
 end
