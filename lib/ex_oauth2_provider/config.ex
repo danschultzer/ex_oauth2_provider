@@ -18,6 +18,9 @@ defmodule ExOauth2Provider.Config do
   def resource_owner(config),
     do: get(config, :resource_owner) || app_module(config, "Users", "User")
 
+  def access_grant_strategy(config),
+    do: get(config, :access_grant_strategy) || ExOauth2Provider.AccessGrants.Strategy.Basic
+
   def access_token_strategy(config),
     do: get(config, :access_token_strategy) || ExOauth2Provider.AccessTokens.Strategy.Basic
 
