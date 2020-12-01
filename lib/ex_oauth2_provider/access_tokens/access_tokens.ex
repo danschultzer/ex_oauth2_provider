@@ -35,6 +35,9 @@ defmodule ExOauth2Provider.AccessTokens do
   def get_token_for(resource_owner, application, scopes, config \\ []),
     do: strategy(config).get_token_for(resource_owner, application, scopes, config)
 
+  def get_all_tokens_for(resource_owner, application, config \\ []),
+    do: strategy(config).get_all_tokens_for(resource_owner, application, config)
+
   @callback get_application_token_for(Application.t(), binary(), keyword()) ::
               AccessToken.t() | nil
   def get_application_token_for(application, scopes, config \\ []),

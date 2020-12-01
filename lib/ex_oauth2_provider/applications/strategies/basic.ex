@@ -246,12 +246,7 @@ defmodule ExOauth2Provider.Applications.Strategy.Basic do
     repo = Config.repo(config)
 
     repo.transaction(fn ->
-      config
-      |> Config.access_token()
-      |> where([a], a.resource_owner_id == ^resource_owner.id)
-      |> where([a], a.application_id == ^application.id)
-      |> where([o], is_nil(o.revoked_at))
-      |> repo.all()
+      AccessTokens.get_all_tokens_for(resource_owner, application, config)
       |> Enum.map(&AccessTokens.revoke(&1, config))
     end)
   end

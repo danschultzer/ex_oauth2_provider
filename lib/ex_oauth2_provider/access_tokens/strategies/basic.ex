@@ -97,6 +97,27 @@ defmodule ExOauth2Provider.AccessTokens.Strategy.Basic do
   end
 
   @doc """
+  Gets all unrevoked access_tokens for a resource owner and application.
+
+  ## Examples
+
+      iex> get_all_tokens_for(resource_owner, application, otp_app: :my_app)
+      [%OauthAccessToken{}]
+
+      iex> get_token_for(resource_owner, application, otp_app: :my_app)
+      []
+  """
+  @spec get_all_tokens_for(Schema.t(), Application.t(), keyword()) :: [AccessToken.t()] | []
+  def get_all_tokens_for(resource_owner, application, config \\ []) do
+    config
+    |> Config.access_token()
+    |> where([a], a.resource_owner_id == ^resource_owner.id)
+    |> where([a], a.application_id == ^application.id)
+    |> where([o], is_nil(o.revoked_at))
+    |> Config.repo(config).all()
+  end
+
+  @doc """
   Gets the most recent, acccessible, matching access token for an application.
 
   ## Examples
