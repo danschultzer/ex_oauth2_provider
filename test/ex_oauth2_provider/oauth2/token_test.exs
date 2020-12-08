@@ -32,4 +32,16 @@ defmodule ExOauth2Provider.TokenTest do
     assert Token.grant(request_invalid_grant_type, otp_app: :ex_oauth2_provider) ==
              {:error, expected_error, :unprocessable_entity}
   end
+
+  defmodule CustomGrantType do
+    def grant(request, config), do: {:ok, "access_token"}
+  end
+
+  test "#grant/2 with custom grant_type" do
+    assert Token.grant(%{"grant_type" => "my_custom_grant_type"},
+             otp_app: :ex_oauth2_provider,
+             custom_grant_flows: %{"my_custom_grant_type" => CustomGrantType}
+           ) ==
+             {:ok, "access_token"}
+  end
 end

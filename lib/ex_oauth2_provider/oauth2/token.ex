@@ -50,7 +50,7 @@ defmodule ExOauth2Provider.Token do
     |> Config.grant_flows()
     |> grant_type_can_be_used?(type, config)
     |> case do
-      true -> grant_type_to_mod(type)
+      true -> grant_type_to_mod(type, config)
       false -> nil
     end
   end
@@ -65,11 +65,19 @@ defmodule ExOauth2Provider.Token do
     Enum.member?(grant_flows, grant_type)
   end
 
-  defp grant_type_to_mod("authorization_code"), do: ExOauth2Provider.Token.AuthorizationCode
-  defp grant_type_to_mod("client_credentials"), do: ExOauth2Provider.Token.ClientCredentials
-  defp grant_type_to_mod("password"), do: ExOauth2Provider.Token.Password
-  defp grant_type_to_mod("refresh_token"), do: ExOauth2Provider.Token.RefreshToken
-  defp grant_type_to_mod(_), do: nil
+  defp grant_type_to_mod("authorization_code", _config),
+    do: ExOauth2Provider.Token.AuthorizationCode
+
+  defp grant_type_to_mod("client_credentials", _config),
+    do: ExOauth2Provider.Token.ClientCredentials
+
+  defp grant_type_to_mod("password", _config), do: ExOauth2Provider.Token.Password
+  defp grant_type_to_mod("refresh_token", _config), do: ExOauth2Provider.Token.RefreshToken
+
+  defp grant_type_to_mod(non_default, config) do
+    Config.custom_grant_flows(config)
+    |> Map.get(non_default)
+  end
 
   @doc """
   Revokes an access token as per http://tools.ietf.org/html/rfc7009
