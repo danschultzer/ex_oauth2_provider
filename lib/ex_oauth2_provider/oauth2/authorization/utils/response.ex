@@ -62,9 +62,7 @@ defmodule ExOauth2Provider.Authorization.Utils.Response do
   end
 
   defp build_redirect_response(%{request: %{"redirect_uri" => redirect_uri}}, payload, config) do
-    do_native_redirect = Keyword.get(config, :do_native_redirect, false)
-
-    case do_native_redirect || RedirectURI.native_redirect_uri?(redirect_uri, config) do
+    case RedirectURI.native_redirect_uri?(redirect_uri, config) do
       true -> {:native_redirect, payload}
       _ -> {:redirect, RedirectURI.uri_with_query(redirect_uri, payload)}
     end
