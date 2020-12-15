@@ -23,7 +23,13 @@ defmodule ExOauth2Provider.Token.Utils.Response do
     except_fields = Config.access_token_except_fields(config)
 
     body =
-      [{:access_token, :token}, :expires_in, :refresh_token, :scope, :created_at]
+      [
+        {:access_token, :token},
+        :expires_in,
+        :refresh_token,
+        {:scope, :scopes},
+        {:created_at, :inserted_at}
+      ]
       |> Enum.map(fn
         {key, search_key} ->
           if search_key not in except_fields, do: {key, search_key}
@@ -38,6 +44,7 @@ defmodule ExOauth2Provider.Token.Utils.Response do
         search_key ->
           {search_key, Map.get(access_token, search_key)}
       end)
+      |> Enum.filter(fn {key, _val} -> !is_nil(key) end)
       # Access Token type: Bearer.
       # @see https://tools.ietf.org/html/rfc6750
       #   The OAuth 2.0 Authorization Framework: Bearer Token Usage
