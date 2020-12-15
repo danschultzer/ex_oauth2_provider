@@ -6,8 +6,8 @@ defmodule ExOauth2Provider.Token.Utils.Response do
   @doc false
   @spec response({:ok, map()} | {:error, map()}, keyword()) ::
           {:ok, map()} | {:error, map(), atom()}
-  def response({:ok, params = %{access_token: _access_token}}, config),
-    do: build_response(params, config)
+  def response({:ok, %{access_token: token}}, config),
+    do: build_response(%{access_token: token}, config)
 
   def response({:error, %{error: _} = params}, config), do: build_response(params, config)
 
@@ -19,10 +19,8 @@ defmodule ExOauth2Provider.Token.Utils.Response do
 
   def revocation_response({_any, _params}, _config), do: {:ok, %{}}
 
-  defp build_response(params = %{access_token: access_token}, config) do
+  defp build_response(%{access_token: access_token}, config) do
     except_fields = Config.access_token_except_fields(config)
-
-    access_grant = Map.get(params, :access_grant)
 
     body =
       [{:access_token, :token}, :expires_in, :refresh_token, :scope, :created_at]
@@ -44,7 +42,7 @@ defmodule ExOauth2Provider.Token.Utils.Response do
       # @see https://tools.ietf.org/html/rfc6750
       #   The OAuth 2.0 Authorization Framework: Bearer Token Usage
       |> Enum.into(%{token_type: "bearer"})
-      |> customize_access_token_response(access_token, access_grant, config)
+      |> customize_access_token_response(access_token, config)
 
     {:ok, body}
   end
@@ -58,9 +56,9 @@ defmodule ExOauth2Provider.Token.Utils.Response do
     {:error, error, :bad_request}
   end
 
-  defp customize_access_token_response(response_body, access_token, access_grant, config) do
+  defp customize_access_token_response(response_body, access_token, config) do
     case Config.access_token_response_body_handler(config) do
-      {module, method} -> apply(module, method, [response_body, access_token, access_grant])
+      {module, method} -> apply(module, method, [response_body, access_token])
       _ -> response_body
     end
   end

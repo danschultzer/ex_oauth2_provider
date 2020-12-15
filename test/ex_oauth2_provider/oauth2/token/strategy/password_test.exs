@@ -152,7 +152,7 @@ defmodule ExOauth2Provider.Token.Strategy.PasswordTest do
     assert access_token.scopes == "app:read"
   end
 
-  def access_token_response_body_handler(body, access_token, _access_grant) do
+  def access_token_response_body_handler(body, access_token) do
     Map.merge(body, %{custom_attr: access_token.inserted_at})
   end
 end

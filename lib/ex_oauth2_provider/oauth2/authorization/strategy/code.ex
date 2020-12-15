@@ -159,6 +159,7 @@ defmodule ExOauth2Provider.Authorization.Code do
        ) do
     grant_params =
       request
+      |> Map.take(["redirect_uri", "scope"])
       |> Map.new(fn {k, v} ->
         case k do
           "scope" -> {:scopes, v}

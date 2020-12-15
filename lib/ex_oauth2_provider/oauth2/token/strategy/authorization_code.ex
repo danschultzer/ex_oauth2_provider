@@ -53,14 +53,9 @@ defmodule ExOauth2Provider.Token.AuthorizationCode do
       end)
 
     case result do
-      {:ok, {:error, error}} ->
-        Error.add_error({:ok, params}, error)
-
-      {:ok, {:ok, access_token}} ->
-        {:ok, Map.merge(params, %{access_token: access_token, access_grant: access_grant})}
-
-      {:error, error} ->
-        Error.add_error({:ok, params}, error)
+      {:ok, {:error, error}} -> Error.add_error({:ok, params}, error)
+      {:ok, {:ok, access_token}} -> {:ok, Map.put(params, :access_token, access_token)}
+      {:error, error} -> Error.add_error({:ok, params}, error)
     end
   end
 
