@@ -23,6 +23,7 @@ defmodule ExOauth2Provider.Token.Utils do
 
     case Applications.load_application(client_id, secret, config) do
       nil -> Error.add_error({:ok, params}, Error.invalid_client())
+      :invalid_code_verifier -> Error.add_error({:ok, params}, Error.invalid_request())
       client -> {:ok, Map.merge(params, %{client: client})}
     end
   end

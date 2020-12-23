@@ -13,11 +13,15 @@ defmodule ExOauth2Provider.Authorization.Utils.Pkce do
     end
   end
 
-  @callback verify(Application.t(), binary()) :: boolean()
-  @spec verify(Application.t(), binary()) :: boolean()
+  @callback verify(Application.t(), binary()) :: :ok | {:error, String.t()}
+  @spec verify(Application.t(), binary()) :: :ok | {:error, String.t()}
   def verify(application, code_verifier) do
     code_challenge = :crypto.hash(:sha256, code_verifier) |> Base.encode64()
 
-    application.uid <> code_challenge == Agent.get(__MODULE__, & &1)
+    if application.uid <> code_challenge == Agent.get(__MODULE__, & &1) do
+      :ok
+    else
+      {:error, "invalid code verfier"}
+    end
   end
 end

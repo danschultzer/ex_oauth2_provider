@@ -105,10 +105,12 @@ defmodule ExOauth2Provider.Applications.Strategy.Basic do
       |> Config.application()
       |> Config.repo(config).get_by(uid: uid)
 
-    if Config.pkce_module(config).verify(application, code_verifier) do
-      application
-    else
-      nil
+    case Config.pkce_module(config).verify(application, code_verifier) do
+      :ok ->
+        application
+
+      {:error, _message} ->
+        :invalid_code_verifier
     end
   end
 
