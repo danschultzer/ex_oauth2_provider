@@ -53,9 +53,14 @@ defmodule ExOauth2Provider.Token.AuthorizationCode do
       end)
 
     case result do
-      {:ok, {:error, error}} -> Error.add_error({:ok, params}, error)
-      {:ok, {:ok, access_token}} -> {:ok, Map.put(params, :access_token, access_token)}
-      {:error, error} -> Error.add_error({:ok, params}, error)
+      {:ok, {:error, error}} ->
+        Error.add_error({:ok, params}, error)
+
+      {:ok, {:ok, access_token}} ->
+        {:ok, Map.put(params, :access_token, access_token)}
+
+      {:error, error} ->
+        Error.add_error({:ok, params}, error)
     end
   end
 
@@ -74,8 +79,14 @@ defmodule ExOauth2Provider.Token.AuthorizationCode do
     resource_owner
     |> AccessTokens.get_token_for(application, scopes, config)
     |> case do
-      nil -> AccessTokens.create_token(resource_owner, token_params, config)
-      access_token -> {:ok, access_token}
+      nil ->
+        AccessTokens.create_token(resource_owner, token_params, config)
+
+      access_token ->
+        access_token =
+          Map.merge(access_token, %{resource_owner: resource_owner, application: application})
+
+        {:ok, access_token}
     end
   end
 
