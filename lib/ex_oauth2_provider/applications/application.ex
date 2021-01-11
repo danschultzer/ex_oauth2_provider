@@ -15,6 +15,13 @@ defmodule ExOauth2Provider.Applications.Application do
 
           timestamps()
         end
+
+        # Optionally, you can implement the changeset callback which is called after
+        # the default changeset.
+        @impl ExOauth2Provider.Applications.Application
+        def changeset(changeset) do
+          # ...
+        end
       end
 
   ## Application owner
@@ -78,7 +85,7 @@ defmodule ExOauth2Provider.Applications.Application do
       # For Phoenix integrations
       if Code.ensure_loaded?(Phoenix.Param), do: @derive({Phoenix.Param, key: :uid})
 
-      import unquote(__MODULE__), only: [application_fields: 0, application_fields: 1]
+      import unquote(__MODULE__), only: [application_fields: 0]
 
       @impl ExOauth2Provider.Applications.Application
       def changeset(application_changeset, _params), do: application_changeset
@@ -87,15 +94,11 @@ defmodule ExOauth2Provider.Applications.Application do
     end
   end
 
-  defmacro application_fields(opts \\ []) do
-    except = ExOauth2Provider.Config.application_except_fields(opts)
-
+  defmacro application_fields() do
     quote do
-      ExOauth2Provider.Schema.fields(unquote(__MODULE__), except: unquote(except))
+      ExOauth2Provider.Schema.fields(unquote(__MODULE__))
     end
   end
-
-  defp except_fields(config), do: Config.application_except_fields(config)
 
   defp validate_secret_not_nil(changeset) do
     case Changeset.get_field(changeset, :secret) do
@@ -112,18 +115,10 @@ defmodule ExOauth2Provider.Applications.Application do
   end
 
   defp new_application_changeset(application, params, config) do
-    cast_fields = [:uid, :secret] -- except_fields(config)
-
     application
-    |> Changeset.cast(params, cast_fields)
+    |> Changeset.cast(params, [:uid, :secret])
     |> put_uid()
-    |> (fn changeset ->
-          if :secret in except_fields(config) do
-            changeset
-          else
-            put_secret(changeset)
-          end
-        end).()
+    |> put_secret()
     |> Scopes.put_scopes(nil, config)
     |> Changeset.assoc_constraint(:owner)
   end
@@ -157,28 +152,13 @@ defmodule ExOauth2Provider.Applications.Application do
 
   @spec changeset(Ecto.Schema.t(), map(), keyword()) :: Changeset.t()
   def changeset(application, params, config \\ []) do
-    cast_fields = [:name, :secret, :redirect_uri, :scopes] -- except_fields(config)
-    required_fields = [:name, :uid, :redirect_uri] -- except_fields(config)
-
     application
     |> maybe_new_application_changeset(params, config)
-    |> Changeset.cast(params, cast_fields)
-    |> Changeset.validate_required(required_fields)
-    |> (fn changeset ->
-          if :secret in except_fields(config) do
-            changeset
-          else
-            validate_secret_not_nil(changeset)
-          end
-        end).()
+    |> Changeset.cast(params, [:name, :secret, :redirect_uri, :scopes])
+    |> Changeset.validate_required([:name, :uid, :redirect_uri])
+    |> validate_secret_not_nil()
     |> Scopes.validate_scopes(nil, config)
-    |> (fn changeset ->
-          if :redirect_uri in except_fields(config) do
-            changeset
-          else
-            validate_redirect_uri(changeset, config)
-          end
-        end).()
+    |> validate_redirect_uri(config)
     |> Changeset.unique_constraint(:uid)
     |> Config.application(config).changeset(params)
   end

@@ -77,25 +77,4 @@ defmodule ExOauth2Provider.Applications.ApplicationTest do
     assert %Ecto.Association.BelongsTo{owner: OverrideOwner} =
              OverrideOwner.__schema__(:association, :owner)
   end
-
-  defmodule WithoutSecret do
-    @moduledoc false
-
-    use Ecto.Schema
-    use ExOauth2Provider.Applications.Application, otp_app: :ex_oauth2_provider
-
-    if System.get_env("UUID") do
-      @primary_key {:id, :binary_id, autogenerate: true}
-      @foreign_key_type :binary_id
-    end
-
-    schema "oauth_applications" do
-      application_fields(application_except_fields: [:secret])
-      timestamps()
-    end
-  end
-
-  test "doesn't have :secret field" do
-    assert Map.get(%WithoutSecret{}, :secret, :undefined) == :undefined
-  end
 end

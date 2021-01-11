@@ -20,35 +20,18 @@ defmodule ExOauth2Provider.Token.Utils.Response do
   def revocation_response({_any, _params}, _config), do: {:ok, %{}}
 
   defp build_response(%{access_token: access_token}, config) do
-    except_fields = Config.access_token_except_fields(config)
-
     body =
-      [
-        {:access_token, :token},
-        :expires_in,
-        :refresh_token,
-        {:scope, :scopes},
-        {:created_at, :inserted_at}
-      ]
-      |> Enum.map(fn
-        {key, search_key} ->
-          if search_key not in except_fields, do: {key, search_key}
-
-        search_key ->
-          if search_key not in except_fields, do: search_key
-      end)
-      |> Enum.map(fn
-        {key, search_key} ->
-          {key, Map.get(access_token, search_key)}
-
-        search_key ->
-          {search_key, Map.get(access_token, search_key)}
-      end)
-      |> Enum.filter(fn {key, _val} -> !is_nil(key) end)
-      # Access Token type: Bearer.
-      # @see https://tools.ietf.org/html/rfc6750
-      #   The OAuth 2.0 Authorization Framework: Bearer Token Usage
-      |> Enum.into(%{token_type: "bearer"})
+      %{
+        access_token: access_token.token,
+        # Access Token type: Bearer.
+        # @see https://tools.ietf.org/html/rfc6750
+        #   The OAuth 2.0 Authorization Framework: Bearer Token Usage
+        token_type: "bearer",
+        expires_in: access_token.expires_in,
+        refresh_token: access_token.refresh_token,
+        scope: access_token.scopes,
+        created_at: access_token.inserted_at
+      }
       |> customize_access_token_response(access_token, config)
 
     {:ok, body}

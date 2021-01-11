@@ -15,10 +15,21 @@ defmodule ExOauth2Provider.AccessGrants.AccessGrant do
 
           timestamps()
         end
+
+        # Optionally, you can implement the changeset callback which is called after
+        # the default changeset.
+        @impl ExOauth2Provider.AccessGrants.AccessGrant
+        def changeset(changeset) do
+          # ...
+        end
       end
   """
 
   @type t :: Ecto.Schema.t()
+
+  @callback changeset(ExOauth2Provider.AccessGrants.AccessGrant.t(), map()) ::
+              Changeset.t()
+  @optional_callbacks changeset: 2
 
   @doc false
   def attrs() do
@@ -48,9 +59,16 @@ defmodule ExOauth2Provider.AccessGrants.AccessGrant do
 
   defmacro __using__(config) do
     quote do
+      @behaviour ExOauth2Provider.AccessGrants.AccessGrant
+
       use ExOauth2Provider.Schema, unquote(config)
 
       import unquote(__MODULE__), only: [access_grant_fields: 0]
+
+      @impl ExOauth2Provider.AccessGrants.AccessGrant
+      def changeset(access_grant_changeset, _params), do: access_grant_changeset
+
+      defoverridable changeset: 2
     end
   end
 
@@ -61,7 +79,7 @@ defmodule ExOauth2Provider.AccessGrants.AccessGrant do
   end
 
   alias Ecto.Changeset
-  alias ExOauth2Provider.{Mixin.Scopes, Utils}
+  alias ExOauth2Provider.{Config, Mixin.Scopes, Utils}
 
   @spec changeset(Ecto.Schema.t(), map(), keyword()) :: Changeset.t()
   def changeset(grant, params, config) do
@@ -80,6 +98,7 @@ defmodule ExOauth2Provider.AccessGrants.AccessGrant do
       :application
     ])
     |> Changeset.unique_constraint(:token)
+    |> Config.access_grant(config).changeset(params)
   end
 
   @spec put_token(Ecto.Changeset.t()) :: Ecto.Changeset.t()

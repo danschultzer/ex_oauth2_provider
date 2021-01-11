@@ -15,11 +15,22 @@ defmodule ExOauth2Provider.AccessTokens.AccessToken do
 
           timestamps()
         end
+
+        # Optionally, you can implement the changeset callback which is called after
+        # the default changeset.
+        @impl ExOauth2Provider.AccessTokens.AccessToken
+        def changeset(changeset) do
+          # ...
+        end
       end
   """
   alias ExOauth2Provider.Schema
 
   @type t :: Ecto.Schema.t()
+
+  @callback changeset(ExOauth2Provider.AccessTokens.AccessToken.t(), map()) ::
+              Changeset.t()
+  @optional_callbacks changeset: 2
 
   @doc false
   def attrs() do
@@ -51,17 +62,22 @@ defmodule ExOauth2Provider.AccessTokens.AccessToken do
 
   defmacro __using__(config) do
     quote do
+      @behaviour ExOauth2Provider.AccessTokens.AccessToken
+
       use ExOauth2Provider.Schema, unquote(config)
 
-      import unquote(__MODULE__), only: [access_token_fields: 0, access_token_fields: 1]
+      import unquote(__MODULE__), only: [access_token_fields: 0]
+
+      @impl ExOauth2Provider.AccessTokens.AccessToken
+      def changeset(access_token_changeset, _params), do: access_token_changeset
+
+      defoverridable changeset: 2
     end
   end
 
-  defmacro access_token_fields(opts \\ []) do
-    except = ExOauth2Provider.Config.access_token_except_fields(opts)
-
+  defmacro access_token_fields() do
     quote do
-      ExOauth2Provider.Schema.fields(unquote(__MODULE__), except: unquote(except))
+      ExOauth2Provider.Schema.fields(unquote(__MODULE__))
     end
   end
 
@@ -80,9 +96,8 @@ defmodule ExOauth2Provider.AccessTokens.AccessToken do
     |> Scopes.put_scopes(server_scopes, config)
     |> Scopes.validate_scopes(server_scopes, config)
     |> put_token(config)
+    |> Config.access_token(config).changeset(params)
   end
-
-  defp except_fields(config), do: Config.access_token_except_fields(config)
 
   defp server_scopes(%{application: %{scopes: scopes}}), do: scopes
   defp server_scopes(_), do: nil
@@ -115,14 +130,10 @@ defmodule ExOauth2Provider.AccessTokens.AccessToken do
   end
 
   defp put_token(changeset, config) do
-    if :token in except_fields(config) do
-      changeset
-    else
-      changeset
-      |> Changeset.change(%{token: gen_token(changeset, config)})
-      |> Changeset.validate_required([:token])
-      |> Changeset.unique_constraint(:token)
-    end
+    changeset
+    |> Changeset.change(%{token: gen_token(changeset, config)})
+    |> Changeset.validate_required([:token])
+    |> Changeset.unique_constraint(:token)
   end
 
   defp gen_token(%{data: %struct{}} = changeset, config) do

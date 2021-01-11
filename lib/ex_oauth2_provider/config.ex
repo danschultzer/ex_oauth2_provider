@@ -51,17 +51,9 @@ defmodule ExOauth2Provider.Config do
   def pkce_module(config),
     do: get(config, :pkce_module, ExOauth2Provider.Authorization.Utils.Pkce)
 
-  @spec access_token_except_fields(keyword()) :: keyword()
-  def access_token_except_fields(config),
-    do: get(config, :access_token_except_fields, [])
-
   @spec application(keyword()) :: module()
   def application(config),
     do: get_oauth_struct(config, :application)
-
-  @spec application_except_fields(keyword()) :: keyword()
-  def application_except_fields(config),
-    do: get(config, :application_except_fields, [])
 
   defp get_oauth_struct(config, name, namespace \\ "oauth") do
     context = Macro.camelize("#{namespace}_#{name}s")
