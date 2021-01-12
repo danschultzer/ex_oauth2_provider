@@ -5,17 +5,19 @@ defmodule ExOauth2Provider.AccessTokens do
 
   alias Ecto.Schema
   alias ExOauth2Provider.Config
+  alias ExOauth2Provider.AccessTokens.AccessToken
+  alias ExOauth2Provider.Applications.Application
 
-  @callback revoke(Schema.t(), keyword()) :: {:ok, Schema.t()} | {:error, Changeset.t()}
+  @callback revoke(AccessToken.t(), keyword()) :: {:ok, AccessToken.t()} | {:error, Changeset.t()}
   def revoke(schema, config \\ []), do: strategy(config).revoke(schema, config)
 
-  @callback revoke!(Schema.t(), keyword()) :: Schema.t() | no_return
+  @callback revoke!(AccessToken.t(), keyword()) :: AccessToken.t() | no_return
   def revoke!(schema, config \\ []), do: strategy(config).revoke!(schema, config)
 
-  @callback is_expired?(Schema.t() | nil, keyword()) :: boolean()
+  @callback is_expired?(AccessToken.t() | nil, keyword()) :: boolean()
   def is_expired?(token, config \\ []), do: strategy(config).is_expired?(token)
 
-  @callback is_revoked?(Schema.t(), keyword()) :: boolean()
+  @callback is_revoked?(AccessToken.t(), keyword()) :: boolean()
   def is_revoked?(token, config \\ []), do: strategy(config).is_revoked?(token)
 
   @callback get_by_token(binary(), keyword()) :: AccessToken.t() | nil
@@ -53,7 +55,7 @@ defmodule ExOauth2Provider.AccessTokens do
   def create_token(resource_owner, attrs \\ %{}, config \\ []),
     do: strategy(config).create_token(resource_owner, attrs, config)
 
-  @callback create_application_token(Schema.t() | nil, map(), keyword()) ::
+  @callback create_application_token(Application.t() | nil, map(), keyword()) ::
               {:ok, AccessToken.t()} | {:error, Changeset.t()}
   def create_application_token(application, attrs \\ %{}, config \\ []),
     do: strategy(config).create_application_token(application, attrs, config)
@@ -70,7 +72,7 @@ defmodule ExOauth2Provider.AccessTokens do
   def revoke_previous_refresh_token(access_token, config \\ []),
     do: strategy(config).revoke_previous_refresh_token(access_token, config)
 
-  @callback get_resource_owner_for(Schema.t(), keyword()) :: Schema.t()
+  @callback get_resource_owner_for(AccessToken.t(), keyword()) :: Schema.t()
   def get_resource_owner_for(access_token, config \\ []),
     do: strategy(config).get_resource_owner_for(access_token, config)
 

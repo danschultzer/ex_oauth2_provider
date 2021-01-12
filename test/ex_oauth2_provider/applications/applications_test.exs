@@ -211,10 +211,10 @@ defmodule ExOauth2Provider.ApplicationsTest do
 
     AccessTokens.revoke(token3)
 
-    assert {:ok, objects} =
-             Applications.revoke_all_access_tokens_for(application, user,
-               otp_app: :ex_oauth2_provider
-             )
+    objects =
+      Applications.revoke_all_access_tokens_for(application, user, otp_app: :ex_oauth2_provider)
+
+    assert [{:ok, _object} | _] = objects
 
     assert Enum.count(objects) == 2
 

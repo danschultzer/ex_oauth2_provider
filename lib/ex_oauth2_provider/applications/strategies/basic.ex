@@ -243,13 +243,9 @@ defmodule ExOauth2Provider.Applications.Strategy.Basic do
   """
   @impl true
   @spec revoke_all_access_tokens_for(Application.t(), Schema.t(), keyword()) ::
-          {:ok, [ok: AccessToken.t()]} | {:error, any()}
+          {:ok, AccessToken.t()} | {:error, any()}
   def revoke_all_access_tokens_for(application, resource_owner, config \\ []) do
-    repo = Config.repo(config)
-
-    repo.transaction(fn ->
-      AccessTokens.get_all_tokens_for(resource_owner, application, config)
-      |> Enum.map(&AccessTokens.revoke(&1, config))
-    end)
+    AccessTokens.get_all_tokens_for(resource_owner, application, config)
+    |> Enum.map(&AccessTokens.revoke(&1, config))
   end
 end
