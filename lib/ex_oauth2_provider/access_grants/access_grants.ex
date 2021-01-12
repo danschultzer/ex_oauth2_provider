@@ -2,6 +2,8 @@ defmodule ExOauth2Provider.AccessGrants do
   @moduledoc """
   Defines a behaviour for interacting with access grants
   """
+
+  alias Ecto.Schema
   alias ExOauth2Provider.Config
 
   @callback revoke!(%{optional(atom) => any}, keyword) :: %{optional(atom) => any}
@@ -19,6 +21,10 @@ defmodule ExOauth2Provider.AccessGrants do
               {:ok, AccessGrant.t()} | {:error, term()}
   def create_grant(resource_owner, application, attrs, config \\ []),
     do: strategy(config).create_grant(resource_owner, application, attrs, config)
+
+  @callback get_resource_owner_for(Schema.t(), keyword()) :: Schema.t()
+  def get_resource_owner_for(access_grant, config \\ []),
+    do: strategy(config).get_resource_owner_for(access_grant, config)
 
   defp strategy(config), do: Config.access_grant_strategy(config)
 end

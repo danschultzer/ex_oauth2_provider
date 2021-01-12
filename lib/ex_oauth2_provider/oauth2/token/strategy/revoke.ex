@@ -90,7 +90,20 @@ defmodule ExOauth2Provider.Token.Revoke do
   defp preload_token_associations({:error, params}, _config), do: {:error, params}
 
   defp preload_token_associations({:ok, %{access_token: access_token} = params}, config) do
-    {:ok, Map.put(params, :access_token, Config.repo(config).preload(access_token, :application))}
+    if is_nil(access_token.application_id) do
+      {:ok, params}
+    else
+      access_token =
+        case params do
+          %{client: application} ->
+            Map.put(access_token, :application, application)
+
+          _ ->
+            Config.repo(config).preload(access_token, :application)
+        end
+
+      {:ok, Map.put(params, :access_token, access_token)}
+    end
   end
 
   defp validate_request({:error, params}), do: {:error, params}

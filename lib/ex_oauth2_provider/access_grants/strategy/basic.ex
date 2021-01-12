@@ -29,6 +29,8 @@ defmodule ExOauth2Provider.AccessGrants.Strategy.Basic do
     |> Config.repo(config).get_by(application_id: application.id, token: token)
     |> Expirable.filter_expired()
     |> Revocable.filter_revoked()
+    |> Config.repo(config).preload(:resource_owner)
+    |> Config.repo(config).preload(:application)
   end
 
   @doc """
@@ -51,5 +53,29 @@ defmodule ExOauth2Provider.AccessGrants.Strategy.Basic do
     |> struct(resource_owner: resource_owner, application: application)
     |> AccessGrant.changeset(attrs, config)
     |> Config.repo(config).insert()
+  end
+
+  @doc """
+  Returns the resource owner associated with an access_grant.
+
+  ## Examples
+
+      iex> get_resource_owner_for(access_grant)
+      %User{}
+
+      iex> get_resource_owner_for(access_grant)
+      nil
+
+  """
+  @spec get_resource_owner_for(AccessGrant.t(), keyword()) :: Ecto.Schema.t()
+  def get_resource_owner_for(resource_owner, config \\ [])
+
+  def get_resource_owner_for(%{resource_owner: %{id: _id} = resource_owner}, _config),
+    do: resource_owner
+
+  def get_resource_owner_for(access_grant, config) do
+    access_grant
+    |> Config.repo(config).preload(:resource_owner)
+    |> Map.get(:resource_owner)
   end
 end

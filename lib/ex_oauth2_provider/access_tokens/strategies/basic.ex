@@ -74,6 +74,8 @@ defmodule ExOauth2Provider.AccessTokens.Strategy.Basic do
     config
     |> Config.access_token()
     |> Config.repo(config).get_by(application_id: application.id, refresh_token: refresh_token)
+    |> Config.repo(config).preload(:resource_owner)
+    |> Config.repo(config).preload(:application)
   end
 
   @doc """
@@ -352,5 +354,29 @@ defmodule ExOauth2Provider.AccessTokens.Strategy.Basic do
     access_token
     |> Changeset.change(previous_refresh_token: "")
     |> Config.repo(config).update()
+  end
+
+  @doc """
+  Returns the resource owner associated with an access_token.
+
+  ## Examples
+
+      iex> get_resource_owner_for(access_token)
+      %User{}
+
+      iex> get_resource_owner_for(access_token)
+      nil
+
+  """
+  @spec get_resource_owner_for(AccessToken.t(), keyword()) :: Ecto.Schema.t()
+  def get_resource_owner_for(resource_owner, config \\ [])
+
+  def get_resource_owner_for(%{resource_owner: %{id: _id} = resource_owner}, _config),
+    do: resource_owner
+
+  def get_resource_owner_for(access_token, config) do
+    access_token
+    |> Config.repo(config).preload(:resource_owner)
+    |> Map.get(:resource_owner)
   end
 end

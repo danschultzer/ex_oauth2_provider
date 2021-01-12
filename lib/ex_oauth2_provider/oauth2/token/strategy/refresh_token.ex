@@ -42,8 +42,6 @@ defmodule ExOauth2Provider.Token.RefreshToken do
     access_token =
       client
       |> AccessTokens.get_by_refresh_token_for(refresh_token, config)
-      |> Config.repo(config).preload(:resource_owner)
-      |> Config.repo(config).preload(:application)
 
     case access_token do
       nil -> Error.add_error({:ok, params}, Error.invalid_request())
@@ -60,25 +58,22 @@ defmodule ExOauth2Provider.Token.RefreshToken do
          {:ok, %{refresh_token: refresh_token, request: _} = params},
          config
        ) do
-    result =
-      Config.repo(config).transaction(fn ->
-        token_params = token_params(refresh_token, config)
+    token_params = token_params(refresh_token, config)
 
-        refresh_token
-        |> revoke_access_token(config)
-        |> case do
-          {:ok, %{resource_owner: resource_owner}} ->
-            AccessTokens.create_token(resource_owner, token_params, config)
+    resource_owner = AccessTokens.get_resource_owner_for(refresh_token, config)
 
-          {:error, error} ->
-            {:error, error}
-        end
-      end)
+    refresh_token
+    |> revoke_access_token(config)
+    |> case do
+      {:ok, _access_token} ->
+        AccessTokens.create_token(resource_owner, token_params, config)
 
-    case result do
-      {:ok, {:error, error}} -> Error.add_error({:ok, params}, error)
-      {:ok, {:ok, access_token}} -> {:ok, Map.merge(params, %{access_token: access_token})}
+      {:error, error} ->
+        {:error, error}
+    end
+    |> case do
       {:error, error} -> Error.add_error({:ok, params}, error)
+      {:ok, access_token} -> {:ok, Map.merge(params, %{access_token: access_token})}
     end
   end
 

@@ -5,6 +5,7 @@ defmodule ExOauth2Provider.Token.AuthorizationCode do
   alias ExOauth2Provider.{
     AccessGrants,
     AccessTokens,
+    Applications,
     Config,
     Token.Utils,
     Token.Utils.Response,
@@ -45,22 +46,15 @@ defmodule ExOauth2Provider.Token.AuthorizationCode do
        ) do
     token_params = %{use_refresh_token: Config.use_refresh_token?(config)}
 
-    result =
-      Config.repo(config).transaction(fn ->
-        access_grant
-        |> revoke_grant(config)
-        |> maybe_create_access_token(token_params, config)
-      end)
-
-    case result do
-      {:ok, {:error, error}} ->
-        Error.add_error({:ok, params}, error)
-
-      {:ok, {:ok, access_token}} ->
-        {:ok, Map.put(params, :access_token, access_token)}
-
+    access_grant
+    |> revoke_grant(config)
+    |> maybe_create_access_token(token_params, config)
+    |> case do
       {:error, error} ->
         Error.add_error({:ok, params}, error)
+
+      {:ok, access_token} ->
+        {:ok, Map.put(params, :access_token, access_token)}
     end
   end
 
@@ -70,11 +64,17 @@ defmodule ExOauth2Provider.Token.AuthorizationCode do
   defp maybe_create_access_token({:error, _} = error, _token_params, _config), do: error
 
   defp maybe_create_access_token(
-         {:ok, %{resource_owner: resource_owner, application: application, scopes: scopes}},
+         {:ok,
+          access_grant = %{
+            application: application,
+            scopes: scopes
+          }},
          token_params,
          config
        ) do
     token_params = Map.merge(token_params, %{scopes: scopes, application: application})
+
+    resource_owner = AccessGrants.get_resource_owner_for(access_grant, config)
 
     resource_owner
     |> AccessTokens.get_token_for(application, scopes, config)
@@ -96,8 +96,6 @@ defmodule ExOauth2Provider.Token.AuthorizationCode do
        ) do
     client
     |> AccessGrants.get_active_grant_for(code, config)
-    |> Config.repo(config).preload(:resource_owner)
-    |> Config.repo(config).preload(:application)
     |> case do
       nil -> Error.add_error({:ok, params}, Error.invalid_grant())
       access_grant -> {:ok, Map.put(params, :access_grant, access_grant)}

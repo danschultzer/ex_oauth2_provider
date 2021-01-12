@@ -48,7 +48,7 @@ defmodule ExOauth2Provider.AccessTokens do
   def get_authorized_tokens_for(resource_owner, config \\ []),
     do: strategy(config).get_authorized_tokens_for(resource_owner, config)
 
-  @callback create_token(Schema.t(), map(), keyword()) ::
+  @callback create_token(Schema.t() | integer() | Ecto.UUID.t(), map(), keyword()) ::
               {:ok, AccessToken.t()} | {:error, Changeset.t()}
   def create_token(resource_owner, attrs \\ %{}, config \\ []),
     do: strategy(config).create_token(resource_owner, attrs, config)
@@ -69,6 +69,10 @@ defmodule ExOauth2Provider.AccessTokens do
               {:ok, AccessToken.t()} | {:error, Changeset.t()}
   def revoke_previous_refresh_token(access_token, config \\ []),
     do: strategy(config).revoke_previous_refresh_token(access_token, config)
+
+  @callback get_resource_owner_for(Schema.t(), keyword()) :: Schema.t()
+  def get_resource_owner_for(access_token, config \\ []),
+    do: strategy(config).get_resource_owner_for(access_token, config)
 
   defp strategy(config), do: Config.access_token_strategy(config)
 end

@@ -34,7 +34,7 @@ defmodule ExOauth2Provider.TokenTest do
   end
 
   defmodule CustomGrantType do
-    def grant(request, config), do: {:ok, "access_token"}
+    def grant(_request, _config), do: {:ok, "access_token"}
   end
 
   test "#grant/2 with custom grant_type" do
