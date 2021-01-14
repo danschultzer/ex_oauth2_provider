@@ -5,7 +5,6 @@ defmodule ExOauth2Provider.Token.AuthorizationCode do
   alias ExOauth2Provider.{
     AccessGrants,
     AccessTokens,
-    Applications,
     Config,
     Token.Utils,
     Token.Utils.Response,
