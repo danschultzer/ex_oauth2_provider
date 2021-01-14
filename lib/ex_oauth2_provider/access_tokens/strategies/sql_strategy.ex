@@ -1,4 +1,4 @@
-defmodule ExOauth2Provider.AccessTokens.Strategy.Basic do
+defmodule ExOauth2Provider.AccessTokens.Strategy.SqlStrategy do
   @moduledoc """
   Standard Postgres-based access token implementation strategy
   """

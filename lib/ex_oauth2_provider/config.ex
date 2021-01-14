@@ -19,13 +19,13 @@ defmodule ExOauth2Provider.Config do
     do: get(config, :resource_owner) || app_module(config, "Users", "User")
 
   def access_grant_strategy(config),
-    do: get(config, :access_grant_strategy) || ExOauth2Provider.AccessGrants.Strategy.Basic
+    do: get(config, :access_grant_strategy) || ExOauth2Provider.AccessGrants.Strategy.SqlStrategy
 
   def access_token_strategy(config),
-    do: get(config, :access_token_strategy) || ExOauth2Provider.AccessTokens.Strategy.Basic
+    do: get(config, :access_token_strategy) || ExOauth2Provider.AccessTokens.Strategy.SqlStrategy
 
   def application_strategy(config),
-    do: get(config, :application_strategy) || ExOauth2Provider.Applications.Strategy.Basic
+    do: get(config, :application_strategy) || ExOauth2Provider.Applications.Strategy.SqlStrategy
 
   defp app_module(config, context, module) do
     app =

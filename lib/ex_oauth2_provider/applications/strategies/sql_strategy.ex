@@ -1,6 +1,6 @@
-defmodule ExOauth2Provider.Applications.Strategy.Basic do
+defmodule ExOauth2Provider.Applications.Strategy.SqlStrategy do
   @moduledoc """
-  The basic postgres-based client_secret application strategy.
+  Standard Postgres-based application implementation strategy
   """
 
   @behaviour ExOauth2Provider.Applications

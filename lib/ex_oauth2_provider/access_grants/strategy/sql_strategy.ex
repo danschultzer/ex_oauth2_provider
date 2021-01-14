@@ -1,6 +1,6 @@
-defmodule ExOauth2Provider.AccessGrants.Strategy.Basic do
+defmodule ExOauth2Provider.AccessGrants.Strategy.SqlStrategy do
   @moduledoc """
-  The boundary for the OauthAccessGrants system.
+  Standard Postgres-based access token implementation strategy
   """
   @behaviour ExOauth2Provider.AccessGrants
 
