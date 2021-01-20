@@ -100,11 +100,15 @@ defmodule ExOauth2Provider.Applications.Strategy.SqlStrategy do
   end
 
   def load_application(uid, {:code_verifier, code_verifier}, config) do
-    application =
-      config
-      |> Config.application()
-      |> Config.repo(config).get_by(uid: uid)
+    config
+    |> Config.application()
+    |> Config.repo(config).get_by(uid: uid)
+    |> verify_pkce(code_verifier, config)
+  end
 
+  defp verify_pkce(nil, _code_verifier, _config), do: nil
+
+  defp verify_pkce(application, code_verifier, config) do
     case Config.pkce_module(config).verify(application, code_verifier) do
       :ok ->
         application
