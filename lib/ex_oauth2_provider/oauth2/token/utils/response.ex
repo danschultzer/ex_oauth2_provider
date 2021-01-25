@@ -1,7 +1,7 @@
 defmodule ExOauth2Provider.Token.Utils.Response do
   @moduledoc false
 
-  alias ExOauth2Provider.Config
+  alias ExOauth2Provider.{Config, Scopes}
 
   @doc false
   @spec response({:ok, map()} | {:error, map()}, keyword()) ::
@@ -32,6 +32,13 @@ defmodule ExOauth2Provider.Token.Utils.Response do
         scope: access_token.scopes,
         created_at: access_token.inserted_at
       }
+      |> (fn response_body ->
+            if "openid" in Scopes.to_list(access_token.scopes) do
+              build_id_token(response_body, access_token, config)
+            else
+              response_body
+            end
+          end).()
       |> customize_access_token_response(access_token, config)
 
     {:ok, body}
@@ -47,9 +54,21 @@ defmodule ExOauth2Provider.Token.Utils.Response do
   end
 
   defp customize_access_token_response(response_body, access_token, config) do
+
     case Config.access_token_response_body_handler(config) do
       {module, method} -> apply(module, method, [response_body, access_token])
       _ -> response_body
+    end
+  end
+
+  defp build_id_token(response_body, access_token, config) do
+    case Config.id_token_builder(config) do
+      {module, method} ->
+        id_token = apply(module, method, [access_token])
+        Map.put(response_body, :id_token, id_token)
+
+      _ ->
+        response_body
     end
   end
 end

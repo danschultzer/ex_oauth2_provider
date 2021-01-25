@@ -144,6 +144,10 @@ defmodule ExOauth2Provider.Config do
   def access_token_response_body_handler(config),
     do: get(config, :access_token_response_body_handler)
 
+  @spec id_token_builder(keyword()) :: {atom(), atom()} | nil
+  def id_token_builder(config),
+    do: get(config, :id_token_builder)
+
   @spec grant_flows(keyword()) :: [binary()]
   def grant_flows(config),
     do:
