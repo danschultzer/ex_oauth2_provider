@@ -29,9 +29,12 @@ defmodule ExOauth2Provider.AccessTokens do
   """
   @spec get_by_token(binary(), keyword()) :: AccessToken.t() | nil
   def get_by_token(token, config \\ []) do
+
     config
-    |> Config.access_token()
-    |> Config.repo(config).get_by(token: token)
+      |> Config.access_token()
+      |> Config.repo(config).get_by(token: token)
+      |> Config.repo(config).preload(:application)
+
   end
 
   @doc """
