@@ -11,7 +11,11 @@ defmodule ExOauth2Provider.Token.Utils do
         nil ->
           case Map.get(request, "code_verifier") do
             nil ->
-              {:client_secret, ""}
+              if request["grant_type"] == "refresh_token" do
+                :refresh_token_flow
+              else
+                {:client_secret, ""}
+              end
 
             code_verifier ->
               {:code_verifier, code_verifier}

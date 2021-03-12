@@ -18,7 +18,7 @@ defmodule ExOauth2Provider.Applications do
 
   @callback load_application(
               binary(),
-              {:client_secret, binary()} | {:code_verifier, binary()},
+              {:client_secret, binary()} | :refresh_token_flow | {:code_verifier, binary()},
               keyword()
             ) :: Application.t() | nil
   def load_application(uid, secret, config \\ []),

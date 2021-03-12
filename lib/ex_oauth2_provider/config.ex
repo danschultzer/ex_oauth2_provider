@@ -116,6 +116,12 @@ defmodule ExOauth2Provider.Config do
   def use_refresh_token?(config),
     do: get(config, :use_refresh_token, false)
 
+  # Use refresh token flow without client_secret provided in request (disabled by default)
+  # Useful when issuing refresh tokens after they were created via PKCE
+  @spec refresh_token_without_secret?(keyword()) :: boolean()
+  def refresh_token_without_secret?(config),
+    do: get(config, :refresh_token_without_secret, false)
+
   # Password auth method to use. Disabled by default. When set, it'll enable
   # password auth strategy. Set config as:
   # `password_auth: {MyModule, :my_auth_method}`

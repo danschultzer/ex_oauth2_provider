@@ -106,6 +106,16 @@ defmodule ExOauth2Provider.Applications.Strategy.SqlStrategy do
     |> verify_pkce(code_verifier, config)
   end
 
+  def load_application(uid, :refresh_token_flow, config) do
+    if Config.refresh_token_without_secret?(config) do
+      config
+      |> Config.application()
+      |> Config.repo(config).get_by(uid: uid)
+    else
+      nil
+    end
+  end
+
   defp verify_pkce(nil, _code_verifier, _config), do: nil
 
   defp verify_pkce(application, code_verifier, config) do
