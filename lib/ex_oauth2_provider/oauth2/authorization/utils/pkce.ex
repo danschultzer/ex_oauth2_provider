@@ -16,7 +16,14 @@ defmodule ExOauth2Provider.Authorization.Utils.Pkce do
   @callback verify(Application.t(), binary()) :: :ok | {:error, String.t()}
   @spec verify(Application.t(), binary()) :: :ok | {:error, String.t()}
   def verify(application, code_verifier) do
-    code_challenge = :crypto.hash(:sha256, code_verifier) |> Base.encode64()
+    hash =
+      :crypto.hash(:sha256, code_verifier)
+      |> :binary.decode_unsigned()
+
+    code_challenge =
+      :io_lib.format("~64.16.0b", [hash])
+      |> to_string()
+      |> Base.encode64()
 
     if application.uid <> code_challenge == Agent.get(__MODULE__, & &1) do
       :ok
