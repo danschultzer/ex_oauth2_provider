@@ -5,7 +5,8 @@ defmodule ExOauth2Provider.Token do
   alias ExOauth2Provider.{
     Config,
     Token.Revoke,
-    Utils.Error}
+    Utils.Error,
+    Token.Introspect}
   alias Ecto.Schema
 
   @doc """
@@ -82,4 +83,9 @@ defmodule ExOauth2Provider.Token do
   """
   @spec revoke(map(), keyword()) :: {:ok, Schema.t()} | {:error, map(), term()}
   def revoke(request, config \\ []), do: Revoke.revoke(request, config)
+
+  @doc """
+  Introspect an access or refresh token as per https://datatracker.ietf.org/doc/html/rfc7662
+  """
+  def introspect(params, config \\ []), do: Introspect.introspect(params, config)
 end
