@@ -126,6 +126,16 @@ case ExOauth2Provider.Token.grant(params, otp_app: :my_app) do
 end
 ```
 
+Refresh tokens can be revoked after (they're not revoked by default):
+
+```elixir
+config :my_app, ExOauth2Provider,
+  repo: MyApp.Repo,
+  resource_owner: MyApp.Users.User,
+  use_refresh_token: true,
+  revoke_refresh_token_on_use: true
+```
+
 #### Username and password
 
 You'll need to provide an authorization method that accepts username and password as arguments, and returns `{:ok, resource_owner}` or `{:error, reason}`. Here'a an example:
