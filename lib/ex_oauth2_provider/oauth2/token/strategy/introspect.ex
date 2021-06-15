@@ -9,7 +9,8 @@ defmodule ExOauth2Provider.Token.Introspect do
     Token.Utils.Response,
     Mixin.Expirable,
     Mixin.Revocable,
-    Config
+    Config,
+    Schema
   }
 
   # 'token_type_hint' query param is not needed to guess if the token is an access or refresh token and can be safely ignored: https://datatracker.ietf.org/doc/html/rfc7662#section-2.1
@@ -31,7 +32,7 @@ defmodule ExOauth2Provider.Token.Introspect do
            Revocable.is_revoked?(access_token) do
         Map.merge(params, %{active: false})
       else
-        Map.merge(params, %{active: true, token: access_token})
+        Map.merge(params, %{active: true, token: access_token, type: :access_token})
       end
 
     {:ok, params}
@@ -46,7 +47,7 @@ defmodule ExOauth2Provider.Token.Introspect do
       if refresh_token == nil || Revocable.is_revoked?(refresh_token) do
         Map.merge(params, %{active: false})
       else
-        Map.merge(params, %{active: true, token: refresh_token})
+        Map.merge(params, %{active: true, token: refresh_token, type: :refresh_token})
       end
 
     {:ok, params}
@@ -55,21 +56,29 @@ defmodule ExOauth2Provider.Token.Introspect do
   defp check_refresh_token({:ok, %{active: true}} = req, _config), do: req
   defp check_refresh_token({:error, _} = req, _config), do: req
 
-  defp build_response({:ok, %{active: false}}, _), do: {:ok, %{active: false}}
-
-  defp build_response({:ok, %{active: true, token: token}}, config) do
+  defp build_response({:ok, %{active: true, token: token, type: token_type}}, config) do
     token = Config.repo(config).preload(token, :application)
 
+    created_at = Schema.unix_time_for(token.inserted_at)
+    expires_at =
+      if token_type == :access_token do
+        created_at + token.expires_in
+      else # refresh tokens don't expire
+        nil
+      end
+
     # as defined in https://datatracker.ietf.org/doc/html/rfc7662#section-2.2
-    # TODO: implement 'exp' and 'iat'
     {:ok,
      %{
        active: true,
        scope: token.scopes,
        token_type: "bearer",
-       client_id: token.application.uid
+       client_id: token.application.uid,
+       iat: created_at,
+       exp: expires_at
      }}
   end
 
+  defp build_response({:ok, %{active: false}}, _), do: {:ok, %{active: false}}
   defp build_response({:error, _} = params, config), do: Response.response(params, config)
 end
