@@ -5,14 +5,17 @@ defmodule ExOauth2Provider.Token.Introspect do
   alias ExOauth2Provider.{
     AccessTokens,
     Utils.Error,
+    Token.Utils,
+    Token.Utils.Response,
     Mixin.Expirable,
     Mixin.Revocable,
     Config
   }
 
   # 'token_type_hint' query param is not needed to guess if the token is an access or refresh token and can be safely ignored: https://datatracker.ietf.org/doc/html/rfc7662#section-2.1
-  def introspect(%{"token" => token}, config \\ []) do
-    {:ok, %{token: token}}
+  def introspect(%{"token" => _} = request, config \\ []) do
+    {:ok, %{request: request}}
+    |> Utils.load_client(config)
     |> check_access_token(config)
     |> check_refresh_token(config)
     |> build_response(config)
@@ -20,28 +23,37 @@ defmodule ExOauth2Provider.Token.Introspect do
 
   def introspect(_, _), do: Error.invalid_request()
 
-  defp check_access_token({:ok, %{token: token} = params}, config) do
-    access_token = AccessTokens.get_by_token(token, config)
+  defp check_access_token({:ok, %{client: client, request: %{"token" => token}} = params}, config) do
+    access_token = AccessTokens.get_by_token_for(client, token, config)
 
-    if access_token == nil || Expirable.is_expired?(access_token) ||
-         Revocable.is_revoked?(access_token) do
-      {:ok, Map.merge(params, %{active: false})}
-    else
-      {:ok, Map.merge(params, %{active: true, token: access_token})}
-    end
+    params =
+      if access_token == nil || Expirable.is_expired?(access_token) ||
+           Revocable.is_revoked?(access_token) do
+        Map.merge(params, %{active: false})
+      else
+        Map.merge(params, %{active: true, token: access_token})
+      end
+
+    {:ok, params}
   end
 
-  defp check_refresh_token({:ok, %{active: false, token: token} = params}, config) do
-    refresh_token = AccessTokens.get_by_refresh_token(token, config)
+  defp check_access_token({:error, _} = req, _config), do: req
 
-    if refresh_token == nil || Revocable.is_revoked?(refresh_token) do
-      {:ok, Map.merge(params, %{active: false})}
-    else
-      {:ok, Map.merge(params, %{active: true, token: refresh_token})}
-    end
+  defp check_refresh_token({:ok, %{client: client, active: false, request: %{"token" => token}} = params}, config) do
+    refresh_token = AccessTokens.get_by_refresh_token_for(client, token, config)
+
+    params =
+      if refresh_token == nil || Revocable.is_revoked?(refresh_token) do
+        Map.merge(params, %{active: false})
+      else
+        Map.merge(params, %{active: true, token: refresh_token})
+      end
+
+    {:ok, params}
   end
 
-  defp check_refresh_token({arg, params}, _config), do: {arg, params}
+  defp check_refresh_token({:ok, %{active: true}} = req, _config), do: req
+  defp check_refresh_token({:error, _} = req, _config), do: req
 
   defp build_response({:ok, %{active: false}}, _), do: {:ok, %{active: false}}
 
@@ -58,4 +70,6 @@ defmodule ExOauth2Provider.Token.Introspect do
        client_id: token.application.uid
      }}
   end
+
+  defp build_response({:error, _} = params, config), do: Response.response(params, config)
 end
