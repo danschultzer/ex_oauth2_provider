@@ -74,8 +74,9 @@ defmodule ExOauth2Provider.Token.Introspect do
        scope: token.scopes,
        token_type: "bearer",
        client_id: token.application.uid,
+       exp: expires_at,
        iat: created_at,
-       exp: expires_at
+       sub: token.resource_owner_id
      }}
   end
 
