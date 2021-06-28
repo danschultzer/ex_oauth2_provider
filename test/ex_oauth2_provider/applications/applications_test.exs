@@ -47,6 +47,42 @@ defmodule ExOauth2Provider.ApplicationsTest do
     assert id == application.id
   end
 
+  describe "load_application/3" do
+    setup %{user: user} do
+      {:ok, application} =
+        Applications.create_application(user, @valid_attrs, otp_app: :ex_oauth2_provider)
+
+      {:ok, application: application}
+    end
+
+    test "secret is required when present in application", %{application: application} do
+      assert %OauthApplication{id: id} =
+               Applications.load_application(
+                 application.uid,
+                 {:client_secret, application.secret},
+                 otp_app: :ex_oauth2_provider
+               )
+
+      assert nil ==
+               Applications.load_application(application.uid, {:client_secret, ""},
+                 otp_app: :ex_oauth2_provider
+               )
+
+      assert id == application.id
+    end
+
+    test "secret can be optionally not required", %{application: application} do
+      assert application.secret != ""
+
+      assert %OauthApplication{id: id} =
+               Applications.load_application(application.uid, {:client_secret, :not_required},
+                 otp_app: :ex_oauth2_provider
+               )
+
+      assert id == application.id
+    end
+  end
+
   test "get_application_for!/2", %{user: user} do
     {:ok, application} =
       Applications.create_application(user, @valid_attrs, otp_app: :ex_oauth2_provider)

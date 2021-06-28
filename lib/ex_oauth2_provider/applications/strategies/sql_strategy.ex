@@ -93,6 +93,12 @@ defmodule ExOauth2Provider.Applications.Strategy.SqlStrategy do
         ) :: Application.t() | nil
   def load_application(uid, secret, config \\ [])
 
+  def load_application(uid, {:client_secret, :not_required}, config) do
+    config
+    |> Config.application()
+    |> Config.repo(config).get_by(uid: uid)
+  end
+
   def load_application(uid, {:client_secret, client_secret}, config) do
     config
     |> Config.application()
