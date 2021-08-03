@@ -325,6 +325,7 @@ This library was made thanks to [doorkeeper](https://github.com/doorkeeper-gem/d
 
 Thanks to [Benjamin Schultzer](https://github.com/schultzer) for helping to refactor the code.
 
+Thanks to [Kevin Ledama](https://github.com/leksim) for implementing OIDC
 ## LICENSE
 
 (The MIT License)
