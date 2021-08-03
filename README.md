@@ -12,7 +12,7 @@ Add ExOauth2Provider to your list of dependencies in `mix.exs`:
 def deps do
   [
     # ...
-    {:ex_oauth2_provider, "~> 0.5.6"}
+    {:ex_oauth2_provider, git: "git@github.com:valuechainfactory/ex_oauth2_provider.git", branch: "master"}
     # ...
   ]
 end
@@ -178,7 +178,29 @@ config :my_app, ExOauth2Provider,
   default_scopes: ~w(public),
   optional_scopes: ~w(read update)
 ```
+## OpenId Connect
+Support for OIDC hsa been added on this fork. The scope `openid` when requested will cause an `id_token` to be generated and sent to the client.
 
+Configuration can be added to the `ExOauth2Provider` config as:
+```elixir
+config :my_app, ExOauth2Provider,
+  repo: MyApp.Repo,
+  resource_owner: MyApp.Users.User,
+  default_scopes: ~w(openid public),
+  optional_scopes: ~w(read update)
+  oidc: [
+    # defaults to [:id]
+    resource_owner_claims: [:id, :email, :msisdn, :first_name, :last_name, :gender, :avatar],
+    # defaults to "https://retailpay.africa"
+    issuer: "https://retailpay.africa",
+    # defaults to application client_id
+    audience: "some custom aud value"
+  ]
+  ````
+
+  `resource_owner_claims` expects a list that will be supplied to `Map.take()` on the resource owner and will thus need to be fields defined in the `resource_owner`. Defaults to [:id].
+
+  `aud` will default to the `client_id` of the client authorized to receive the token. It can be configured with the `audience` key.
 ## Plug API
 
 ### [ExOauth2Provider.Plug.VerifyHeader](lib/ex_oauth2_provider/plug/verify_header.ex)
@@ -292,6 +314,10 @@ You'll need to create the migration file and schema modules with the argument `-
 ```bash
 mix ex_oauth2_provider.install --binary-id
 ```
+
+## ToDo
+- [x] Implement OpenId Connect layer
+- [ ]  Implement Proof Key for Code Exchange (PKCE)
 
 ## Acknowledgement
 
