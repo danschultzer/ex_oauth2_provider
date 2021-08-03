@@ -132,6 +132,9 @@ defmodule ExOauth2Provider.Config do
   def grant_flows(config),
     do: get(config, :grant_flows, ~w(authorization_code client_credentials))
 
+  @spec oidc(keyword()) :: [list()]
+  def oidc(config), do: get(config, :oidc)
+
   defp get(config, key, value \\ nil) do
     otp_app = Keyword.get(config, :otp_app)
 
