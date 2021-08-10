@@ -15,25 +15,28 @@ defmodule ExOauth2Provider.Oidc do
 
     signer = Joken.Signer.create("HS256", "secret")
 
-    config =
+    joken_config =
       %{}
       |> Joken.Config.add_claim("iss", fn -> issuer end, &(&1 == issuer))
       |> Joken.Config.add_claim("aud", fn -> audience end, &(&1 == audience))
 
-    extra_claims = recursive_take(resource_owner, resource_owner_claims)
-    Joken.generate_and_sign!(config, extra_claims, signer)
+    extra_claims = recursive_take(resource_owner, resource_owner_claims, config)
+    Joken.generate_and_sign!(joken_config, extra_claims, signer)
   end
 
-  defp recursive_take(map, fields) do
+  defp recursive_take(map, fields, config, preload? \\ true) do
     take = fn
-      maps, fields when is_list(maps) -> Enum.map(maps, &recursive_take(&1, fields))
-      map, fields when is_map(map) -> recursive_take(map, fields)
+      maps, fields when is_list(maps) -> Enum.map(maps, &recursive_take(&1, fields, config))
+      map, fields when is_map(map) -> recursive_take(map, fields, config)
     end
 
     {plain, nested} =
       Enum.reduce(fields, {[], []}, fn field, {plain, nested} ->
         if is_tuple(field), do: {plain, nested ++ [field]}, else: {plain ++ [field], nested}
       end)
+
+    # preload nested fields
+    map = (preload? && Config.repo(config).preload(map, Keyword.keys(nested))) || map
 
     initial_map = Map.take(map, plain)
 
