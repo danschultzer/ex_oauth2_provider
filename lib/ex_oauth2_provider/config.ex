@@ -3,12 +3,13 @@ defmodule ExOauth2Provider.Config do
 
   @spec repo(keyword()) :: module()
   def repo(config) do
-    get(config, :repo) || raise """
+    get(config, :repo) ||
+      raise """
       No `:repo` found in ExOauth2Provider configuration.
 
       Please set up the repo in your configuration:
 
-      config #{inspect Keyword.get(config, :otp_app, :ex_oauth2_provider)}, ExOauth2Provider,
+      config #{inspect(Keyword.get(config, :otp_app, :ex_oauth2_provider))}, ExOauth2Provider,
         repo: MyApp.Repo
       """
   end
@@ -21,7 +22,9 @@ defmodule ExOauth2Provider.Config do
     app =
       config
       |> Keyword.get(:otp_app)
-      |> Kernel.||(raise "No `:otp_app` found in provided configuration. Please pass `:otp_app` in configuration.")
+      |> Kernel.||(
+        raise "No `:otp_app` found in provided configuration. Please pass `:otp_app` in configuration."
+      )
       |> app_base()
 
     Module.concat([app, context, module])
@@ -39,9 +42,13 @@ defmodule ExOauth2Provider.Config do
   def application(config),
     do: get_oauth_struct(config, :application)
 
+  @spec device_grant(keyword()) :: module()
+  def device_grant(config),
+    do: get_oauth_struct(config, :device_grant)
+
   defp get_oauth_struct(config, name, namespace \\ "oauth") do
     context = Macro.camelize("#{namespace}_#{name}s")
-    module  = Macro.camelize("#{namespace}_#{name}")
+    module = Macro.camelize("#{namespace}_#{name}")
 
     config
     |> get(name)
@@ -117,7 +124,7 @@ defmodule ExOauth2Provider.Config do
   # wise to keep this enabled.
   @spec force_ssl_in_redirect_uri?(keyword()) :: boolean()
   def force_ssl_in_redirect_uri?(config),
-    do: get(config, :force_ssl_in_redirect_uri, unquote(Mix.env != :dev))
+    do: get(config, :force_ssl_in_redirect_uri, unquote(Mix.env() != :dev))
 
   # Use a custom access token generator
   @spec access_token_generator(keyword()) :: {atom(), atom()} | nil
@@ -129,8 +136,47 @@ defmodule ExOauth2Provider.Config do
     do: get(config, :access_token_response_body_handler)
 
   @spec grant_flows(keyword()) :: [binary()]
-  def grant_flows(config),
-    do: get(config, :grant_flows, ~w(authorization_code client_credentials))
+  def grant_flows(config) do
+    flows = get(config, :grant_flows, ~w(authorization_code client_credentials))
+
+    case Enum.member?(flows, "device_code") do
+      # Device flow requires grant type to be this for the token request.
+      # Adding it in bound to the device code token strategy allows this to work
+      # but also allows the configuration to only need "device_code" to enable.
+      # https://datatracker.ietf.org/doc/html/rfc8628#section-3.4
+      true -> Enum.concat(flows, ["urn:ietf:params:oauth:grant-type:device_code"])
+      false -> flows
+    end
+  end
+
+  @spec device_flow_device_code_length(keyword()) :: [integer()]
+  def device_flow_device_code_length(config),
+    do: get(config, :device_flow_device_code_length, 32)
+
+  @spec device_flow_polling_interval(keyword()) :: [integer()]
+  def device_flow_polling_interval(config),
+    do: get(config, :device_flow_polling_interval, 5)
+
+  @spec device_flow_user_code_base(keyword()) :: [integer()]
+  def device_flow_user_code_base(config),
+    do: get(config, :device_flow_user_code_base, 36)
+
+  @spec device_flow_user_code_length(keyword()) :: [integer()]
+  def device_flow_user_code_length(config),
+    do: get(config, :device_flow_user_code_length, 8)
+
+  @spec device_flow_verification_uri(keyword()) :: [binary()]
+  def device_flow_verification_uri(config),
+    do:
+      get(config, :device_flow_verification_uri) ||
+        raise("""
+        `:device_flow_verification_uri` is required to support the device flow.
+
+        Please update your configuration with the uri your application uses to verify devices:
+
+        config #{inspect(Keyword.get(config, :otp_app, :ex_oauth2_provider))}, ExOauth2Provider,
+          device_flow_verification_uri: "https://really.cool.site/device"
+        """)
 
   defp get(config, key, value \\ nil) do
     otp_app = Keyword.get(config, :otp_app)
@@ -141,18 +187,20 @@ defmodule ExOauth2Provider.Config do
     |> get_from_global_env(key)
     |> case do
       :not_found -> value
-      value      -> value
+      value -> value
     end
   end
 
   defp get_from_config(config, key), do: Keyword.get(config, key, :not_found)
 
   defp get_from_app_env(:not_found, nil, _key), do: :not_found
+
   defp get_from_app_env(:not_found, otp_app, key) do
     otp_app
     |> Application.get_env(ExOauth2Provider, [])
     |> Keyword.get(key, :not_found)
   end
+
   defp get_from_app_env(value, _otp_app, _key), do: value
 
   defp get_from_global_env(:not_found, key) do
@@ -160,5 +208,6 @@ defmodule ExOauth2Provider.Config do
     |> Application.get_env(ExOauth2Provider, [])
     |> Keyword.get(key, :not_found)
   end
+
   defp get_from_global_env(value, _key), do: value
 end

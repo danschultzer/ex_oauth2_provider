@@ -22,15 +22,16 @@ defmodule Mix.Tasks.ExOauth2Provider.Gen.Migration do
 
     * `-r`, `--repo` - the repo module
     * `--binary-id` - use binary id for primary keys
+    * `--device-code - create the tables needed for the device code flow
     * `--namespace` - namespace to prepend table and schema module name
   """
   use Mix.Task
 
   alias Mix.{Ecto, ExOauth2Provider, ExOauth2Provider.Migration}
 
-  @switches     [binary_id: :boolean, namespace: :string]
-  @default_opts [binary_id: false, namespace: "oauth"]
-  @mix_task     "ex_oauth2_provider.gen.migrations"
+  @switches [binary_id: :boolean, device_code: :boolean, namespace: :string]
+  @default_opts [binary_id: false, device_code: false, namespace: "oauth"]
+  @mix_task "ex_oauth2_provider.gen.migrations"
 
   @impl true
   def run(args) do
@@ -53,8 +54,8 @@ defmodule Mix.Tasks.ExOauth2Provider.Gen.Migration do
   end
 
   defp create_migration_files(%{repo: repo, namespace: namespace} = config) do
-    name         = "Create#{Macro.camelize(namespace)}Tables"
-    content      = Migration.gen(name, namespace, config)
+    name = "Create#{Macro.camelize(namespace)}Tables"
+    content = Migration.gen(name, namespace, config)
 
     Migration.create_migration_file(repo, name, content)
   end
