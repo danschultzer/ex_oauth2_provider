@@ -31,24 +31,6 @@ defmodule ExOauth2Provider.Token.Strategy.IntrospectionTest do
         scopes: "app:read"
       )
 
-    expired_token =
-      Fixtures.access_token(
-        resource_owner: user,
-        application: application,
-        use_refresh_token: true,
-        scopes: "app:read",
-        expires_in: -1000
-      )
-
-    revoked_token =
-      Fixtures.access_token(
-        resource_owner: user,
-        application: application,
-        use_refresh_token: true,
-        scopes: "app:read"
-      )
-    revoked_token = AccessTokens.revoke!(revoked_token, otp_app: :ex_oauth2_provider)
-
     valid_request = %{
       "client_id" => @client_id,
       "client_secret" => @client_secret,
@@ -57,11 +39,10 @@ defmodule ExOauth2Provider.Token.Strategy.IntrospectionTest do
 
     {:ok,
      %{
-       access_token: access_token,
-       expired_token: expired_token,
-       revoked_token: revoked_token,
-       valid_request: valid_request,
        user: user
+       application: application,
+       access_token: access_token,
+       valid_request: valid_request,
      }}
   end
 
@@ -91,6 +72,7 @@ defmodule ExOauth2Provider.Token.Strategy.IntrospectionTest do
     user: user
   } do
     created_at = Schema.unix_time_for(access_token.inserted_at)
+
     expected_introspection =
       {:ok,
        %{
@@ -113,16 +95,19 @@ defmodule ExOauth2Provider.Token.Strategy.IntrospectionTest do
     new_application = Fixtures.application(uid: "new_app", client_secret: "new")
     QueryHelpers.change!(access_token, application_id: new_application.id)
 
-    assert Token.introspect(valid_request, otp_app: :ex_oauth2_provider) == {:ok, %{active: false}}
+    assert Token.introspect(valid_request, otp_app: :ex_oauth2_provider) ==
+             {:ok, %{active: false}}
   end
 
   test "#introspect/2 refresh token", %{
     valid_request: valid_request,
-    access_token: access_token
+    access_token: access_token,
+    user: user
   } do
     params = Map.merge(valid_request, %{"token" => access_token.refresh_token})
 
     created_at = Schema.unix_time_for(access_token.inserted_at)
+
     expected_introspection =
       {:ok,
        %{
@@ -138,42 +123,91 @@ defmodule ExOauth2Provider.Token.Strategy.IntrospectionTest do
     assert Token.introspect(params, otp_app: :ex_oauth2_provider) == expected_introspection
   end
 
-  test "#introspect/2 expired access token", %{
-    valid_request: valid_request,
-    expired_token: expired_token
-  } do
-    params = Map.merge(valid_request, %{"token" => expired_token.token})
+  describe "with expired token" do
+    setup %{
+      application: application,
+      access_token: access_token,
+      valid_request: valid_request,
+      user: user
+    } do
+      expired_token =
+        Fixtures.access_token(
+          resource_owner: user,
+          application: application,
+          use_refresh_token: true,
+          scopes: "app:read",
+          expires_in: -1000
+        )
 
-    assert Token.introspect(params, otp_app: :ex_oauth2_provider) == {:ok, %{active: false}}
+      {:ok,
+       %{
+         valid_request: valid_request,
+         expired_token: expired_token
+       }}
+    end
+
+    test "#introspect/2 expired access token", %{
+      valid_request: valid_request,
+      expired_token: expired_token
+    } do
+      params = Map.merge(valid_request, %{"token" => expired_token.token})
+
+      assert Token.introspect(params, otp_app: :ex_oauth2_provider) == {:ok, %{active: false}}
+    end
+
+    test "#introspect/2 expired refresh token", %{
+      valid_request: valid_request,
+      expired_token: expired_token
+    } do
+      params = Map.merge(valid_request, %{"token" => expired_token.refresh_token})
+      {status, introspection} = Token.introspect(params, otp_app: :ex_oauth2_provider)
+
+      assert status == :ok
+      assert introspection.active
+    end
   end
 
-  test "#introspect/2 expired refresh token", %{
-    valid_request: valid_request,
-    expired_token: expired_token
-  } do
-    params = Map.merge(valid_request, %{"token" => expired_token.refresh_token})
-    {status, introspection} = Token.introspect(params, otp_app: :ex_oauth2_provider)
+  describe "with revoked token" do
+    setup %{
+      application: application,
+      access_token: access_token,
+      valid_request: valid_request,
+      user: user
+    } do
+      revoked_token =
+        Fixtures.access_token(
+          resource_owner: user,
+          application: application,
+          use_refresh_token: true,
+          scopes: "app:read"
+        )
 
-    assert status == :ok
-    assert introspection.active
-  end
+      revoked_token = AccessTokens.revoke!(revoked_token, otp_app: :ex_oauth2_provider)
 
-  test "#introspect/2 revoked access token", %{
-    valid_request: valid_request,
-    revoked_token: revoked_token,
-    user: user
-  } do
-    params = Map.merge(valid_request, %{"token" => revoked_token.token})
+      {:ok,
+       %{
+         valid_request: valid_request,
+         revoked_token: revoked_token
+       }}
+    end
 
-    assert Token.introspect(params, otp_app: :ex_oauth2_provider) == {:ok, %{active: false}}
-  end
+    test "#introspect/2 revoked access token", %{
+      valid_request: valid_request,
+      revoked_token: revoked_token,
+      user: user
+    } do
+      params = Map.merge(valid_request, %{"token" => revoked_token.token})
 
-  test "#introspect/2 revoked refresh token", %{
-    valid_request: valid_request,
-    revoked_token: revoked_token
-  } do
-    params = Map.merge(valid_request, %{"token" => revoked_token.refresh_token})
+      assert Token.introspect(params, otp_app: :ex_oauth2_provider) == {:ok, %{active: false}}
+    end
 
-    assert Token.introspect(params, otp_app: :ex_oauth2_provider) == {:ok, %{active: false}}
+    test "#introspect/2 revoked refresh token", %{
+      valid_request: valid_request,
+      revoked_token: revoked_token
+    } do
+      params = Map.merge(valid_request, %{"token" => revoked_token.refresh_token})
+
+      assert Token.introspect(params, otp_app: :ex_oauth2_provider) == {:ok, %{active: false}}
+    end
   end
 end
