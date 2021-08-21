@@ -39,10 +39,10 @@ defmodule ExOauth2Provider.Token.Strategy.IntrospectionTest do
 
     {:ok,
      %{
-       user: user
+       user: user,
        application: application,
        access_token: access_token,
-       valid_request: valid_request,
+       valid_request: valid_request
      }}
   end
 
@@ -123,6 +123,34 @@ defmodule ExOauth2Provider.Token.Strategy.IntrospectionTest do
     assert Token.introspect(params, otp_app: :ex_oauth2_provider) == expected_introspection
   end
 
+  describe "access token with refresh token disabled" do
+    setup %{
+      application: application,
+      valid_request: valid_request,
+      user: user
+    } do
+      access_token =
+        Fixtures.access_token(
+          resource_owner: user,
+          application: application,
+          use_refresh_token: false,
+          scopes: "app:read"
+        )
+
+      valid_request = Map.merge(valid_request, %{"token" => access_token.token})
+
+      {:ok,
+       %{
+         valid_request: valid_request,
+         access_token: access_token
+       }}
+    end
+
+    test "#introspect/2", %{ valid_request: valid_request } do
+      assert {:ok, %{active: true}} = Token.introspect(valid_request, otp_app: :ex_oauth2_provider)
+    end
+  end
+
   describe "with expired token" do
     setup %{
       application: application,
@@ -160,10 +188,8 @@ defmodule ExOauth2Provider.Token.Strategy.IntrospectionTest do
       expired_token: expired_token
     } do
       params = Map.merge(valid_request, %{"token" => expired_token.refresh_token})
-      {status, introspection} = Token.introspect(params, otp_app: :ex_oauth2_provider)
 
-      assert status == :ok
-      assert introspection.active
+      assert {:ok, %{active: true}} = Token.introspect(params, otp_app: :ex_oauth2_provider)
     end
   end
 
