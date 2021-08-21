@@ -13,8 +13,10 @@ defmodule ExOauth2Provider.Token.Introspect do
     Schema
   }
 
+  def introspect(params, config \\ [])
+
   # 'token_type_hint' query param is not needed to guess if the token is an access or refresh token and can be safely ignored: https://datatracker.ietf.org/doc/html/rfc7662#section-2.1
-  def introspect(%{"token" => _} = request, config \\ []) do
+  def introspect(%{"token" => _} = request, config) do
     {:ok, %{request: request}}
     |> Utils.load_client(config)
     |> check_access_token(config)
