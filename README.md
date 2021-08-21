@@ -98,7 +98,7 @@ Check access token or refresh token for validity and meta-data. [See RFC-7662](h
 # or 
 # GET /oauth/introspect?client_id=CLIENT_ID&client_secret=CLIENT_SECRET&token=REFRESH_TOKEN
 case ExOauth2Provider.Token.introspect(params, otp_app: :my_app) do
-  {:ok, introspection}                        -> # JSON response
+  {:ok, introspection}              -> # JSON response
   {:error, error, http_status}      -> # JSON response
 end
 ```
