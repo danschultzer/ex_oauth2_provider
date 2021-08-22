@@ -95,8 +95,7 @@ defmodule ExOauth2Provider.Token.AuthorizationCode do
   defp validate_pkce({:error, params}), do: {:error, params}
   defp validate_pkce({:ok, %{access_grant: %{code_challenge_method: nil}} = params}), do: {:ok, params} # pkce not enabled for this grant
   defp validate_pkce({:ok, %{request: %{"code_verifier" => actual_code}, access_grant: %{code_challenge: expected_code, code_challenge_method: challenge_method}} = params}) do
-    if Validation.valid_code_verifier_format?(actual_code) &&
-         valid_pkce?(actual_code, expected_code, challenge_method) do
+    if Validation.valid_code_verifier_format?(actual_code) && valid_pkce?(actual_code, expected_code, challenge_method) do
       {:ok, params}
     else
       Error.add_error({:ok, params}, Error.invalid_grant())
