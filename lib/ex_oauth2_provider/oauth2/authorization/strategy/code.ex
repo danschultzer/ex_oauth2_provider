@@ -141,19 +141,18 @@ defmodule ExOauth2Provider.Authorization.Code do
 
   defp issue_grant({:error, %{error: _error} = params}, _config), do: {:error, params}
   defp issue_grant({:ok, %{resource_owner: resource_owner, client: application, request: request} = params}, config) do
-    take_fields = if Config.use_pkce?(config) do
-      ["redirect_uri", "scope", "code_challenge", "code_challenge_method"]
+    filtered_request = if Config.use_pkce?(config) do
+      Map.merge(%{"code_challenge_method" => "plain"}, request)
+      |> Map.take(["redirect_uri", "scope", "code_challenge", "code_challenge_method"])
+      |> Map.update!("code_challenge", fn v -> String.replace(v, "=", "") end)
     else
-      ["redirect_uri", "scope"]
+      Map.take(request, ["redirect_uri", "scope"])
     end
 
-    grant_params =
-      Map.merge(%{"code_challenge_method" => "plain"}, request)
-      |> Map.take(take_fields)
+    grant_params = filtered_request
       |> Map.new(fn {k, v} ->
         case k do
           "scope" -> {:scopes, v}
-          "code_challenge" -> {:code_challenge, String.replace(v, "=", "")}
           _       -> {String.to_atom(k), v}
         end
       end)
