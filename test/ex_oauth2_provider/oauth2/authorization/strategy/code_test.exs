@@ -154,6 +154,13 @@ defmodule ExOauth2Provider.Authorization.CodeTest do
     assert Authorization.authorize(resource_owner, request, otp_app: :ex_oauth2_provider) == {:error, @invalid_redirect_uri, :unprocessable_entity}
   end
 
+  test "#authorize/3 generates grant without persisting code_challenge, code_challenge_method on disabled pkce", %{resource_owner: resource_owner} do
+    request = Map.merge(@valid_request, %{"code_challenge" => "1234567890abcdefrety1234567890abcdefrety1234", "code_challenge_method" => "plain"})
+
+    assert {:native_redirect, %{code: code}} = Authorization.authorize(resource_owner, request, otp_app: :ex_oauth2_provider)
+    assert %{code_challenge: nil, code_challenge_method: nil} = Repo.get_by(OauthAccessGrant, token: code)
+  end
+
   test "#authorize/3 generates grant", %{resource_owner: resource_owner} do
     assert {:native_redirect, %{code: code}} = Authorization.authorize(resource_owner, @valid_request, otp_app: :ex_oauth2_provider)
     access_grant = Repo.get_by(OauthAccessGrant, token: code)
