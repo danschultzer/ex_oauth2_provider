@@ -3,7 +3,6 @@ defmodule ExOauth2Provider.Authorization.DeviceCode.DeviceAuthorization do
     Config,
     DeviceGrants,
     Authorization.Utils,
-    Scopes,
     Utils.DeviceFlow,
     Utils.Error,
     Utils.Validation

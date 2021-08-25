@@ -26,20 +26,8 @@ defmodule Mix.Tasks.ExOauth2Provider.Gen.SchemasTest do
 
         assert File.exists?(path)
 
-        module =
-          Module.concat([
-            "Test",
-            Macro.camelize("oauth_#{file}s"),
-            Macro.camelize("oauth_#{file}")
-          ])
-
-        macro =
-          Module.concat([
-            "ExOauth2Provider",
-            Macro.camelize("#{file}s"),
-            Macro.camelize("#{file}")
-          ])
-
+        module = modulize(file)
+        macro = macroize(file)
         content = File.read!(path)
 
         assert content =~ "defmodule #{inspect(module)} do"
@@ -52,6 +40,25 @@ defmodule Mix.Tasks.ExOauth2Provider.Gen.SchemasTest do
         path = Path.join([root_path, "oauth_#{file}s", "oauth_#{file}.ex"])
 
         refute File.exists?(path)
+      end
+    end)
+  end
+
+  test "it uses the configured otp_app when --context-app is not given" do
+    File.cd!(@tmp_path, fn ->
+      # Test config defines :ex_oauth2_provider as the otp_app
+      root_path = Path.join(["lib", "ex_oauth2_provider"])
+
+      Schemas.run([])
+
+      for file <- @required_files do
+        path = Path.join([root_path, "oauth_#{file}s", "oauth_#{file}.ex"])
+
+        assert File.exists?(path)
+
+        macro = macroize(file)
+
+        assert File.read!(path) =~ "use #{inspect(macro)}, otp_app: :ex_oauth2_provider"
       end
     end)
   end
@@ -75,20 +82,8 @@ defmodule Mix.Tasks.ExOauth2Provider.Gen.SchemasTest do
 
         assert File.exists?(path)
 
-        module =
-          Module.concat([
-            "Test",
-            Macro.camelize("oauth_#{file}s"),
-            Macro.camelize("oauth_#{file}")
-          ])
-
-        macro =
-          Module.concat([
-            "ExOauth2Provider",
-            Macro.camelize("#{file}s"),
-            Macro.camelize("#{file}")
-          ])
-
+        module = modulize(file)
+        macro = macroize(file)
         content = File.read!(path)
 
         assert content =~ "defmodule #{inspect(module)} do"
@@ -97,5 +92,21 @@ defmodule Mix.Tasks.ExOauth2Provider.Gen.SchemasTest do
         assert content =~ "#{file}_fields()"
       end
     end)
+  end
+
+  defp modulize(file) do
+    Module.concat([
+      "Test",
+      Macro.camelize("oauth_#{file}s"),
+      Macro.camelize("oauth_#{file}")
+    ])
+  end
+
+  defp macroize(file) do
+    Module.concat([
+      "ExOauth2Provider",
+      Macro.camelize("#{file}s"),
+      Macro.camelize("#{file}")
+    ])
   end
 end

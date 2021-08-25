@@ -43,12 +43,16 @@ defmodule Mix.Tasks.ExOauth2Provider.Gen.Schemas do
   defp create_schema_files(
          %{
            binary_id: binary_id,
-           context_app: context_app,
            device_code: device_code,
            namespace: namespace
          } = config
        ) do
-    context_app = context_app || ExOauth2Provider.otp_app()
+    context_app =
+      Map.get(
+        config,
+        :context_app,
+        ExOauth2Provider.otp_app()
+      )
 
     Schema.create_schema_files(
       context_app,

@@ -94,8 +94,6 @@ defmodule ExOauth2Provider.DeviceGrants do
     |> get_repo(config).update!()
   end
 
-  defp device_grant_schema(config), do: Config.device_grant(config)
-
   defp fetch_grant_with_user_code({schema, repo}, user_code) do
     # from(d in schema, preload: [:application], where: d.user_code == ^user_code)
     schema

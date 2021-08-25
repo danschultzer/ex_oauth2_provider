@@ -62,7 +62,7 @@ defmodule ExOauth2Provider.DeviceGrants.DeviceGrant do
   end
 
   alias Ecto.Changeset
-  alias ExOauth2Provider.{Mixin.Scopes, Utils}
+  alias ExOauth2Provider.Mixin.Scopes
 
   @spec changeset(Ecto.Schema.t(), map(), keyword()) :: Changeset.t()
   def changeset(grant, params, config) do

@@ -5,10 +5,12 @@ defmodule ExOauth2Provider.Token.Utils do
 
   @doc false
   @spec load_client({:ok, map()}, keyword()) :: {:ok, map()} | {:error, map()}
+  def load_client(context, config, opts \\ [])
+
   def load_client(
         {:ok, %{request: request = %{"client_id" => client_id}} = params},
         config,
-        opts \\ []
+        opts
       ) do
     client_secret = Map.get(request, "client_secret", "")
 

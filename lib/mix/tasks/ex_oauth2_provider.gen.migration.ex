@@ -22,7 +22,7 @@ defmodule Mix.Tasks.ExOauth2Provider.Gen.Migration do
 
     * `-r`, `--repo` - the repo module
     * `--binary-id` - use binary id for primary keys
-    * `--device-code - create the tables needed for the device code flow
+    * `--device-code` - create the tables needed for the device code flow
     * `--namespace` - namespace to prepend table and schema module name
   """
   use Mix.Task
