@@ -30,6 +30,19 @@ defmodule ExOauth2Provider.Authorization do
   end
 
   @doc """
+  Authorize access for a device. See #preauthorize/3 for more details.
+  """
+  @spec preauthorize_device(map(), keyword()) ::
+          Response.success() | Response.error() | Response.redirect() | Response.native_redirect()
+  def preauthorize_device(request, config \\ []) do
+    # This wraps preauthorize but since there's no user or response type
+    # in these requests we can pass what's needed.
+    request = Map.put(request, "response_type", "device_code")
+
+    preauthorize(nil, request, config)
+  end
+
+  @doc """
   Check ExOauth2Provider.Authorization.Code for usage.
   """
   @spec authorize(Schema.t(), map(), keyword()) ::

@@ -32,14 +32,11 @@ defmodule ExOauth2Provider.Authorization.DeviceCodeTest do
     end
   end
 
-  describe "#preauthorize/3" do
+  describe "#preauthorize_device/2" do
     test "invokes the device authorization and creats the device grant", context do
       %{application: application} = context
 
-      request = %{
-        "client_id" => application.uid,
-        "response_type" => "device_code"
-      }
+      request = %{"client_id" => application.uid}
 
       {:ok,
        %{
@@ -48,7 +45,7 @@ defmodule ExOauth2Provider.Authorization.DeviceCodeTest do
          interval: _interval,
          user_code: _user_code,
          verification_uri: _verification_uri
-       }} = Authorization.preauthorize(nil, request, @config)
+       }} = Authorization.preauthorize_device(request, @config)
     end
   end
 end
