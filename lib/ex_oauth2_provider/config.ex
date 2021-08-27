@@ -149,23 +149,23 @@ defmodule ExOauth2Provider.Config do
     end
   end
 
-  @spec device_flow_device_code_length(keyword()) :: [integer()]
+  @spec device_flow_device_code_length(keyword()) :: non_neg_integer()
   def device_flow_device_code_length(config),
-    do: get(config, :device_flow_device_code_length, 32)
+    do: config |> get(:device_flow_device_code_length, 32) |> abs()
 
-  @spec device_flow_polling_interval(keyword()) :: [integer()]
+  @spec device_flow_polling_interval(keyword()) :: non_neg_integer()
   def device_flow_polling_interval(config),
-    do: get(config, :device_flow_polling_interval, 5)
+    do: config |> get(:device_flow_polling_interval, 5) |> abs()
 
-  @spec device_flow_user_code_base(keyword()) :: [integer()]
+  @spec device_flow_user_code_base(keyword()) :: non_neg_integer()
   def device_flow_user_code_base(config),
-    do: get(config, :device_flow_user_code_base, 36)
+    do: config |> get(:device_flow_user_code_base, 36) |> abs()
 
-  @spec device_flow_user_code_length(keyword()) :: [integer()]
+  @spec device_flow_user_code_length(keyword()) :: non_neg_integer()
   def device_flow_user_code_length(config),
-    do: get(config, :device_flow_user_code_length, 8)
+    do: config |> get(:device_flow_user_code_length, 8) |> abs()
 
-  @spec device_flow_verification_uri(keyword()) :: [binary()]
+  @spec device_flow_verification_uri(keyword()) :: binary()
   def device_flow_verification_uri(config),
     do:
       get(config, :device_flow_verification_uri) ||

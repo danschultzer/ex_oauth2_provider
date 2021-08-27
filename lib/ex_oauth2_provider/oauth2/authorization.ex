@@ -13,8 +13,11 @@ defmodule ExOauth2Provider.Authorization do
 
   @doc """
   Check ExOauth2Provider.Authorization.Code for usage.
+
+  NOTE: the first argument is allowed to be nil because device authorization
+  does not have a user, there is no session.
   """
-  @spec preauthorize(Schema.t(), map(), keyword()) ::
+  @spec preauthorize(Schema.t() | nil, map(), keyword()) ::
           Response.success() | Response.error() | Response.redirect() | Response.native_redirect()
   def preauthorize(resource_owner, request, config \\ []) do
     case validate_response_type(request, config) do

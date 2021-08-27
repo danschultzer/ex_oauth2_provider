@@ -41,6 +41,7 @@ defmodule ExOauth2Provider.Authorization.DeviceCode.DeviceAuthorization do
     {:error, error, http_status}
   end
 
+  @spec generate_grant_params(map(), keyword()) :: map()
   defp generate_grant_params(request, config) do
     %{
       device_code: DeviceFlow.generate_device_code(),

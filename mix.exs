@@ -11,6 +11,11 @@ defmodule ExOauth2Provider.Mixfile do
       elixirc_paths: elixirc_paths(Mix.env()),
       start_permanent: Mix.env() == :prod,
       deps: deps(),
+      dialyzer: [
+        list_unused_filters: true,
+        plt_add_apps: [:ex_unit, :mix],
+        plt_file: {:no_warn, "plts/ex_oauth2_provider.plt"}
+      ],
 
       # Hex
       description: "No brainer OAuth 2.0 provider",
@@ -39,6 +44,7 @@ defmodule ExOauth2Provider.Mixfile do
 
       # Dev and test dependencies
       {:credo, "~> 1.1.0", only: [:dev, :test]},
+      {:dialyxir, "~> 1.0.0", only: [:dev, :test], runtime: false},
       {:ex_doc, ">= 0.0.0", only: :dev},
       {:ecto_sql, "~> 3.0.0", only: [:dev, :test]},
       {:plug_cowboy, "~> 2.0", only: :test},
