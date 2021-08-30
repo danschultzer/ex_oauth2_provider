@@ -64,6 +64,19 @@ defmodule ExOauth2Provider.Authorization do
   end
 
   @doc """
+  Authorize a device. Pass in a map with user_code for the request.
+  """
+  @spec authorize_device(Schema.t(), map(), keyword()) ::
+          {:ok, Schema.t()} | Response.error() | Response.redirect() | Response.native_redirect()
+  def authorize_device(resource_owner, request, config \\ []) do
+    authorize(
+      resource_owner,
+      Map.put(request, "response_type", "device_code"),
+      config
+    )
+  end
+
+  @doc """
   Check ExOauth2Provider.Authorization.Code for usage.
   """
   @spec deny(Schema.t(), map(), keyword()) :: Response.error() | Response.redirect()
