@@ -4,6 +4,7 @@ defmodule ExOauth2Provider.DeviceGrants do
   """
 
   import Ecto.Query
+  alias Ecto.{Changeset, Schema}
   alias ExOauth2Provider.Mixin.{Expirable}
 
   alias ExOauth2Provider.{
@@ -14,12 +15,19 @@ defmodule ExOauth2Provider.DeviceGrants do
 
   defdelegate is_expired?(device_grant), to: Expirable
 
+  @spec authorize(DeviceGrant.t(), Schema.t(), keyword()) ::
+          {:ok, Schema.t()} | {:error, Changeset.t()}
   def authorize(device_grant, resource_owner, config) do
     params = %{resource_owner_id: resource_owner.id, user_code: nil}
 
     device_grant
     |> DeviceGrant.changeset(params, config)
     |> get_repo(config).update()
+  end
+
+  @spec authorized?(DeviceGrant.t()) :: true | false
+  def authorized?(device_grant) do
+    device_grant.user_code == nil && device_grant.resource_owner_id != nil
   end
 
   @doc """
@@ -45,6 +53,7 @@ defmodule ExOauth2Provider.DeviceGrants do
     |> repo.insert()
   end
 
+  @spec delete_expired(keyword()) :: {integer(), nil | [term()]}
   def delete_expired(config) do
     {schema, repo} = schema_and_repo_from_config(config)
     lifespan = Config.authorization_code_expires_in(config)
@@ -56,6 +65,7 @@ defmodule ExOauth2Provider.DeviceGrants do
     |> repo.delete_all()
   end
 
+  @spec delete!(Schema.t(), keyword()) :: Schema.t()
   def delete!(grant, config) do
     get_repo(config).delete!(grant)
   end
@@ -81,13 +91,14 @@ defmodule ExOauth2Provider.DeviceGrants do
 
   def find_by_user_code(nil, _config), do: nil
 
-  # DeviceGrant | nil
+  @spec find_by_user_code(binary(), keyword()) :: Schema.t() | nil
   def find_by_user_code(user_code, config) do
     config
     |> schema_and_repo_from_config()
     |> fetch_grant_with_user_code(user_code)
   end
 
+  @spec update_last_polled_at!(Schema.t(), keyword()) :: Schema.t()
   def update_last_polled_at!(grant, config) do
     grant
     |> DeviceGrant.changeset(%{last_polled_at: DateTime.utc_now()}, config)
@@ -95,7 +106,6 @@ defmodule ExOauth2Provider.DeviceGrants do
   end
 
   defp fetch_grant_with_user_code({schema, repo}, user_code) do
-    # from(d in schema, preload: [:application], where: d.user_code == ^user_code)
     schema
     |> repo.get_by(user_code: user_code)
     |> repo.preload(:application)
