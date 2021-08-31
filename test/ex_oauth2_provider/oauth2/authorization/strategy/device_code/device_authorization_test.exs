@@ -168,4 +168,38 @@ defmodule ExOauth2Provider.Authorization.DeviceCode.DeviceAuthorizationTest do
         DeviceAuthorization.process_request(request, @config)
     end
   end
+
+  describe "#process_request when values are configured" do
+    test "it generates the grant based on the config", context do
+      %{application: application} = context
+
+      request = %{
+        "client_id" => application.uid,
+        "response_type" => "device_code"
+      }
+
+      custom_config =
+        Keyword.merge(
+          @config,
+          authorization_code_expires_in: 60,
+          device_flow_device_code_length: 10,
+          device_flow_polling_interval: 30,
+          device_flow_user_code_length: 4
+        )
+
+      {:ok,
+       %{
+         device_code: device_code,
+         expires_in: expires_in,
+         interval: interval,
+         user_code: user_code
+       }} = DeviceAuthorization.process_request(request, custom_config)
+
+      # Base64 encoded 10 char string is 16 long.
+      assert String.length(device_code) == 16
+      assert expires_in == 60
+      assert interval == 30
+      assert String.length(user_code) == 4
+    end
+  end
 end

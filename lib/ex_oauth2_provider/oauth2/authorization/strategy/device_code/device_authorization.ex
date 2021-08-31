@@ -44,10 +44,10 @@ defmodule ExOauth2Provider.Authorization.DeviceCode.DeviceAuthorization do
   @spec generate_grant_params(map(), keyword()) :: map()
   defp generate_grant_params(request, config) do
     %{
-      device_code: DeviceFlow.generate_device_code(),
+      device_code: DeviceFlow.generate_device_code(config),
       expires_in: Config.authorization_code_expires_in(config),
       scopes: Map.get(request, "scope"),
-      user_code: DeviceFlow.generate_user_code()
+      user_code: DeviceFlow.generate_user_code(config)
     }
   end
 

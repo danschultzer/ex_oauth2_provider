@@ -3,7 +3,7 @@ defmodule ExOauth2Provider.Utils.DeviceFlow do
 
   @spec generate_device_code() :: binary()
   @spec generate_device_code(keyword()) :: binary()
-  def generate_device_code(config \\ [otp_app: :ex_oauth2_provider]) do
+  def generate_device_code(config \\ []) do
     config
     |> Config.device_flow_device_code_length()
     |> :crypto.strong_rand_bytes()
@@ -12,7 +12,7 @@ defmodule ExOauth2Provider.Utils.DeviceFlow do
 
   @spec generate_user_code() :: binary()
   @spec generate_user_code(keyword()) :: binary()
-  def generate_user_code(config \\ [otp_app: :ex_oauth2_provider]) do
+  def generate_user_code(config \\ []) do
     # NOTE: Integer.pow only exists in elixir 1.12+
     # So we have to convert erlangs pow response to integer
     # Thanks to Doorkeeper for this!
