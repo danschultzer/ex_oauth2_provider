@@ -4,7 +4,7 @@ defmodule ExOauth2Provider.DeviceGrantsTest do
   alias ExOauth2Provider.DeviceGrants
   alias ExOauth2Provider.Test.Fixtures
   alias ExOauth2Provider.Test.QueryHelpers
-  alias Dummy.{OauthDeviceGrants.OauthDeviceGrant, Repo, Users.User}
+  alias Dummy.{OauthDeviceGrants.OauthDeviceGrant, Users.User}
 
   @config [otp_app: :ex_oauth2_provider]
 

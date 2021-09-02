@@ -1,6 +1,10 @@
 defmodule ExOauth2Provider.Authorization.DeviceCode.UserInteraction do
-  alias Ecto.Changeset
-  alias ExOauth2Provider.DeviceGrants
+  @moduledoc """
+  User Interaction Request - approve the grant with user code
+  https://datatracker.ietf.org/doc/html/rfc8628#section-3.3
+  """
+  alias Ecto.{Changeset, Schema}
+  alias ExOauth2Provider.{Authorization.Utils.Response, DeviceGrants}
 
   @message_lookup [
     expired_user_code: "The user_code has expired.",
@@ -15,8 +19,8 @@ defmodule ExOauth2Provider.Authorization.DeviceCode.UserInteraction do
     user_code_missing: :bad_request
   ]
 
-  # User Interaction Request - approve the grant with user code
-  # https://datatracker.ietf.org/doc/html/rfc8628#section-3.3
+  @spec process_request(Schema.t(), map(), keyword()) ::
+          Response.device_authorization_success() | Response.error()
   def process_request(owner, request, config \\ []) do
     %{config: config, owner: owner, user_code: Map.get(request, "user_code")}
     |> find_device_grant()

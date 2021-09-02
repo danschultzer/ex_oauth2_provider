@@ -1,8 +1,13 @@
 defmodule ExOauth2Provider.Authorization.DeviceCode.DeviceAuthorization do
+  @moduledoc """
+  Device authorization request handler
+  https://tools.ietf.org/html/rfc8628#section-3.1
+  """
   alias ExOauth2Provider.{
     Config,
     DeviceGrants,
     Authorization.Utils,
+    Authorization.Utils.Response,
     Utils.DeviceFlow,
     Utils.Error,
     Utils.Validation
@@ -10,8 +15,8 @@ defmodule ExOauth2Provider.Authorization.DeviceCode.DeviceAuthorization do
 
   @required_params ~w(client_id)
 
-  # Device Authorization Request
-  # https://tools.ietf.org/html/rfc8628#section-3.1
+  @spec process_request(map(), keyword()) ::
+          Response.device_preauthorization_success() | Response.error()
   def process_request(request, config \\ []) do
     %{config: config, request: request}
     |> Validation.validate_required_query_params(@required_params)

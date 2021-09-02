@@ -18,7 +18,11 @@ defmodule ExOauth2Provider.Authorization do
   does not have a user, there is no session.
   """
   @spec preauthorize(Schema.t() | nil, map(), keyword()) ::
-          Response.success() | Response.error() | Response.redirect() | Response.native_redirect()
+          Response.preauthorization_success()
+          | Response.device_preauthorization_success()
+          | Response.error()
+          | Response.redirect()
+          | Response.native_redirect()
   def preauthorize(resource_owner, request, config \\ []) do
     case validate_response_type(request, config) do
       {:error, :invalid_response_type} ->
@@ -36,7 +40,10 @@ defmodule ExOauth2Provider.Authorization do
   Authorize access for a device. See #preauthorize/3 for more details.
   """
   @spec preauthorize_device(map(), keyword()) ::
-          Response.success() | Response.error() | Response.redirect() | Response.native_redirect()
+          Response.device_preauthorization_success()
+          | Response.error()
+          | Response.redirect()
+          | Response.native_redirect()
   def preauthorize_device(request, config \\ []) do
     # This wraps preauthorize but since there's no user or response type
     # in these requests we can pass what's needed.

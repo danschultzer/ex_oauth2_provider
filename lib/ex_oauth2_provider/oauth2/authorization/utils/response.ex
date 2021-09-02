@@ -1,12 +1,16 @@
 defmodule ExOauth2Provider.Authorization.Utils.Response do
   @moduledoc false
 
+  alias Ecto.Schema
   alias ExOauth2Provider.{RedirectURI, Scopes, Utils}
 
-  @type native_redirect :: {:native_redirect, %{code: binary()}}
-  @type redirect :: {:redirect, binary()}
+  @type authorization_success :: {:ok, map()}
+  @type device_authorization_success :: {:ok, Schema.t()}
+  @type device_preauthorization_success :: {:ok, map()}
   @type error :: {:error, map(), integer()}
-  @type success :: {:ok, map()}
+  @type native_redirect :: {:native_redirect, %{code: binary()}}
+  @type preauthorization_success :: {:ok, Schema.t(), list()}
+  @type redirect :: {:redirect, binary()}
 
   @doc false
   @spec error_response({:error, map()}, keyword()) :: error() | redirect() | native_redirect()
@@ -15,7 +19,7 @@ defmodule ExOauth2Provider.Authorization.Utils.Response do
 
   @doc false
   @spec preauthorize_response({:ok, map()} | {:error, map()}, keyword()) ::
-          success() | error() | redirect() | native_redirect()
+          preauthorization_success() | error() | redirect() | native_redirect()
   def preauthorize_response({:ok, %{grant: grant} = params}, config),
     do: build_response(params, %{code: grant.token}, config)
 
@@ -27,7 +31,7 @@ defmodule ExOauth2Provider.Authorization.Utils.Response do
 
   @doc false
   @spec authorize_response({:ok, map()} | {:error, map()}, keyword()) ::
-          success() | error() | redirect() | native_redirect()
+          authorization_success() | error() | redirect() | native_redirect()
   def authorize_response({:ok, %{grant: grant} = params}, config),
     do: build_response(params, %{code: grant.token}, config)
 
