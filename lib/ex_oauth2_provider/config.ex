@@ -178,6 +178,41 @@ defmodule ExOauth2Provider.Config do
           device_flow_verification_uri: "https://really.cool.site/device"
         """)
 
+  @doc """
+  This returns the function to use to determine if we should skip authorization
+  and automatically grant an authorization token. This is disabled by default.
+
+  To implement it you can set :skip_authorization in the config to any function
+  you wish to use to determine if it applies to the given user and/or application.
+
+  The behavior ExOauth2Provider.Behaviors.SkipAuthorization is provided to help
+  facilitate proper implementation.
+
+  For example:
+
+    config :my_app, ExOauth2Provider,
+      skip_authorization_with: &MyModule.my_function/2
+
+
+  Then you can do whatever you want with your implementation!
+
+    defmodule MyModule do
+      @behaviour ExOauth2Provider.Behaviors.SkipAuthorization
+
+      def skip_authorization(user, application) do
+        user.super_cool? || application.trusted?
+      end
+    end
+  """
+  @spec skip_authorization(keyword()) :: function()
+  def skip_authorization(config) do
+    get(
+      config,
+      :skip_authorization_with,
+      &ExOauth2Provider.Features.skip_authorization?/2
+    )
+  end
+
   defp get(config, key, value \\ nil) do
     otp_app = Keyword.get(config, :otp_app)
 

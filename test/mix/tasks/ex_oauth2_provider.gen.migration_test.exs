@@ -46,6 +46,10 @@ defmodule Mix.Tasks.ExOauth2Provider.Gen.MigrationTest do
                "add :application_id, references(:oauth_applications, on_delete: :nothing, type: binary_id)"
 
       refute file =~ ":oauth_device_grants"
+
+      # TODO: this could be improved by testing each table indpendently and
+      # completely.
+      assert file =~ "add :is_trusted, :boolean, null: false, default: false"
     end)
   end
 
