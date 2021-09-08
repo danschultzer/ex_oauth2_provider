@@ -98,6 +98,7 @@ defmodule ExOauth2Provider.Authorization.Code do
     |> validate_request(config)
     |> check_previous_authorization(config)
     |> reissue_grant(config)
+    |> skip_authorization_if_applicable(config)
     |> Response.preauthorize_response(config)
   end
 
@@ -121,6 +122,19 @@ defmodule ExOauth2Provider.Authorization.Code do
     do: issue_grant({:ok, params}, config)
 
   defp reissue_grant({:ok, params}, _config), do: {:ok, params}
+
+  defp skip_authorization_if_applicable({:error, _params} = error, _config), do: error
+
+  defp skip_authorization_if_applicable({:ok, %{grant: _grant}} = payload, _config), do: payload
+
+  defp skip_authorization_if_applicable({:ok, params}, config) do
+    %{client: application, resource_owner: user} = params
+
+    case Config.skip_authorization(config).(user, application) do
+      true -> issue_grant({:ok, params}, config)
+      false -> {:ok, params}
+    end
+  end
 
   @doc """
   Authorizes an authorization code flow request.

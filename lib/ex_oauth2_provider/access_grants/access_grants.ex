@@ -23,11 +23,10 @@ defmodule ExOauth2Provider.AccessGrants do
   """
   @spec get_active_grant_for(Application.t(), binary(), keyword()) :: AccessGrant.t() | nil
   def get_active_grant_for(application, token, config \\ []) do
-    config
-    |> Config.access_grant()
-    |> Config.repo(config).get_by(application_id: application.id, token: token)
-    |> Expirable.filter_expired()
-    |> Revocable.filter_revoked()
+    get_active_grant_with_criteria(
+      [application_id: application.id, token: token],
+      config
+    )
   end
 
   @doc """
@@ -42,12 +41,33 @@ defmodule ExOauth2Provider.AccessGrants do
       {:error, %Ecto.Changeset{}}
 
   """
-  @spec create_grant(Ecto.Schema.t(), Application.t(), map(), keyword()) :: {:ok, AccessGrant.t()} | {:error, term()}
+  @spec create_grant(Ecto.Schema.t(), Application.t(), map(), keyword()) ::
+          {:ok, AccessGrant.t()} | {:error, term()}
   def create_grant(resource_owner, application, attrs, config \\ []) do
     config
     |> Config.access_grant()
     |> struct(resource_owner: resource_owner, application: application)
     |> AccessGrant.changeset(attrs, config)
     |> Config.repo(config).insert()
+  end
+
+  @doc """
+  Retrieve active grant for the given resource owner and token.
+  """
+  @spec get_active_grant_for_owner_by_token(Ecto.Schema.t(), binary(), keyword()) ::
+          AccessGrant.t() | nil
+  def get_active_grant_for_owner_by_token(owner, token, config \\ []) do
+    get_active_grant_with_criteria(
+      [token: token, resource_owner_id: owner.id],
+      config
+    )
+  end
+
+  defp get_active_grant_with_criteria(criteria, config) do
+    config
+    |> Config.access_grant()
+    |> Config.repo(config).get_by(criteria)
+    |> Expirable.filter_expired()
+    |> Revocable.filter_revoked()
   end
 end
