@@ -42,7 +42,7 @@ defmodule ExOauth2Provider.Token.RefreshToken do
       |> Config.repo(config).preload(:application)
 
     case access_token do
-      nil          -> Error.add_error({:ok, params}, Error.invalid_request())
+      nil          -> Error.add_error({:ok, params}, Error.invalid_grant())
       access_token -> {:ok, Map.put(params, :refresh_token, access_token)}
     end
   end
