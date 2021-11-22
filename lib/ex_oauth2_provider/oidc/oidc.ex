@@ -13,7 +13,11 @@ defmodule ExOauth2Provider.Oidc do
     issuer = Keyword.get(oidc_config, :issuer, "https://retailpay.africa")
     resource_owner_claims = Keyword.get(oidc_config, :resource_owner_claims, [:id])
 
-    signer = Joken.Signer.create("HS256", "secret")
+    signer =
+      Joken.Signer.create(
+        "HS512",
+        "l57+4+ChYKGGX6c7Aiscu1KQaXakALMuQ1i4HG2Qv842VhjkCDStolV/LbL3qGF0"
+      )
 
     joken_config =
       %{}
