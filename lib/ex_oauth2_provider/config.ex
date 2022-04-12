@@ -213,6 +213,19 @@ defmodule ExOauth2Provider.Config do
     )
   end
 
+  @doc """
+  Returns a function that is used to verify that a token string is valid.
+  This allows you to add in additional functionality like a caching layer or
+  side effects.
+  """
+  def token_authenticator(config) do
+    get(
+      config,
+      :authenticate_token_with,
+      &ExOauth2Provider.authenticate_token/2
+    )
+  end
+
   defp get(config, key, value \\ nil) do
     otp_app = Keyword.get(config, :otp_app)
 

@@ -1,4 +1,4 @@
-defmodule ExOauth2Provider.Behaviors.SkipAuthorization do
+defmodule ExOauth2Provider.Behaviours.SkipAuthorization do
   @moduledoc """
   Define the rules used to determine if authorization can be skipped. If your
   app has unique criteria then implement it.
