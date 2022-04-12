@@ -14,7 +14,9 @@ defmodule ExOauth2Provider.Plug.StoreCodeChallenge do
   defp ensure_code_challenge(conn, config) do
     case conn.params do
       %{"client_id" => client_id, "code_challenge" => code_challenge} ->
-        Config.pkce_module(config).store(client_id, code_challenge)
+        code_challenge_method = Map.get(conn.params, "code_challenge_method")
+        Config.pkce_module(config).store(client_id, code_challenge, code_challenge_method)
+
         conn
 
       _ ->

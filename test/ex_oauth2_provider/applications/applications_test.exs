@@ -1,6 +1,7 @@
 defmodule ExOauth2Provider.ApplicationsTest do
   use ExOauth2Provider.TestCase
 
+  alias ExOauth2Provider.Authorization.Utils.Pkce
   alias ExOauth2Provider.Test.Fixtures
   alias ExOauth2Provider.{AccessTokens, Applications}
   alias Dummy.{OauthApplications.OauthApplication, OauthAccessTokens.OauthAccessToken, Repo}
@@ -76,6 +77,21 @@ defmodule ExOauth2Provider.ApplicationsTest do
 
       assert %OauthApplication{id: id} =
                Applications.load_application(application.uid, {:client_secret, :not_required},
+                 otp_app: :ex_oauth2_provider
+               )
+
+      assert id == application.id
+    end
+
+    test "loading via code verifier", %{application: application} do
+      code_verifier = "this_is_the_code_verifier"
+      code_challenge = Pkce.generate_code_challenge(code_verifier, "S256")
+      Pkce.store(application.uid, code_challenge)
+
+      assert %OauthApplication{id: id} =
+               Applications.load_application(
+                 application.uid,
+                 {:code_verifier, code_verifier, "S256"},
                  otp_app: :ex_oauth2_provider
                )
 

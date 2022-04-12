@@ -105,11 +105,11 @@ defmodule ExOauth2Provider.Applications.Strategy.SqlStrategy do
     |> Config.repo(config).get_by(uid: uid, secret: client_secret)
   end
 
-  def load_application(uid, {:code_verifier, code_verifier}, config) do
+  def load_application(uid, {:code_verifier, code_verifier, code_challenge_method}, config) do
     config
     |> Config.application()
     |> Config.repo(config).get_by(uid: uid)
-    |> verify_pkce(code_verifier, config)
+    |> verify_pkce(code_verifier, code_challenge_method, config)
   end
 
   def load_application(uid, :refresh_token_flow, config) do
@@ -122,10 +122,10 @@ defmodule ExOauth2Provider.Applications.Strategy.SqlStrategy do
     end
   end
 
-  defp verify_pkce(nil, _code_verifier, _config), do: nil
+  defp verify_pkce(nil, _code_verifier, _code_challenge_method, _config), do: nil
 
-  defp verify_pkce(application, code_verifier, config) do
-    case Config.pkce_module(config).verify(application, code_verifier) do
+  defp verify_pkce(application, code_verifier, code_challenge_method, config) do
+    case Config.pkce_module(config).verify(application, code_verifier, code_challenge_method) do
       :ok ->
         application
 

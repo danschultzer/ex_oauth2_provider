@@ -18,7 +18,8 @@ defmodule ExOauth2Provider.Token.Utils do
               end
 
             code_verifier ->
-              {:code_verifier, code_verifier}
+              code_challenge_method = Map.get(request, "code_challenge_method")
+              {:code_verifier, code_verifier, code_challenge_method}
           end
 
         client_secret ->
