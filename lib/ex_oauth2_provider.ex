@@ -96,4 +96,11 @@ defmodule ExOauth2Provider do
 
     {:ok, access_token}
   end
+  defp load_application({:error, error}, _config), do: {:error, error}
+  defp load_application({:ok, access_token}, config) do
+    repo         = Config.repo(config)
+    application = repo.preload(access_token, :application)
+
+    {:ok, load_application}
+  end
 end
