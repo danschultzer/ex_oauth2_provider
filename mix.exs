@@ -44,7 +44,7 @@ defmodule ExOauth2Provider.Mixfile do
 
       {:ecto_sql, "~> 3.5.0", only: :test},
       {:plug_cowboy, "~> 2.0", only: :test},
-      {:postgrex, "~> 0.14", only: :test}]
+      {:postgrex, "~> 0.15", only: :test}]
   end
 
   defp package do
