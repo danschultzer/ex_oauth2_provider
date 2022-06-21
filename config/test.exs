@@ -1,4 +1,4 @@
-use Mix.Config
+import Config
 
 config :ex_oauth2_provider, namespace: Dummy
 config :ex_oauth2_provider, ExOauth2Provider,
