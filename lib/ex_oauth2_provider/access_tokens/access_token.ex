@@ -24,12 +24,12 @@ defmodule ExOauth2Provider.AccessTokens.AccessToken do
   @doc false
   def attrs() do
     [
-      {:token, :string, null: false},
+      {:token, :string},
       {:refresh_token, :string},
       {:expires_in, :integer},
       {:revoked_at, :utc_datetime},
       {:scopes, :string},
-      {:previous_refresh_token, :string, null: false, default: ""}
+      {:previous_refresh_token, :string, default: ""}
     ]
   end
 
