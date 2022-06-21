@@ -34,7 +34,7 @@ defmodule ExOauth2Provider.Mixfile do
 
   defp deps do
     [
-      {:ecto, "~> 3.5"},
+      {:ecto, "~> 3.6"},
       {:plug, ">= 1.5.0 and < 2.0.0"},
 
       # Dev and test dependencies
@@ -42,7 +42,7 @@ defmodule ExOauth2Provider.Mixfile do
 
       {:ex_doc, ">= 0.0.0", only: :dev},
 
-      {:ecto_sql, "~> 3.5.0", only: :test},
+      {:ecto_sql, "~> 3.6.0", only: :test},
       {:plug_cowboy, "~> 2.0", only: :test},
       {:postgrex, "~> 0.15", only: :test}]
   end
