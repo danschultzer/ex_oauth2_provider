@@ -28,7 +28,7 @@ Generate the migrations and schema modules:
 mix ex_oauth2_provider.install
 ```
 
-Add the following to `config/config.ex`:
+Add the following to `config/config.exs`:
 
 ```elixir
 config :my_app, ExOauth2Provider,
