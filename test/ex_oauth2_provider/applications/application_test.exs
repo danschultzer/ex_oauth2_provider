@@ -2,7 +2,9 @@ defmodule ExOauth2Provider.Applications.ApplicationTest do
   use ExOauth2Provider.TestCase
 
   alias ExOauth2Provider.Applications.Application
+  alias ExOauth2Provider.Test.Fixtures
   alias Dummy.OauthApplications.OauthApplication
+  alias Dummy.Repo
 
   describe "changeset/2 with existing application" do
     setup do
@@ -35,11 +37,8 @@ defmodule ExOauth2Provider.Applications.ApplicationTest do
     end
 
     test "require valid redirect uri", %{application: application} do
-      ["",
-      "invalid",
-      "https://example.com invalid",
-      "https://example.com http://example.com"]
-      |> Enum.each(fn(redirect_uri) ->
+      ["", "invalid", "https://example.com invalid", "https://example.com http://example.com"]
+      |> Enum.each(fn redirect_uri ->
         changeset = Application.changeset(application, %{redirect_uri: redirect_uri})
         assert changeset.errors[:redirect_uri]
       end)
@@ -48,6 +47,15 @@ defmodule ExOauth2Provider.Applications.ApplicationTest do
     test "doesn't require scopes", %{application: application} do
       changeset = Application.changeset(application, %{scopes: ""})
       refute changeset.errors[:scopes]
+    end
+
+    test "allows is_trusted to be changed" do
+      app =
+        Fixtures.application()
+        |> Application.changeset(%{is_trusted: true})
+        |> Repo.update!()
+
+      assert app.is_trusted == true
     end
   end
 
@@ -63,7 +71,7 @@ defmodule ExOauth2Provider.Applications.ApplicationTest do
     end
 
     schema "oauth_applications" do
-      belongs_to :owner, __MODULE__
+      belongs_to(:owner, __MODULE__)
 
       application_fields()
       timestamps()
@@ -71,6 +79,7 @@ defmodule ExOauth2Provider.Applications.ApplicationTest do
   end
 
   test "with overridden `:owner`" do
-    assert %Ecto.Association.BelongsTo{owner: OverrideOwner} = OverrideOwner.__schema__(:association, :owner)
+    assert %Ecto.Association.BelongsTo{owner: OverrideOwner} =
+             OverrideOwner.__schema__(:association, :owner)
   end
 end

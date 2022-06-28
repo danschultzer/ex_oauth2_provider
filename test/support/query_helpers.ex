@@ -21,6 +21,10 @@ defmodule ExOauth2Provider.Test.QueryHelpers do
   defp convert_timestamp({key, %DateTime{} = value}), do: {key, %{value | microsecond: {0, 0}}}
   defp convert_timestamp(any), do: any
 
+  def count(schema) do
+    Repo.one(from(r in schema, select: count(r.id)))
+  end
+
   def get_latest_inserted(module) do
     module
     |> order_by([x], desc: x.id)

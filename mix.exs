@@ -8,9 +8,14 @@ defmodule ExOauth2Provider.Mixfile do
       app: :ex_oauth2_provider,
       version: @version,
       elixir: "~> 1.8",
-      elixirc_paths: elixirc_paths(Mix.env),
-      start_permanent: Mix.env == :prod,
+      elixirc_paths: elixirc_paths(Mix.env()),
+      start_permanent: Mix.env() == :prod,
       deps: deps(),
+      dialyzer: [
+        list_unused_filters: true,
+        plt_add_apps: [:ex_unit, :mix],
+        plt_file: {:no_warn, "plts/ex_oauth2_provider.plt"}
+      ],
 
       # Hex
       description: "No brainer OAuth 2.0 provider",
@@ -23,7 +28,7 @@ defmodule ExOauth2Provider.Mixfile do
   end
 
   def application do
-    [extra_applications: extra_applications(Mix.env)]
+    [extra_applications: extra_applications(Mix.env())]
   end
 
   defp extra_applications(:test), do: [:ecto, :logger]
@@ -34,17 +39,17 @@ defmodule ExOauth2Provider.Mixfile do
 
   defp deps do
     [
-      {:ecto, "~> 3.0"},
+      {:ecto, "~> 3.8"},
       {:plug, ">= 1.5.0 and < 2.0.0"},
 
       # Dev and test dependencies
       {:credo, "~> 1.1.0", only: [:dev, :test]},
-
+      {:dialyxir, "~> 1.0.0", only: [:dev, :test], runtime: false},
       {:ex_doc, ">= 0.0.0", only: :dev},
-
-      {:ecto_sql, "~> 3.0.0", only: :test},
+      {:ecto_sql, "~> 3.8", only: [:dev, :test]},
       {:plug_cowboy, "~> 2.0", only: :test},
-      {:postgrex, "~> 0.14", only: :test}]
+      {:postgrex, "~> 0.14", only: :test}
+    ]
   end
 
   defp package do

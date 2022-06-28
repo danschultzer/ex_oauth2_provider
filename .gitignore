@@ -8,3 +8,6 @@ erl_crash.dump
 /tmp
 .DS_Store
 /.elixir_ls
+*.swp
+/plts
+.tool-versions
