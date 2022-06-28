@@ -39,14 +39,14 @@ defmodule ExOauth2Provider.Mixfile do
 
   defp deps do
     [
-      {:ecto, "~> 3.0"},
+      {:ecto, "~> 3.8"},
       {:plug, ">= 1.5.0 and < 2.0.0"},
 
       # Dev and test dependencies
       {:credo, "~> 1.1.0", only: [:dev, :test]},
       {:dialyxir, "~> 1.0.0", only: [:dev, :test], runtime: false},
       {:ex_doc, ">= 0.0.0", only: :dev},
-      {:ecto_sql, "~> 3.0.0", only: [:dev, :test]},
+      {:ecto_sql, "~> 3.8", only: [:dev, :test]},
       {:plug_cowboy, "~> 2.0", only: :test},
       {:postgrex, "~> 0.14", only: :test}
     ]

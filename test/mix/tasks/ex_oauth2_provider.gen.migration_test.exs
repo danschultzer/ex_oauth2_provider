@@ -49,7 +49,7 @@ defmodule Mix.Tasks.ExOauth2Provider.Gen.MigrationTest do
 
       # TODO: this could be improved by testing each table indpendently and
       # completely.
-      assert file =~ "add :is_trusted, :boolean, null: false, default: false"
+      assert file =~ "add :is_trusted, :boolean, default: false, null: false"
     end)
   end
 
