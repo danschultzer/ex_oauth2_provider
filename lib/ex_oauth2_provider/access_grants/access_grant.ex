@@ -23,9 +23,9 @@ defmodule ExOauth2Provider.AccessGrants.AccessGrant do
   @doc false
   def attrs() do
     [
-      {:token, :string},
-      {:expires_in, :integer},
-      {:redirect_uri, :string},
+      {:token, :string, null: false},
+      {:expires_in, :integer, null: false},
+      {:redirect_uri, :string, null: false},
       {:revoked_at, :utc_datetime},
       {:scopes, :string}
     ]

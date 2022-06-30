@@ -8,6 +8,23 @@ defmodule ExOauth2Provider.Schema do
   defmacro __using__(config \\ []) do
     quote do
       @config unquote(config)
+      @ecto_field_options [
+        :autogenerate,
+        :default,
+        :defaults,
+        :foreign_key,
+        :load_in_query,
+        :on_replace,
+        :primary_key,
+        :read_after_writes,
+        :redact,
+        :references,
+        :skip_default_validation,
+        :source,
+        :type,
+        :virtual,
+        :where
+      ]
     end
   end
 
@@ -19,6 +36,15 @@ defmodule ExOauth2Provider.Schema do
           field(name, type)
 
         {name, type, defaults} ->
+          # NOTE: Ecto.Schema.field/3 checks the values passed as options.
+          # :null is not valid so let's only pass what's acceptable so we can
+          # rely on the attrs defined to generate migrations.
+          defaults =
+          Enum.filter(
+            defaults,
+            fn {name, _value} -> name in @ecto_field_options end
+          )
+
           field(name, type, defaults)
       end)
 
