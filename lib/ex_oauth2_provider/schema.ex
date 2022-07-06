@@ -19,6 +19,7 @@ defmodule ExOauth2Provider.Schema do
           field(name, type)
 
         {name, type, defaults} ->
+          defaults = Keyword.delete(defaults, :null)
           field(name, type, defaults)
       end)
 
