@@ -93,6 +93,34 @@ Revocation will return `{:ok, %{}}` status even if the token is invalid.
 
 ExOauth2Provider doesn't support **implicit** grant flow. Instead you should set up an application with no client secret, and use the **Authorize code** grant flow. `client_secret` isn't required unless it has been set for the application.
 
+
+
+#### PKCE [RFC-7637](https://datatracker.ietf.org/doc/html/rfc7636)
+
+Enable PKCE in configuration `config/config.ex`:
+
+```elixir
+config :my_app, ExOauth2Provider,
+  # ...
+  # this will enable PKCE for *all* applications
+  use_pkce: true
+```
+
+When `:use_pkce` is set to true, PKCE is enabled globally for all apps when using the authorization code flow. It is not required or enforced. Instead, when a request comes with a `code_challenge`, we store the challenge in oauth_access_grants and use it later when granting an access token.
+
+```elixir
+# GET /oauth/authorize?response_type=code&client_id=CLIENT_ID&redirect_uri=CALLBACK_URL&scope=read&code_challenge=CODE_CHALLENGE&code_challenge_method=CODE_CHALLENGE_METHOD
+case ExOauth2Provider.Authorization.preauthorize(resource_owner, params, otp_app: :my_app) do
+  {:ok, client, scopes}             -> # render authorization page
+  {:redirect, redirect_uri}         -> # redirect to external redirect_uri
+  {:native_redirect, %{code: code}} -> # redirect to local :show endpoint
+  {:error, error, http_status}      -> # render error page
+end
+```
+
+When making an authorization code flow you are now required to provide a `code_challenge` and `code_challenge_method` query fields for the authorization request and `code_verifier` field for the access token request, as per [RFC-7637](https://datatracker.ietf.org/doc/html/rfc7636).
+
+
 ### Other supported token grants
 
 #### Client credentials
