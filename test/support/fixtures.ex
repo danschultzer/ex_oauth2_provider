@@ -52,7 +52,7 @@ defmodule ExOauth2Provider.Test.Fixtures do
   end
 
 
-  def access_grant(application, user, code, redirect_uri) do
+  def access_grant(application, user, code, redirect_uri, extra_attrs \\ []) do
     attrs = [
       expires_in: 900,
       redirect_uri: "urn:ietf:wg:oauth:2.0:oob",
@@ -61,7 +61,7 @@ defmodule ExOauth2Provider.Test.Fixtures do
       token: code,
       scopes: "read",
       redirect_uri: redirect_uri
-    ]
+    ] ++ extra_attrs
 
     %OauthAccessGrant{}
     |> Changeset.change(attrs)

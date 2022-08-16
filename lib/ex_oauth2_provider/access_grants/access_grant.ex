@@ -27,7 +27,9 @@ defmodule ExOauth2Provider.AccessGrants.AccessGrant do
       {:expires_in, :integer, null: false},
       {:redirect_uri, :string, null: false},
       {:revoked_at, :utc_datetime},
-      {:scopes, :string}
+      {:scopes, :string},
+      {:code_challenge, :string},
+      {:code_challenge_method, :string}
     ]
   end
 
@@ -66,7 +68,7 @@ defmodule ExOauth2Provider.AccessGrants.AccessGrant do
   @spec changeset(Ecto.Schema.t(), map(), keyword()) :: Changeset.t()
   def changeset(grant, params, config) do
     grant
-    |> Changeset.cast(params, [:redirect_uri, :expires_in, :scopes])
+    |> Changeset.cast(params, [:redirect_uri, :expires_in, :scopes, :code_challenge, :code_challenge_method])
     |> Changeset.assoc_constraint(:application)
     |> Changeset.assoc_constraint(:resource_owner)
     |> put_token()

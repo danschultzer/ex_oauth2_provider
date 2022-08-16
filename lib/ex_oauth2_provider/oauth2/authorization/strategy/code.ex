@@ -63,7 +63,8 @@ defmodule ExOauth2Provider.Authorization.Code do
     Authorization.Utils.Response,
     RedirectURI,
     Scopes,
-    Utils.Error}
+    Utils.Error,
+    Utils.Validation}
   alias Ecto.Schema
 
   @doc """
@@ -140,9 +141,15 @@ defmodule ExOauth2Provider.Authorization.Code do
 
   defp issue_grant({:error, %{error: _error} = params}, _config), do: {:error, params}
   defp issue_grant({:ok, %{resource_owner: resource_owner, client: application, request: request} = params}, config) do
-    grant_params =
-      request
-      |> Map.take(["redirect_uri", "scope"])
+    filtered_request = if Config.use_pkce?(config) do
+      Map.merge(%{"code_challenge_method" => "plain"}, request)
+      |> Map.take(["redirect_uri", "scope", "code_challenge", "code_challenge_method"])
+      |> Map.update!("code_challenge", fn v -> String.replace(v, "=", "") end)
+    else
+      Map.take(request, ["redirect_uri", "scope"])
+    end
+
+    grant_params = filtered_request
       |> Map.new(fn {k, v} ->
         case k do
           "scope" -> {:scopes, v}
@@ -188,6 +195,7 @@ defmodule ExOauth2Provider.Authorization.Code do
     |> validate_resource_owner()
     |> validate_redirect_uri(config)
     |> validate_scopes(config)
+    |> validate_pkce(Config.use_pkce?(config))
   end
 
   defp validate_resource_owner({:ok, %{resource_owner: resource_owner} = params}) do
@@ -225,4 +233,29 @@ defmodule ExOauth2Provider.Authorization.Code do
     end
   end
   defp validate_redirect_uri({:ok, params}, _config), do: Error.add_error({:ok, params}, Error.invalid_request())
+
+  defp validate_pkce({:error, params}, _use_pkce?), do: {:error, params}
+  defp validate_pkce({:ok, params}, false), do: {:ok, params}
+  defp validate_pkce({:ok, %{request: %{"code_challenge" => code_challenge} = request} = params}, true) do
+    code_challenge_method = Map.get(request, "code_challenge_method", "plain")
+
+    if valid_code_challenge_format?(code_challenge, code_challenge_method) do
+      {:ok, params}
+    else
+      Error.add_error({:ok, params}, Error.invalid_request())
+    end
+  end
+  defp validate_pkce({:ok, params}, true), do: Error.add_error({:ok, params}, Error.invalid_request()) # missing code_challenge
+
+  @sha256_byte_size 256/8
+
+  defp valid_code_challenge_format?(nil, _code_challenge_method), do: false
+  defp valid_code_challenge_format?(code_challenge, "plain"), do: Validation.valid_code_verifier_format?(code_challenge)
+  defp valid_code_challenge_format?(code_challenge, "S256") do
+    case Base.url_decode64(code_challenge, padding: false) do # padding '=' deliberately accepted
+      {:ok, bin} -> byte_size(bin) == @sha256_byte_size
+      :error -> false
+    end
+  end
+  defp valid_code_challenge_format?(_code_challenge, _code_challenge_method), do: false
 end
