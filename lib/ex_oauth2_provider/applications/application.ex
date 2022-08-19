@@ -35,6 +35,8 @@ defmodule ExOauth2Provider.Applications.Application do
           timestamps()
         end
       end
+
+  Public clients will not require a client secret to get an access token.
   """
 
   @type t :: Ecto.Schema.t()
@@ -46,7 +48,8 @@ defmodule ExOauth2Provider.Applications.Application do
       {:uid, :string, null: false},
       {:secret, :string, null: false, default: ""},
       {:redirect_uri, :string, null: false},
-      {:scopes, :string, null: false, default: ""}
+      {:scopes, :string, null: false, default: ""},
+      {:public, :boolean, null: false, default: false}
     ]
   end
 
@@ -87,7 +90,7 @@ defmodule ExOauth2Provider.Applications.Application do
   def changeset(application, params, config \\ []) do
     application
     |> maybe_new_application_changeset(params, config)
-    |> Changeset.cast(params, [:name, :secret, :redirect_uri, :scopes, :internal])
+    |> Changeset.cast(params, [:name, :secret, :redirect_uri, :scopes, :internal, :public])
     |> Changeset.validate_required([:name, :uid, :redirect_uri])
     |> validate_secret_not_nil()
     |> Scopes.validate_scopes(nil, config)

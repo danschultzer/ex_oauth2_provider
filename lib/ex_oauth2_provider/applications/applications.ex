@@ -81,7 +81,14 @@ defmodule ExOauth2Provider.Applications do
 
   """
   @spec load_application(binary(), binary(), keyword()) :: Application.t() | nil
-  def load_application(uid, secret, config \\ []) do
+  def load_application(uid, secret, config \\ [])
+  def load_application(uid, secret, config) when secret in [nil, ""] do
+    config
+    |> Config.application()
+    |> Config.repo(config).get_by(uid: uid, secret: secret)
+  end
+
+  def load_application(uid, secret, config) do
     config
     |> Config.application()
     |> Config.repo(config).get_by(uid: uid, secret: secret)
