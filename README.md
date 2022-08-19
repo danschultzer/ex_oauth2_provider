@@ -128,6 +128,7 @@ case ExOauth2Provider.Token.grant(params, otp_app: :my_app) do
 end
 ```
 
+To request an access token without specifying a client secret, mark an application public.
 
 ### Other supported token grants
 
