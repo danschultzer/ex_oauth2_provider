@@ -44,8 +44,7 @@ Add the string fields `code_challenge` and `code_challenge_method` to the table 
 Example migration file:
 
 ```elixir
-# file: accounts/priv/repo/migrations/20210821193238_update_oauth_tables.exs
-defmodule Accounts.Repo.Migrations.UpdateOauthTables do
+defmodule Identity.Repo.Migrations.UpdateOauthTables do
   use Ecto.Migration
 
   def change do
@@ -55,7 +54,20 @@ defmodule Accounts.Repo.Migrations.UpdateOauthTables do
     end
   end
 end
+```
 
+Add the boolean field `public` to the table `oauth_applications`.
+
+```elixir
+defmodule Identity.Repo.Migrations.UpdateOauthTables do
+  use Ecto.Migration
+
+  def change do
+    alter table(:oauth_applications) do
+      add :public, :boolean
+    end
+  end
+end
 ```
 
 ### Upgrading from 0.4

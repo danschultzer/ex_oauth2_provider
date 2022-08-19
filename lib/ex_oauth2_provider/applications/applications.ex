@@ -68,12 +68,16 @@ defmodule ExOauth2Provider.Applications do
     |> Config.repo(config).get_by(uid: uid)
   end
 
-  @doc """
+   @doc """
   Gets a single application by uid and secret.
+  Public clients cannot be trusted with a secret and are therefore not required to use one to fetch a token.
 
   ## Examples
 
       iex> load_application("c341a5c7b331ef076eb4954668d54f590e0009e06b81b100191aa22c93044f3d", "SECRET", otp_app: :my_app)
+      %OauthApplication{}
+
+      iex> load_application("c341a5c7b331ef076eb4954668d54f590e0009e06b81b100191aa22c93044f3d", nil, otp_app: :my_app)
       %OauthApplication{}
 
       iex> load_application("75d72f326a69444a9287ea264617058dbbfe754d7071b8eef8294cbf4e7e0fdc", "SECRET", otp_app: :my_app)
@@ -85,7 +89,8 @@ defmodule ExOauth2Provider.Applications do
   def load_application(uid, secret, config) when secret in [nil, ""] do
     config
     |> Config.application()
-    |> Config.repo(config).get_by(uid: uid, secret: secret)
+    |> Config.repo(config).get_by(uid: uid)
+    |> validate_is_public
   end
 
   def load_application(uid, secret, config) do
@@ -93,6 +98,9 @@ defmodule ExOauth2Provider.Applications do
     |> Config.application()
     |> Config.repo(config).get_by(uid: uid, secret: secret)
   end
+
+  defp validate_is_public(%{public: true} = application), do: application
+  defp validate_is_public(_application), do: nil
 
   @doc """
   Returns all applications for a owner.
