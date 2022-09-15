@@ -7,6 +7,13 @@ defmodule ExOauth2Provider.Oidc do
   # alias ExOauth2Provider.Oidc.Token
 
   def generate_token(resource_owner, %{uid: client_id}, config) do
+    resource_owner =
+      resource_owner
+      |> Jason.encode!()
+      |> Jason.decode!()
+      |> Enum.map(fn {k, v} -> {String.to_atom(k), v} end)
+      |> Map.new()
+
     oidc_config = Config.oidc(config)
 
     audience = Keyword.get(oidc_config, :audience, client_id)
