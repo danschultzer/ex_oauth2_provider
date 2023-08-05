@@ -232,13 +232,13 @@ end
 If the Authorization Header was verified, you'll be able to retrieve the current resource owner or access token.
 
 ```elixir
-ExOauth2Provider.Plug.current_access_token(conn) # access the token in the default location
-ExOauth2Provider.Plug.current_access_token(conn, :secret) # access the token in the secret location
+ExOauth2Provider.Plug.current_access_token(conn) # access the token in the `:default` location
+ExOauth2Provider.Plug.current_access_token(conn, :custom) # access the token in the `:custom` location if set as `:key` option in `plug ExOauth2Provider.Plug.VerifyHeader`
 ```
 
 ```elixir
-ExOauth2Provider.Plug.current_resource_owner(conn) # Access the loaded resource owner in the default location
-ExOauth2Provider.Plug.current_resource_owner(conn, :secret) # Access the loaded resource owner in the secret location
+ExOauth2Provider.Plug.current_resource_owner(conn) # Access the loaded resource owner in the `:default` location
+ExOauth2Provider.Plug.current_resource_owner(conn, :custom) # Access the loaded resource owner in the `:secret` location if set as `:key` option in `plug ExOauth2Provider.Plug.VerifyHeader`
 ```
 
 ### Custom access token generator
