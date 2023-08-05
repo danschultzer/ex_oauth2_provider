@@ -41,7 +41,7 @@ defmodule ExOauth2Provider.Mixfile do
       # Dev and test dependencies
       {:credo, "~> 1.5", only: [:dev, :test]},
 
-      {:ex_doc, ">= 0.0.0", only: :dev},
+      {:ex_doc, "~> 0.25", only: :dev},
 
       {:ecto_sql, "~> 3.10", only: :test},
       {:plug_cowboy, "~> 2.0", only: :test},
