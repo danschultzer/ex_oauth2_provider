@@ -1,0 +1,66 @@
+name: CI
+
+on: 
+  push:
+  pull_request:
+  release:
+    types:
+      - published
+
+jobs:
+  test:
+    # This ensures we run the test for only the PR or the push
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name != github.event.pull_request.base.repo.full_name
+    services:
+      postgres:
+        image: postgres:latest
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: ex_oauth2_provider_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    strategy:
+      matrix:
+        include:
+          - otp: 26.0
+            elixir: 1.15.0
+            os: ubuntu-latest
+          - otp: 22.0
+            elixir: 1.12.0
+            # It's necessary to run on ubunto 20.04 for OTP 20 - 25
+            # See https://github.com/erlef/setup-beam
+            os: ubuntu-20.04
+    runs-on: ${{ matrix.os }}
+    name: OTP ${{ matrix.otp }} / Elixir ${{ matrix.elixir }}
+    steps:
+      - uses: actions/checkout@v3
+      - uses: erlef/setup-beam@v1
+        with:
+          otp-version: ${{ matrix.otp }}
+          elixir-version: ${{ matrix.elixir }}
+      - run: mix deps.get
+      - run: mix test
+        env:
+          POSTGRES_URL: ecto://postgres:postgres@localhost/ex_oauth2_provider_test
+      - run: MIX_ENV=test mix credo --ignore design.tagtodo
+  deploy:
+    needs: test
+    runs-on: ubuntu-latest
+    if: github.event_name == 'release' && github.event.action == 'published'
+    name: Deploy published release
+    env:
+      HEX_API_KEY: ${{ secrets.HEX_API_KEY }}
+    steps:
+      - uses: actions/checkout@v3
+      - uses: erlef/setup-beam@v1
+        with:
+          otp-version: 25.0
+          elixir-version: 1.14.0
+      - run: mix deps.get
+      - run: mix hex.publish --yes

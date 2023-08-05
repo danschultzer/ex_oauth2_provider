@@ -14,4 +14,5 @@ config :ex_oauth2_provider, ExOauth2Provider,
 config :ex_oauth2_provider, Dummy.Repo,
   database: "ex_oauth2_provider_test",
   pool: Ecto.Adapters.SQL.Sandbox,
-  priv: "test/support/priv"
+  priv: "test/support/priv",
+  url: System.get_env("POSTGRES_URL")

@@ -98,10 +98,11 @@ defmodule Mix.ExOauth2Provider.Migration do
   end
 
   defp schema(module, table, namespace, %{binary_id: binary_id}) do
-    attrs           =
+    attrs =
       module.attrs()
       |> Kernel.++(attrs_from_assocs(module.assocs(), namespace))
       |> migration_attrs()
+
     defaults        = defaults(attrs)
     {assocs, attrs} = partition_attrs(attrs)
     table           = "#{namespace}_#{table}"
@@ -139,13 +140,25 @@ defmodule Mix.ExOauth2Provider.Migration do
   defp to_migration_attr({name, type}) do
     {name, type, ""}
   end
-  defp to_migration_attr({name, type, []}) do
-    to_migration_attr({name, type})
+  defp to_migration_attr({name, type, field_options}) do
+    to_migration_attr({name, type, field_options, []})
   end
-  defp to_migration_attr({name, type, defaults}) do
-    defaults = Enum.map_join(defaults, ", ", fn {k, v} -> "#{k}: #{inspect v}" end)
+  defp to_migration_attr({name, type, field_options, migration_options}) do
+    field_options
+    |> Keyword.get(:default)
+    |> case do
+      nil -> migration_options ++ []
+      default -> migration_options ++ [default: default]
+    end
+    |> case do
+      [] ->
+        to_migration_attr({name, type})
 
-    {name, type, ", #{defaults}"}
+      options ->
+        options = Enum.map_join(options, ", ", fn {k, v} -> "#{k}: #{inspect v}" end)
+
+        {name, type, ", #{options}"}
+    end
   end
 
   defp defaults(attrs) do
