@@ -1,6 +1,6 @@
 # Changelog
 
-## v0.5.7 (TBA)
+## v0.5.7 (2023-08-05)
 
 Requires Elixir 1.12+.
 
