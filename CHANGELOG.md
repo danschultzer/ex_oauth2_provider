@@ -5,6 +5,7 @@
 Requires Elixir 1.12+.
 
 * Permit native application redirect uri
+* Separate Ecto migration and field options to resolve ecto 3.8 deprecation
 
 ## v0.5.6 (2020-01-07)
 

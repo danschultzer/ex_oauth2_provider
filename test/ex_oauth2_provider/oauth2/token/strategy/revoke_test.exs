@@ -49,7 +49,7 @@ defmodule ExOauth2Provider.Token.Strategy.RevokeTest do
   end
 
   test "#revoke/2 when access token owned by another client", %{valid_request: valid_request, access_token: access_token} do
-    new_application = Fixtures.application(uid: "new_app", client_secret: "new")
+    new_application = Fixtures.application(uid: "new_app", secret: "new")
     QueryHelpers.change!(access_token, application_id: new_application.id)
 
     assert Token.revoke(valid_request, otp_app: :ex_oauth2_provider) == {:ok, %{}}
