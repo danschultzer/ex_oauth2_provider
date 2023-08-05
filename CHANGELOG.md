@@ -2,6 +2,8 @@
 
 ## v0.5.7 (TBA)
 
+Requires Elixir 1.12+.
+
 * Permit native application redirect uri
 
 ## v0.5.6 (2020-01-07)
