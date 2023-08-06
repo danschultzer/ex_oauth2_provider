@@ -93,7 +93,22 @@ Revocation will return `{:ok, %{}}` status even if the token is invalid.
 
 ### Authorization code flow in a Single Page Application
 
-ExOauth2Provider doesn't support **implicit** grant flow. Instead you should set up an application with no client secret, and use the **Authorize code** grant flow. `client_secret` isn't required unless it has been set for the application.
+ExOauth2Provider doesn't support **implicit** grant flow. Instead you should set up an application with no client secret, and use the **Authorize code** grant flow. `client_secret` isn't required unless it has been set for the application. 
+It's **strongly** encouraged to enable PKCE for these applications.
+
+
+#### PKCE
+
+Enable PKCE in configuration `config/config.ex`:
+
+```elixir
+config :my_app, ExOauth2Provider,
+  # ...
+  # this will enable PKCE for *all* applications
+  use_pkce: true
+```
+
+When making an authorization code flow you are now required to provide a `code_challenge` and `code_challenge_method` query fields for the authorization request and `code_verifier` field for the access token request, as per [RFC-7637](https://datatracker.ietf.org/doc/html/rfc7636).
 
 ### Other supported token grants
 

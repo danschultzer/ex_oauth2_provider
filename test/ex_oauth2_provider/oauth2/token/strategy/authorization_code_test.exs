@@ -136,6 +136,72 @@ defmodule ExOauth2Provider.Token.Strategy.AuthorizationCodeTest do
     assert Token.grant(request_invalid_redirect_uri, otp_app: :ex_oauth2_provider) == {:error, @invalid_grant, :unprocessable_entity}
   end
 
+  describe "pkce enabled for grant" do
+    @code_plain "code_plain"
+    @code_s256 "code_s256"
+
+    @code_challenge "1234567890abcdefrety1234567890abcdefrety.~-_"
+    @unmatching_code_challenge "1234567890abcdefrety1234567890abcdefrety.~-1"
+    @s256_code_challenge :crypto.hash(:sha256, @code_challenge) |> Base.url_encode64(padding: false)
+
+    @valid_plain_request Map.merge(@valid_request, %{
+      "code_verifier" => @code_challenge,
+      "code" => @code_plain
+    })
+    @valid_s256_request Map.merge(@valid_request, %{
+      "code_verifier" => @code_challenge,
+      "code" => @code_s256
+    })
+
+    @invalid_request %{
+      error: :invalid_request,
+      error_description:
+        "The request is missing a required parameter, includes an unsupported parameter value, or is otherwise malformed."
+    }
+
+    setup %{resource_owner: resource_owner, application: application, access_grant: access_grant} do
+      plain_grant = Fixtures.access_grant(
+        application, resource_owner, @code_plain, @redirect_uri, code_challenge: @code_challenge, code_challenge_method: "plain"
+      )
+      s256_grant = Fixtures.access_grant(
+        application, resource_owner, @code_s256, @redirect_uri, code_challenge: @s256_code_challenge, code_challenge_method: "S256"
+      )
+
+      {:ok, %{
+        resource_owner: resource_owner,
+        application: application,
+        no_pkce_grant: access_grant,
+        plain_grant: plain_grant,
+        s256_grant: s256_grant
+      }}
+    end
+
+    test "#grant/2 missing code_verifier" do
+      request = Map.merge(@valid_request, %{"code" => @code_plain})
+      assert {:error, @invalid_request, :bad_request} == Token.grant(request, otp_app: :ex_oauth2_provider)
+    end
+
+    test "#grant/2 plain challenge method with unmatching code verifier" do
+      request = Map.merge(@valid_plain_request, %{"code_verifier" => @unmatching_code_challenge})
+      assert {:error, @invalid_grant, :unprocessable_entity} == Token.grant(request, otp_app: :ex_oauth2_provider)
+    end
+
+    test "#grant/2 S256 challenge method with unmatching code verifier" do
+      request = Map.merge(@valid_s256_request, %{"code_verifier" => @unmatching_code_challenge})
+      assert {:error, @invalid_grant, :unprocessable_entity} == Token.grant(request, otp_app: :ex_oauth2_provider)
+    end
+
+    test "#grant/2 returns access token with plain challenge method" do
+      assert {:ok, %{access_token: actual_token}} = Token.grant(@valid_plain_request, otp_app: :ex_oauth2_provider)
+      assert %{token: ^actual_token} = QueryHelpers.get_latest_inserted(OauthAccessToken)
+    end
+
+    test "#grant/2 returns access token with S256 challenge method" do
+      assert {:ok, %{access_token: actual_token}} = Token.grant(@valid_s256_request, otp_app: :ex_oauth2_provider)
+      assert %{token: ^actual_token} = QueryHelpers.get_latest_inserted(OauthAccessToken)
+    end
+  end
+
   def access_token_response_body_handler(body, access_token) do
     Map.merge(body, %{custom_attr: access_token.inserted_at})
   end

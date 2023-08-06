@@ -39,6 +39,28 @@ Requires Elixir 1.12+.
 
 This is a full rewrite of the library, and are several breaking changes. You're encouraged to test your app well if you upgrade from 0.4.
 
+### Upgrading from 0.5
+
+#### 1. DB
+
+Add the string fields `code_challenge` and `code_challenge_method` to the table `<scope>_access_grants`.
+Example migration file:
+
+```elixir
+# file: accounts/priv/repo/migrations/20210821193238_update_oauth_tables.exs
+defmodule Accounts.Repo.Migrations.UpdateOauthTables do
+  use Ecto.Migration
+
+  def change do
+    alter table(:oauth_access_grants) do
+      add :code_challenge, :string
+      add :code_challenge_method, :string
+    end
+  end
+end
+
+```
+
 ### Upgrading from 0.4
 
 #### 1. Schema modules

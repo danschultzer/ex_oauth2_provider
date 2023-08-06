@@ -8,7 +8,8 @@ defmodule ExOauth2Provider.Token.AuthorizationCode do
     Config,
     Token.Utils,
     Token.Utils.Response,
-    Utils.Error}
+    Utils.Error,
+    Utils.Validation}
 
   @doc """
   Will grant access token by client credentials.
@@ -32,6 +33,7 @@ defmodule ExOauth2Provider.Token.AuthorizationCode do
     |> Utils.load_client(config)
     |> load_active_access_grant(config)
     |> validate_redirect_uri()
+    |> validate_pkce()
     |> issue_access_token_by_grant(config)
     |> Response.response(config)
   end
@@ -89,4 +91,22 @@ defmodule ExOauth2Provider.Token.AuthorizationCode do
     end
   end
   defp validate_redirect_uri({:ok, params}), do: Error.add_error({:ok, params}, Error.invalid_grant())
+
+  defp validate_pkce({:error, params}), do: {:error, params}
+  defp validate_pkce({:ok, %{access_grant: %{code_challenge_method: nil}} = params}), do: {:ok, params} # pkce not enabled for this grant
+  defp validate_pkce({:ok, %{request: %{"code_verifier" => actual_code}, access_grant: %{code_challenge: expected_code, code_challenge_method: challenge_method}} = params}) do
+    if Validation.valid_code_verifier_format?(actual_code) && valid_pkce?(actual_code, expected_code, challenge_method) do
+      {:ok, params}
+    else
+      Error.add_error({:ok, params}, Error.invalid_grant())
+    end
+  end
+  defp validate_pkce({:ok, params}), do: Error.add_error({:ok, params}, Error.invalid_request())
+
+  defp valid_pkce?(actual_code, expected_code, "plain"), do: Plug.Crypto.secure_compare(actual_code, expected_code)
+  defp valid_pkce?(actual_code, expected_code, "S256") do
+    :crypto.hash(:sha256, actual_code)
+    |> Base.url_encode64(padding: false)
+    |> Plug.Crypto.secure_compare(expected_code)
+  end
 end
