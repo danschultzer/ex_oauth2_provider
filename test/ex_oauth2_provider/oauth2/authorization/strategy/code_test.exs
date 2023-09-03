@@ -6,7 +6,7 @@ defmodule ExOauth2Provider.Authorization.CodeTest do
   alias Dummy.{OauthAccessGrants.OauthAccessGrant, Repo}
 
   @client_id                "Jf5rM8hQBc"
-  @valid_request            %{"client_id" => @client_id, "response_type" => "code", "scope" => "app:read app:write"}
+  @valid_request            %{"client_id" => @client_id, "response_type" => "code"}
   @invalid_request          %{error: :invalid_request,
                               error_description: "The request is missing a required parameter, includes an unsupported parameter value, or is otherwise malformed."
                             }
@@ -83,6 +83,12 @@ defmodule ExOauth2Provider.Authorization.CodeTest do
       %{resource_owner: resource_owner, application: application}
     end
 
+    test "with no scope", %{resource_owner: resource_owner, application: application} do
+      request = Map.delete(@valid_request, "scope")
+
+      assert Authorization.preauthorize(resource_owner, request, otp_app: :ex_oauth2_provider) == {:ok, application, []}
+    end
+
     test "with limited server scope", %{resource_owner: resource_owner, application: application} do
       request = Map.merge(@valid_request, %{"scope" => "read"})
 
@@ -134,12 +140,20 @@ defmodule ExOauth2Provider.Authorization.CodeTest do
       %{resource_owner: resource_owner, application: application}
     end
 
+    test "generates grant with no scope passed", %{resource_owner: resource_owner} do
+      request = Map.delete(@valid_request, "scope")
+      assert {:native_redirect, %{code: code}} = Authorization.authorize(resource_owner, request, otp_app: :ex_oauth2_provider)
+
+      access_grant = Repo.get_by(OauthAccessGrant, token: code)
+      assert access_grant.resource_owner_id == resource_owner.id
+    end
+
     test "error when invalid server scope", %{resource_owner: resource_owner} do
       request = Map.merge(@valid_request, %{"scope" => "public profile"})
       assert Authorization.authorize(resource_owner, request, otp_app: :ex_oauth2_provider) == {:error, @invalid_scope, :unprocessable_entity}
     end
 
-    test "generates grant", %{resource_owner: resource_owner} do
+    test "generates grant with public scope", %{resource_owner: resource_owner} do
       request = Map.merge(@valid_request, %{"scope" => "public"})
       assert {:native_redirect, %{code: code}} = Authorization.authorize(resource_owner, request, otp_app: :ex_oauth2_provider)
 
@@ -160,7 +174,7 @@ defmodule ExOauth2Provider.Authorization.CodeTest do
 
     assert access_grant.resource_owner_id == resource_owner.id
     assert access_grant.expires_in == Config.authorization_code_expires_in(otp_app: :ex_oauth2_provider)
-    assert access_grant.scopes == @valid_request["scope"]
+    assert access_grant.scopes == ""
   end
 
   test "#authorize/3 generates grant with redirect uri", %{resource_owner: resource_owner, application: application} do
