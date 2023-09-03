@@ -57,6 +57,7 @@ defmodule ExOauth2Provider do
     |> maybe_revoke_previous_refresh_token(config)
     |> validate_access_token()
     |> load_resource_owner(config)
+	|> load_application(config)
   end
 
   defp load_access_token(token, config) do
@@ -95,5 +96,12 @@ defmodule ExOauth2Provider do
     access_token = repo.preload(access_token, :resource_owner)
 
     {:ok, access_token}
+  end
+  defp load_application({:error, error}, _config), do: {:error, error}
+  defp load_application({:ok, access_token}, config) do
+    repo         = Config.repo(config)
+    application = repo.preload(access_token, :application)
+
+    {:ok, application}
   end
 end
