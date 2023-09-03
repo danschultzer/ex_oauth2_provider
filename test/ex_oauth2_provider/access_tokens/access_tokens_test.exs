@@ -17,6 +17,20 @@ defmodule ExOauth2Provider.AccessTokensTest do
     assert id == access_token.id
   end
 
+  test "get_by_token_for/2", %{user: user, application: application} do
+    {:ok, access_token} = AccessTokens.create_token(user, %{application: application}, otp_app: :ex_oauth2_provider)
+
+    assert %OauthAccessToken{id: id} = AccessTokens.get_by_token_for(application, access_token.token, otp_app: :ex_oauth2_provider)
+    assert id == access_token.id
+  end
+
+  test "get_by_token_for/2 different application", %{user: user, application: application} do
+    {:ok, access_token} = AccessTokens.create_token(user, %{application: application}, otp_app: :ex_oauth2_provider)
+
+    other_application = Fixtures.application(resource_owner: user, uid: "other",)
+    assert AccessTokens.get_by_token_for(other_application, access_token.token, otp_app: :ex_oauth2_provider) == nil
+  end
+
   test "get_by_refresh_token/2", %{user: user} do
     assert {:ok, access_token} = AccessTokens.create_token(user, %{use_refresh_token: true}, otp_app: :ex_oauth2_provider)
 

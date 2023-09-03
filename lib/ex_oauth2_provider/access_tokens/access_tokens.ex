@@ -35,6 +35,24 @@ defmodule ExOauth2Provider.AccessTokens do
   end
 
   @doc """
+  Gets a single access token belonging to an application.
+
+  ## Examples
+
+      iex> get_by_token_for(application, "c341a5c7b331ef076eb4954668d54f590e0009e06b81b100191aa22c93044f3d", otp_app: :my_app)
+      %OauthAccessToken{}
+
+      iex> get_by_token_for(application, "75d72f326a69444a9287ea264617058dbbfe754d7071b8eef8294cbf4e7e0fdc", otp_app: :my_app)
+      nil
+  """
+  @spec get_by_token_for(Application.t(), binary(), keyword()) :: AccessToken.t() | nil
+  def get_by_token_for(application, token, config \\ []) do
+    config
+    |> Config.access_token()
+    |> Config.repo(config).get_by(application_id: application.id, token: token)
+  end
+
+  @doc """
   Gets an access token by the refresh token.
 
   ## Examples

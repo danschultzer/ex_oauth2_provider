@@ -94,4 +94,15 @@ defmodule ExOauth2Provider.Schema do
   def __timestamp__(type) do
     type.from_unix!(System.system_time(:microsecond), :microsecond)
   end
+
+  def unix_time_for(%DateTime{} = datetime) do
+    DateTime.to_unix(datetime)
+  end
+  def unix_time_for(%NaiveDateTime{} = naive) do
+    DateTime.from_naive!(naive, "Etc/UTC")
+    |> unix_time_for()
+  end
+  def unix_time_for(date) when is_struct(date) do
+    date.__struct__.to_unix(date)
+  end
 end

@@ -91,6 +91,33 @@ end
 
 Revocation will return `{:ok, %{}}` status even if the token is invalid.
 
+### Token introspection
+
+Check access token or refresh token for validity and meta-data. [See RFC-7662](https://datatracker.ietf.org/doc/html/rfc7662)
+
+```elixir
+# GET /oauth/introspect?client_id=CLIENT_ID&client_secret=CLIENT_SECRET&token=ACCESS_TOKEN
+# or 
+# GET /oauth/introspect?client_id=CLIENT_ID&client_secret=CLIENT_SECRET&token=REFRESH_TOKEN
+case ExOauth2Provider.Token.introspect(params, otp_app: :my_app) do
+  {:ok, introspection}              -> # JSON response
+  {:error, error, http_status}      -> # JSON response
+end
+```
+
+Example `introspection` value:
+```elixir
+%{
+  active: true,
+  client_id: "0f3e0eee9e70c6aa833bc03ba7e635e1842e92a82e14d7d2222221111",
+  exp: 1629563742, # not present for refresh tokens
+  iat: 1629556542,
+  scope: "read write",
+  sub: 1,
+  token_type: "bearer"
+}
+```
+
 ### Authorization code flow in a Single Page Application
 
 ExOauth2Provider doesn't support **implicit** grant flow. Instead you should set up an application with no client secret, and use the **Authorize code** grant flow. `client_secret` isn't required unless it has been set for the application.
