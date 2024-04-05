@@ -150,8 +150,11 @@ defmodule ExOauth2Provider.Applications do
       iex> create_application(user, %{name: ""}, otp_app: :my_app)
       {:error, %Ecto.Changeset{}}
 
+      iex> create_application(nil, %{name: "App", redirect_uri: "http://example.com"}, otp_app: :my_app)
+      {:ok, %OauthApplication{}}
+
   """
-  @spec create_application(Schema.t(), map(), keyword()) :: {:ok, Application.t()} | {:error, Changeset.t()}
+  @spec create_application(Schema.t() | nil, map(), keyword()) :: {:ok, Application.t()} | {:error, Changeset.t()}
   def create_application(owner, attrs \\ %{}, config \\ []) do
     config
     |> Config.application()
